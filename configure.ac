@@ -7,7 +7,7 @@ AM_CONFIG_HEADER(config.h)
 AC_PROG_CC
 AC_ISC_POSIX
 
-AC_CHECK_HEADERS([termios.h linux/termios.h sys/mman.h stdint.h inttypes.h])
+AC_CHECK_HEADERS([termios.h sys/mman.h stdint.h inttypes.h])
 
 AC_CHECK_FUNCS([strlcpy strlcat arc4random arc4random_uniform mlockall strcasestr])
 

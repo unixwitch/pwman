@@ -22,16 +22,12 @@
 #ifndef PWMAN_UI_H
 #define PWMAN_UI_H
 
-#include <curses.h>
-#include <signal.h>
-#include <ctype.h>
+#include	<curses.h>
+#include	<signal.h>
+#include	<ctype.h>
 
 #ifdef HAVE_TERMIOS_H
-#       include <termios.h>
-#else   
-#       ifdef HAVE_LINUX_TERMIOS_H
-#               include <linux/termios.h>
-#       endif
+# include	<termios.h>
 #endif
 
 #include	"pwman.h"
