@@ -1,11 +1,8 @@
 # PWMan Password Manager
 
-**NOTE**: I (Felicity) created this fork of pwman to fix bugs we encountered
-with it at Torchbox.  I did not write this software, and I strongly recommend
-that you don't use it, as the code is fairly awful and in need of a cleanup
-or (preferably) a complete rewrite.  Among other things, pwman is known to
-sometimes drop entries from the database for no reason.  Use it at your own
-risk.
+**Note**: This is a fork of the [original pwman](http://pwman.sf.net/),
+maintained mostly for Torchbox internal use.  It may be useful to other people,
+but proceed at your own risk.
 
 PWMan is a password manager which uses gpg encryption to safeguard your data.
 It provides a simple and easy to use command line (NCurses) interface to 
