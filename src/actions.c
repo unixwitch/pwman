@@ -467,9 +467,40 @@ action_list_delete_item()
 {
 	Pw* curpw;
 	PWList* curpwl;
+	PWSearchResult* cursearch;
 	int i;
 	char str[STRING_LONG];
 	
+	if (search_results) {
+		cursearch = uilist_get_highlighted_searchresult();
+		curpwl = cursearch->sublist;
+		curpw = cursearch->entry;
+
+		if (curpw) {
+			snprintf(str, STRING_LONG, "Really delete \"%s\"", curpw->name);
+			if ((i = ui_statusline_yes_no(str, 0)) != 0) {
+				pwlist_delete_pw(curpwl, curpw);
+				ui_statusline_msg("Password deleted");
+			} else {
+				ui_statusline_msg("Password not deleted");
+			}
+
+			search_remove();
+			return;
+		}
+
+		snprintf(str, STRING_LONG, "Really delete Sublist \"%s\"", curpwl->name);
+		if ((i = ui_statusline_yes_no(str, 0)) != 0) {
+			pwlist_delete_sublist(curpwl->parent, curpwl);
+			ui_statusline_msg("Password Sublist deleted");
+		} else {
+			ui_statusline_msg("Password not deleted");
+		}
+
+		search_remove();
+		return;
+	}
+
 	switch(uilist_get_highlighted_type()){
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
@@ -484,6 +515,7 @@ action_list_delete_item()
 				}	
 			}
 			break;
+
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl){
