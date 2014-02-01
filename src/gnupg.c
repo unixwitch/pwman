@@ -310,7 +310,6 @@ int		id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
 	regcomp(&reg, idstr, REG_EXTENDED);
-
 	while (fgets(text, STRING_LONG, streams[STDOUT])) {
 		if (regexec(&reg, text, 0, NULL, 0) != 0)
 			continue;
@@ -703,4 +702,113 @@ int		pid, ret = 0, pos;
 	debug("gnupg_read: finished all");
 
 	return ret;
+}
+
+int
+gnupg_list_ids(ids, nids)
+	char	***ids;
+	size_t	  *nids;
+{
+int		pid;
+char		text[STRING_LONG];
+char		*args[4];
+FILE           *streams[3];
+
+	*ids = NULL;
+	*nids = 0;
+
+	args[0] = "gpg";
+	args[1] = "--with-colons";
+	args[2] = "-K";
+	args[3] = NULL;
+
+	pid = gnupg_exec(options->gpg_path, args, streams);
+
+	while (fgets(text, sizeof(text), streams[STDOUT])) {
+	char	*type, *flags, *bits, *alg, *id, *date, *j1, *j2, *j3, *name, *j4;
+	char	 kstr[128];
+
+		text[strlen(text) - 1] = 0;
+		type = text;
+
+		if ((flags = index(type, ':')) == NULL)
+			continue;
+		*flags++ = 0;
+
+		if ((bits = index(flags, ':')) == NULL)
+			continue;
+		*bits++ = 0;
+		
+		if ((alg = index(bits, ':')) == NULL)
+			continue;
+		*alg++ = 0;
+
+		if ((id = index(alg, ':')) == NULL)
+			continue;
+		*id++ = 0;
+
+		if ((date = index(id, ':')) == NULL)
+			continue;
+		*date++ = 0;
+
+		if ((j1 = index(date, ':')) == NULL)
+			continue;
+		*j1++ = 0;
+
+		if ((j2 = index(j1, ':')) == NULL)
+			continue;
+		*j2++ = 0;
+
+		if ((j3 = index(j2, ':')) == NULL)
+			continue;
+		*j3++ = 0;
+
+		if ((name = index(j3, ':')) == NULL)
+			continue;
+		*name++ = 0;
+
+		if ((j4 = index(name, ':')) == NULL)
+			continue;
+		*j4++ = 0;
+
+		if (strcmp(type, "sec"))
+			continue;
+
+		if (strlen(id) > 8)
+			id += 8;
+
+		snprintf(kstr, sizeof(kstr), "%s: %s (%s bits, created %s)",
+			 id, name, bits, date);
+
+		*ids = realloc(*ids, *nids * (sizeof(char *)));
+		(*ids)[*nids] = strdup(kstr);
+		(*nids)++;
+	}
+
+	/* Tidy up */
+	gnupg_exec_end(pid, streams);
+	return 0;
+}
+
+char *
+gnupg_find_program()
+{
+char	*path, *p;
+	if ((path = getenv("PATH")) == NULL)
+		return NULL;
+
+	path = xstrdup(path);
+
+	for (p = strtok(path, ":"); p; p = strtok(NULL, ":")) {
+	char	gpath[PATH_MAX];
+		snprintf(gpath, sizeof(gpath), "%s/gpg", p);
+
+		if (access(gpath, X_OK) == 0) {
+			free(path);
+			return xstrdup(gpath);
+		}
+	}
+
+	free(path);
+	return NULL;
 }

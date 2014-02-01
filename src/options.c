@@ -26,6 +26,7 @@
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
 
+#include	"gnupg.h"
 #include	"pwman.h"
 
 static char    *options_get_file(void);
@@ -187,22 +188,50 @@ xmlNodePtr	node, root;
 void
 options_get()
 {
-char           *dbfile;
-char		line[1024];
+char		*dbfile;
+char		 line[1024];
+char		**ids;
+size_t		 nids, i;
+char		*default_gpg;
 
-	puts("Hmm... can't open ~/.pwmanrc, we'll create one manually now.");
+	printf("~/.pwmanrc not found; starting initial configuration.\n\n");
 
-	printf("GnuPG ID [you@yourdomain.com] or [012345AB]: ");
+	default_gpg = gnupg_find_program();
+	if (!default_gpg) {
+		fprintf(stderr, "warning: couldn't find gpg in $PATH\n");
+		default_gpg = xstrdup("/usr/bin/gpg");
+	}
+
+	printf("Path to GnuPG [%s]: ", default_gpg);
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+	line[strlen(line) - 1] = 0;
+
+	options->gpg_path = *line ? xstrdup(line) : xstrdup(default_gpg);
+	free(default_gpg);
+
+	printf("\n");
+	if (gnupg_list_ids(&ids, &nids)) {
+		fprintf(stderr, "Couldn't invoke gpg.\n");
+		exit(1);
+	}
+
+	if (nids == 0) {
+		fprintf(stderr, "No keys available.\n");
+		exit(1);
+	}
+
+	for (i = 0; i < nids; i++) {
+		printf("%s\n", ids[i]);
+		free(ids[i]);
+	}
+	free(ids);
+
+	printf("\nGnuPG ID [you@yourdomain.com] or [012345AB]: ");
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
 	line[strlen(line) - 1] = 0;
 	options->gpg_id = *line ? xstrdup(line) : xstrdup("you@yourdomain.com");
-
-	printf("Path to GnuPG [/usr/bin/gpg]: ");
-	if (!fgets(line, sizeof(line), stdin))
-		exit(1);
-	line[strlen(line) - 1] = 0;
-	options->gpg_path = *line ? xstrdup(line) : xstrdup("/usr/bin/gpg");
 
 	dbfile = options_get_database();
 	printf("Password database file [%s]: ", dbfile);
@@ -212,7 +241,7 @@ char		line[1024];
 	options->password_file = *line ? xstrdup(line) : xstrdup(dbfile);
 	xfree(dbfile);
 
-	printf("Passphrase Timeout(in minutes) [180]: ");
+	printf("Passphrase timeout (in minutes) [180]: ");
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
 
