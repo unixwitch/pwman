@@ -433,13 +433,13 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 		xmlEncodeSpecialChars(root->doc, (xmlChar*)pw->launch);
 
 	// Build the entry and add in our (escaped) contents
-	node = xmlNewChild(root, NULL, (xmlChar*)"PwItem", NULL);
+	node = xmlNewChild(root, NULL, (xmlChar const *)"PwItem", NULL);
 
-	xmlNewChild(node, NULL, (xmlChar*)"name", escapedName);
-	xmlNewChild(node, NULL, (xmlChar*)"host", escapedHost);
-	xmlNewChild(node, NULL, (xmlChar*)"user", escapedUser);
-	xmlNewChild(node, NULL, (xmlChar*)"passwd", escapedPasswd);
-	xmlNewChild(node, NULL, (xmlChar*)"launch", escapedLaunch);
+	xmlNewChild(node, NULL, (xmlChar const *)"name", escapedName);
+	xmlNewChild(node, NULL, (xmlChar const *)"host", escapedHost);
+	xmlNewChild(node, NULL, (xmlChar const *)"user", escapedUser);
+	xmlNewChild(node, NULL, (xmlChar const *)"passwd", escapedPasswd);
+	xmlNewChild(node, NULL, (xmlChar const *)"launch", escapedLaunch);
 
 	// Finally, we need to free all our escaped versions now we're done
 	xmlFree(escapedName);
@@ -456,8 +456,8 @@ pwlist_write(xmlNodePtr parent, PWList *list)
 	Pw *iter;
 	PWList *pwliter;
 	
-	node = xmlNewChild(parent, NULL, (xmlChar*)"PwList", NULL);
-	xmlSetProp(node, (xmlChar*)"name", (xmlChar*)list->name);
+	node = xmlNewChild(parent, NULL, (xmlChar const *)"PwList", NULL);
+	xmlSetProp(node, (xmlChar const *)"name", (xmlChar*)list->name);
 	
 	for(iter = list->list; iter != NULL; iter = iter->next){
 		pwlist_write_node(node, iter);
@@ -484,11 +484,11 @@ pwlist_write_file()
 		return -1;
 	}
 	snprintf(vers, 5, "%d", FF_VERSION);
-	doc = xmlNewDoc((xmlChar*)"1.0");
+	doc = xmlNewDoc((xmlChar const *)"1.0");
 	
-	root = xmlNewDocNode(doc, NULL, (xmlChar*)"PWMan_PasswordList", NULL);
+	root = xmlNewDocNode(doc, NULL, (xmlChar const *)"PWMan_PasswordList", NULL);
 
-	xmlSetProp(root, (xmlChar*)"version", (xmlChar*)vers);
+	xmlSetProp(root, (xmlChar const *)"version", (xmlChar*)vers);
 	pwlist_write(root, pwlist);
 
 	xmlDocSetRootElement(doc, root);
@@ -542,16 +542,16 @@ pwlist_read(xmlNodePtr parent, PWList *parent_list)
 		ui_statusline_msg("Messed up xml node");
 		return -1;
 	}
-	if(strcmp((char*)parent->name,"PwList") == 0){
-		strncpy(name, xmlGetProp(parent, (xmlChar*)"name"), STRING_MEDIUM);
+	if(strcmp((char const*)parent->name,"PwList") == 0){
+		strncpy(name, (char const *) xmlGetProp(parent, (xmlChar const *)"name"), STRING_MEDIUM);
 		new = pwlist_new(name);
 
 		for(node = parent->children; node != NULL; node = node->next){
 			if(!node || !node->name){
 				debug("read_pwlist: messed up child node");
-			} else if(strcmp(node->name, "PwList") == 0){
+			} else if (strcmp((char const *) node->name, "PwList") == 0){
 				pwlist_read(node, new);
-			} else if(strcmp(node->name, "PwItem") == 0){
+			} else if (strcmp((char const *) node->name, "PwItem") == 0){
 				pwlist_read_node(node, new);
 			}
 		}
@@ -572,7 +572,7 @@ int
 pwlist_read_file()
 {
     char fn[STRING_LONG];
-	char *buf;
+	char const *buf;
 	int i = 0;
 	int gnupg_worked = 0;
 	xmlNodePtr node, root;
@@ -602,22 +602,21 @@ pwlist_read_file()
 		return -1;
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root || !root->name	|| (strcmp((char*)root->name, "PWMan_PasswordList") != 0) ){
+	if(!root || !root->name	|| (strcmp((char const *)root->name, "PWMan_PasswordList") != 0) ){
 		ui_statusline_msg("Badly Formed password data");
 		return -1;
 	}
-	if( buf = xmlGetProp(root, (xmlChar*)"version") ){
-		i = atoi( buf );
-	} else {
-		i = 0;
-	}
+
+	if ((buf = (char const *) xmlGetProp(root, (xmlChar const *) "version")) != NULL)
+		i = atoi(buf);
+
 	if(i < FF_VERSION){
 		ui_statusline_msg("Password File in older format, use convert_pwdb");
 		return -1;
 	}
 
-	for(node = root->children; node != NULL; node = node->next){
-		if(strcmp(node->name, "PwList") == 0){
+	for (node = root->children; node != NULL; node = node->next){
+		if (strcmp((char const *) node->name, "PwList") == 0){
 			pwlist_read(node, NULL);
 
 			break;
@@ -626,7 +625,6 @@ pwlist_read_file()
 	xmlFreeDoc(doc);
 	return 0;
 }
-
 
 int
 pwlist_do_export(PWList *pwlist, Pw *pw)
@@ -672,17 +670,16 @@ pwlist_do_export(PWList *pwlist, Pw *pw)
 
 	debug("export_passwd: construct xml doc");
 	snprintf(vers, 5, "%d", FF_VERSION);
-	doc = xmlNewDoc((xmlChar*)"1.0");
+	doc = xmlNewDoc((xmlChar const *)"1.0");
 	
-	root = xmlNewDocNode(doc, NULL, (xmlChar*)"PWMan_Export", NULL);
+	root = xmlNewDocNode(doc, NULL, (xmlChar const *) "PWMan_Export", NULL);
 
-	xmlSetProp(root, "version", vers);
+	xmlSetProp(root, (xmlChar const *) "version", (xmlChar const *) vers);
 	
-   if(pwlist) {
-      pwlist_write(root, pwlist);
-   } else {
-      pwlist_write_node(root, pw);
-   }
+	if(pwlist)
+		pwlist_write(root, pwlist);
+	else
+		pwlist_write_node(root, pw);
 
 	xmlDocSetRootElement(doc, root);
 
@@ -715,7 +712,8 @@ pwlist_export_list(PWList *pwlist)
 int
 pwlist_import_passwd()
 {
-	char file[STRING_LONG], *buf;
+	char file[STRING_LONG];
+	char const *buf;
 	int i = 0;
 	xmlNodePtr node, root;
 	xmlDocPtr doc;
@@ -729,25 +727,24 @@ pwlist_import_passwd()
 		return -1;
 	}
 	root = xmlDocGetRootElement(doc);
-	if(!root || !root->name	|| (strcmp((char*)root->name, "PWMan_Export") != 0) ){
+	if(!root || !root->name	|| (strcmp((char const*) root->name, "PWMan_Export") != 0) ){
 		ui_statusline_msg("Badly Formed password data");
 		return -1;
 	}
-	if( buf = xmlGetProp(root, (xmlChar*)"version") ){
-		i = atoi( buf );
-	} else {
-		i = 0;
-	}
-	if(i < FF_VERSION){
+
+	if ((buf = (char const *) xmlGetProp(root, (xmlChar const*) "version")) != NULL) 
+		i = atoi(buf);
+
+	if (i < FF_VERSION){
 		ui_statusline_msg("Password Export File in older format, use convert_pwdb");
 		return -1;
 	}
 	
 	for(node = root->children; node != NULL; node = node->next){
-		if(strcmp(node->name, "PwList") == 0){
+		if(strcmp((char const *) node->name, "PwList") == 0){
 			pwlist_read(node, current_pw_sublist);
 			break;
-		} else if(strcmp(node->name, "PwItem") == 0){
+		} else if(strcmp((char const *) node->name, "PwItem") == 0){
 			pwlist_read_node(node, current_pw_sublist);
 			break;
 		}
