@@ -133,7 +133,7 @@ int options_read(void);
 void options_get(void);
 
 void search_get(void);
-int search_remove(void);
+void search_remove(void);
 
 int pwlist_add_ptr(PWList*, Pw*);
 Pw* pwlist_new_pw(void);

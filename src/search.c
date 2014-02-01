@@ -25,6 +25,9 @@
 #include	"pwman.h"
 #include	"ui.h"
 
+void _search_free(void);
+int search_active(PwSearch* srch);
+
 PwSearch *
 search_new()
 {
@@ -191,7 +194,7 @@ search_apply()
 	return 1;
 }
 
-int 
+void
 search_remove()
 {
 	// Put things back how they should have been
@@ -208,7 +211,7 @@ search_remove()
 	uilist_refresh();
 }
 
-int 
+void 
 _search_free()
 {
 	PWSearchResult *cur;
@@ -246,36 +249,34 @@ search_get()
 	uilist_refresh();
 }
 
-
-int
+void
 search_alert(PwSearch* srch)
 {
 	char alert[80];	
 
-	if( search_active(srch) == 0 ) {
-		return 1;
-	}
+	if (search_active(srch) == 0)
+		return;
 
-	if(search_results == NULL) {
+	if (search_results == NULL)
 		sprintf(alert, " (No results found for '%s')", srch->search_term);
-	} else {
+	else
 		sprintf(alert, " (Search results for '%s')", srch->search_term);
-	}
 
 	ui_statusline_clear();
 	ui_statusline_msg(alert);
 }
 
 
-int search_active(PwSearch* srch)
+int
+search_active(PwSearch* srch)
 {
-	if( (srch == NULL) || (srch->search_term == NULL) ){
+	if ((srch == NULL) || (srch->search_term == NULL))
 		/* no search object */
 		return 0;
-	}
-	if( strlen(srch->search_term) == 0 ){
+
+	if (strlen(srch->search_term) == 0)
 		/* no search */
 		return 0;
-	}
+
 	return 1;
 }

@@ -115,6 +115,6 @@ int filter_apply(Pw *pw, PwFilter* fil);
 void filter_alert(PwFilter* fil);
 void filter_get(void);
 
-int search_alert(PwSearch* srch);
+void search_alert(PwSearch* srch);
 
 #endif	/* !PWMAN_UI_H */
