@@ -51,6 +51,7 @@
 
 #define MAIN_HELPLINE 	"q:quit  ?:help  a:add  e:edit  d:delete"
 #define READONLY_MSG	"RO"
+#define SAFE_MSG	"SAFE"
 
 #define MAX_SEARCH_DEPTH 25
 

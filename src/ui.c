@@ -50,18 +50,20 @@ static WINDOW  *top = NULL, *bottom = NULL;
 static void
 ui_draw_top()
 {
+char	text[128];
+
 	wbkgd(top, WA_REVERSE);
 	werase(top);
 	wclrtoeol(top);
 
-	if (!options->readonly) {
-		mvwprintw(top, 0, 0, "%s | %s", PACKAGE " " VERSION,
-			  MAIN_HELPLINE);
-	} else {
-		mvwprintw(top, 0, 0, "%s | %s | %s", PACKAGE " " VERSION,
-			  READONLY_MSG, MAIN_HELPLINE);
-	}
+	strlcpy(text, PACKAGE " " VERSION, sizeof(text));
+	if (options->readonly)
+		strlcat(text, " | " READONLY_MSG, sizeof(text));
+	if (options->safemode)
+		strlcat(text, " | " SAFE_MSG, sizeof(text));
 
+	strlcat(text, " | " MAIN_HELPLINE, sizeof(text));
+	mvwprintw(top, 0, 0, "%s", text);
 	wrefresh(top);
 }
 
