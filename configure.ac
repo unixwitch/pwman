@@ -91,13 +91,7 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
-# Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([string.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_SIZE_T
-
-# Checks for library functions.
+AC_CHECK_HEADERS([inttypes.h stdint.h])
 
 AC_OUTPUT([Makefile src/Makefile doc/Makefile convert_pwdb/Makefile pwdb2csv/Makefile]) 
