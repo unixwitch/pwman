@@ -25,8 +25,10 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-void _search_free(void);
-int search_active(PwSearch* srch);
+static PWSearchResult	*_search_add_if_matches(PWSearchResult *, Pw *, PWList *);
+static void		 _search_free(void);
+static int		 search_active(PwSearch* srch);
+static int		 search_apply(void);
 
 PwSearch *
 search_new()
@@ -68,7 +70,7 @@ search_strcasestr(char *haystack, char *needle){
 }
 
 
-PWSearchResult* 
+static PWSearchResult* 
 _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 	PWSearchResult* next = NULL;
 
@@ -112,8 +114,7 @@ _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 	}
 }
 
-
-int
+static int
 search_apply()
 {
 	PWList *stack[MAX_SEARCH_DEPTH];
@@ -230,7 +231,6 @@ _search_free()
 void
 search_get()
 {
-	char c;
 	if(options->search == NULL) {
 		debug("No options->search");
 	} else {
@@ -241,7 +241,8 @@ search_get()
 		}
 	}
 
-	ui_statusline_ask_str("String to search for: ", options->search->search_term, STRING_MEDIUM);
+	xfree(options->search->search_term);
+	options->search->search_term = ui_statusline_ask_str("String to search for: ");
 
 	search_apply();
 

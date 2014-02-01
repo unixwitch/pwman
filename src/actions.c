@@ -26,66 +26,40 @@
 #include	"gnupg.h"
 #include	"actions.h"
 
-int disp_h = 15, disp_w = 60;
+static void	action_edit_pw(Pw *pw);
+static void	_create_information_field(char* name, InputField* field);
+
+static int disp_h = 15, disp_w = 60;
 
 void
 action_list_add_pw()
 {
-	Pw *pw;
+Pw	*pw;
+
 	InputField fields[] = {
-		{"Name:\t", NULL, STRING_MEDIUM, STRING},
-		{"Host:\t", NULL, STRING_MEDIUM, STRING},
-		{"User:\t", NULL, STRING_MEDIUM, STRING},
-		{"Password:\t", NULL, STRING_SHORT, STRING, pwgen_ask},
-		{"Launch Command:\t", NULL, STRING_LONG, STRING}
+		{"Name:\t", NULL, STRING},
+		{"Host:\t", NULL, STRING},
+		{"User:\t", NULL, STRING},
+		{"Password:\t", NULL, STRING, pwgen_ask},
+		{"Launch Command:\t", NULL, STRING}
 	};
-	int i, x;
+	int i;
 
 	pw = pwlist_new_pw(); 
-	ui_statusline_ask_str(fields[0].name, pw->name, STRING_MEDIUM);
-	ui_statusline_ask_str(fields[1].name, pw->host, STRING_MEDIUM);
-	ui_statusline_ask_str(fields[2].name, pw->user, STRING_MEDIUM);
-/*
-		int x = strlen(msg) + 5;
+	pw->name = ui_statusline_ask_str(fields[0].name);
+	pw->host = ui_statusline_ask_str(fields[1].name);
+	pw->user = ui_statusline_ask_str(fields[2].name);
 
-	if(input == NULL){
-		input = malloc(len);
-	}
-	statusline_clear();
-	statusline_msg(msg);
-
-	echo();
-	show_cursor();
-	mvwgetnstr(bottom, 1, x, input, len);
-	noecho();
-	hide_cursor();
-
-	statusline_clear();*/
-
-	ui_statusline_ask_str_with_autogen(fields[3].name, pw->passwd, STRING_SHORT, fields[3].autogen, 0x07);
-/*	statusline_msg(fields[3].name);
-	x = strlen(fields[3].name) + 5;
-
-	if((i = getch()) == 0x07){
-		pw->passwd = fields[3].autogen();
-	} else {
-		echo();
-		show_cursor();
-		mvwgetnstr(bottom, 1, x, pw->passwd, PASS_LEN);
-		mvwaddch(bottom, 1, x, i);
-		wmove(bottom, 1, x+1);
-		noecho();
-		hide_cursor();
-		statusline_clear();
-	}*/
+	pw->passwd = ui_statusline_ask_str_with_autogen(fields[3].name,
+			fields[3].autogen, 0x07);
 	
-	ui_statusline_ask_str(fields[4].name, pw->launch, STRING_LONG);
+	pw->launch = ui_statusline_ask_str(fields[4].name);
 	
-	fields[0].value = pw->name;
-	fields[1].value = pw->host;
-	fields[2].value = pw->user;
-	fields[3].value = pw->passwd;
-	fields[4].value = pw->launch;
+	fields[0].value = &pw->name;
+	fields[1].value = &pw->host;
+	fields[2].value = &pw->user;
+	fields[3].value = &pw->passwd;
+	fields[4].value = &pw->launch;
 
 	i = action_yes_no_dialog(fields, (sizeof(fields)/sizeof(InputField)), NULL, "Add this entry");
 
@@ -100,15 +74,15 @@ action_list_add_pw()
 	uilist_refresh();
 }
 
-void
+static void
 action_edit_pw(Pw *pw)
 {
 	InputField fields[] = {
-		{"Name:\t", NULL, STRING_MEDIUM, STRING},
-		{"Host:\t", NULL, STRING_MEDIUM, STRING},
-		{"User:\t", NULL, STRING_MEDIUM, STRING},
-		{"Password:\t", NULL, STRING_SHORT, STRING, pwgen_ask},
-		{"Launch Command:\t", NULL, STRING_LONG, STRING}
+		{"Name:\t", NULL, STRING},
+		{"Host:\t", NULL, STRING},
+		{"User:\t", NULL, STRING},
+		{"Password:\t", NULL, STRING, pwgen_ask},
+		{"Launch Command:\t", NULL, STRING}
 	};
 
 	if(pw == NULL)
@@ -118,11 +92,11 @@ action_edit_pw(Pw *pw)
 	 * Get specified password
 	 */
 
-	fields[0].value = pw->name;
-	fields[1].value = pw->host;
-	fields[2].value = pw->user;
-	fields[3].value = pw->passwd;
-	fields[4].value = pw->launch;
+	fields[0].value = &pw->name;
+	fields[1].value = &pw->host;
+	fields[2].value = &pw->user;
+	fields[3].value = &pw->passwd;
+	fields[4].value = &pw->launch;
 
 	/*
 	 * initialize the info window
@@ -143,25 +117,26 @@ action_list_rename()
 	switch(uilist_get_highlighted_type()){
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
-			if(curpw){
-				ui_statusline_ask_str("New Name", new_name, STRING_MEDIUM);
-				if(strlen(new_name) > 0) {
+			if (curpw) {
+				new_name = ui_statusline_ask_str("New name");
+				if (strlen(new_name) > 0)
 					pwlist_rename_item(curpw, new_name);
-				}
+				free(new_name);
 			}
 			break;
+
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl){
-				ui_statusline_ask_str("New Sublist Name", new_name, STRING_MEDIUM);
-				if(strlen(new_name) > 0) {
+				new_name = ui_statusline_ask_str("New sublist name");
+				if (strlen(new_name) > 0)
 					pwlist_rename_sublist(curpwl, new_name);
-				}
+				free(new_name);
 			}
 			break;
+
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -173,10 +148,10 @@ void
 action_edit_options()
 {
 	InputField fields[] = {
-		{"GnuPG Path:\t", options->gpg_path, STRING_LONG, STRING},
-		{"GnuPG ID:\t", options->gpg_id, STRING_LONG, STRING},
-		{"Password File:\t", options->password_file, STRING_LONG, STRING},
-		{"Passphrase Timeout(in minutes):\t", &options->passphrase_timeout, STRING_SHORT, INT}
+		{"GnuPG Path:\t",	&options->gpg_path, STRING},
+		{"GnuPG ID:\t",		&options->gpg_id, STRING},
+		{"Password File:\t",	&options->password_file, STRING},
+		{"Passphrase timeout (in minutes):\t", &options->passphrase_timeout, INT}
 	};
 
 	action_input_dialog(fields, (sizeof(fields)/sizeof(InputField)), "Edit Preferences");
@@ -194,7 +169,7 @@ action_input_dialog_draw_items(WINDOW* dialog_win, InputField *fields,
 	
 	box(dialog_win, 0, 0);
 
-	if(title){
+	if (title) {
 		wattron(dialog_win, A_BOLD);
 		i = strlen(title);
 		h += 2;
@@ -207,7 +182,7 @@ action_input_dialog_draw_items(WINDOW* dialog_win, InputField *fields,
 		h += 2;
 		if(fields[i].type == STRING){
 			mvwprintw(dialog_win, h, 3,
-				"%d - %s %s", (i+1), fields[i].name, (char*)fields[i].value);
+				"%d - %s %s", (i+1), fields[i].name, *(char**)fields[i].value);
 		} else if(fields[i].type == INT){
 			mvwprintw(dialog_win, h, 3,
 				"%d - %s %d", (i+1), fields[i].name, *((int*)fields[i].value) );
@@ -237,51 +212,50 @@ void
 action_input_dialog(InputField *fields, int num_fields, char *title)
 {
 	int ch, i;
-	char *ret;
 	WINDOW *dialog_win;
 	char msg[] = "(press 'q' to return to list)";
-	char msg2[80];
+
 	/*
 	 * initialize the info window
 	 */
-	if(title){
+	if(title)
 		disp_h = ((num_fields+2) * 2) + 3;
-	} else {
+	else
 		disp_h = ((num_fields+1) * 2) + 3;
-	}
 	
 	dialog_win = newwin(disp_h, disp_w, (LINES - disp_h)/2, (COLS - disp_w)/2);
 	keypad(dialog_win, TRUE);
 
 	action_input_dialog_draw_items(dialog_win, fields, num_fields, title, msg);
+
 	/*
 	 * actions loop
 	 */
-	while((ch = wgetch(dialog_win)) != 'q'){
-		if(!options->readonly) {
-			if( (ch >= '1') && (ch <= NUM_TO_CHAR(num_fields)) ){
-				i = CHAR_TO_NUM(ch);
-				if(fields[i].autogen != NULL){
-					fields[i].value = (char*)ui_statusline_ask_str_with_autogen(
-								fields[i].name, (char*)fields[i].value, 
-								fields[i].max_length, fields[i].autogen, 0x07); 
-				} else if(fields[i].type == STRING){
-					fields[i].value = (char*)ui_statusline_ask_str(fields[i].name, 
-								(char*)fields[i].value, fields[i].max_length);
-				} else if(fields[i].type == INT){
-					ui_statusline_ask_num(fields[i].name, (int*)fields[i].value);
-				} else if(fields[i].type == INFORMATION){
-					/* Easy, do nothing! */
-				}
-				action_input_dialog_draw_items(dialog_win, fields, num_fields, title, msg);
-			} else if(ch == 'l'){
-				delwin(dialog_win);
-				action_list_launch();
-				break;
-			}	
-		} else {
+	while ((ch = wgetch(dialog_win)) != 'q'){
+		if (options->readonly) {
 			statusline_readonly();
+			continue;
 		}
+
+		if ((ch >= '1') && (ch <= NUM_TO_CHAR(num_fields))) {
+			i = CHAR_TO_NUM(ch);
+			if (fields[i].autogen != NULL) {
+				*(char **)fields[i].value = ui_statusline_ask_str_with_autogen(
+							fields[i].name, 
+							fields[i].autogen, 0x07); 
+			} else if (fields[i].type == STRING){
+				*(char **)fields[i].value = ui_statusline_ask_str(fields[i].name);
+			} else if (fields[i].type == INT) {
+				*(int *)fields[i].value = ui_statusline_ask_num(fields[i].name);
+			} else if(fields[i].type == INFORMATION) {
+				/* Easy, do nothing! */
+			}
+			action_input_dialog_draw_items(dialog_win, fields, num_fields, title, msg);
+		} else if(ch == 'l'){
+			delwin(dialog_win);
+			action_list_launch();
+			break;
+		}	
 	}
 	/*
 	 * clean up
@@ -295,7 +269,6 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 {
 	int i, valid_id;
 	int ch = '1', first_time = 1;
-	char *ret;
 	WINDOW *dialog_win;
 	char msg[] = "(press 'q' when export recipient list is complete)";
 	char msg2[80];
@@ -317,11 +290,10 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 
 		if( (ch >= '1') && (ch <= NUM_TO_CHAR(num_fields)) ){
 			i = CHAR_TO_NUM(ch);
-			fields[i].value = (char*)ui_statusline_ask_str(fields[i].name, 
-								(char*)fields[i].value, fields[i].max_length);
+			*(char **)fields[i].value = ui_statusline_ask_str(fields[i].name);
 			
 			/* Now verify it's a valid recipient */
-			if(strlen(fields[i].value)) {
+			if (strlen(fields[i].value)) {
 				valid_id = gnupg_check_id(fields[i].value);
 				if(valid_id == 0) {
 					/* Good, valid id */
@@ -352,18 +324,16 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 int 
 action_yes_no_dialog(InputField *fields, int num_fields, char *title, char *question)
 {
-	int ch, i;
-	char *ret;
+	int i;
 	WINDOW *dialog_win;
 
 	/*
 	 * initialize the info window
 	 */
-	if(title){
+	if (title)
 		disp_h = ((num_fields+2) * 2) + 3;
-	} else {
+	else
 		disp_h = ((num_fields+1) * 2) + 3;
-	}
 	
 	dialog_win = newwin(disp_h, disp_w, (LINES - disp_h)/2, (COLS - disp_w)/2);
 	keypad(dialog_win, TRUE);
@@ -384,18 +354,19 @@ action_yes_no_dialog(InputField *fields, int num_fields, char *title, char *ques
 void
 action_list_add_sublist()
 {
-	char *name;
-	PWList *sublist, *iter;
+char	*name;
+PWList	*sublist, *iter;
 
-	name = malloc(STRING_MEDIUM);
-	ui_statusline_ask_str("Sublist Name:", name, STRING_MEDIUM);
-	for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
-		if( strcmp(iter->name, name) == 0){
+	name = ui_statusline_ask_str("Sublist name:");
+	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
+		if (strcmp(iter->name, name) == 0) {
 			free(name);
 			return;
 		}
 	}
+
 	sublist = pwlist_new(name);
+	free(name);
 
 	pwlist_add_sublist(current_pw_sublist, sublist);
 	uilist_refresh();
@@ -455,7 +426,6 @@ action_list_select_item()
 				action_list_up_one_level();
 				break;
 			case PW_NULL:
-			default:
 				/* do nothing */
 				break;
 		}
@@ -531,7 +501,6 @@ action_list_delete_item()
 			break;
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -541,61 +510,72 @@ action_list_delete_item()
 void
 action_list_move_item()
 {
-	Pw* curpw;
-	PWList *curpwl, *iter;
-	int i;
-	char str[STRING_LONG];
-	char answer[STRING_MEDIUM];
+Pw*	 curpw;
+PWList	*curpwl, *iter;
+char	 str[STRING_LONG];
+char	*answer;
 
 	switch(uilist_get_highlighted_type()){
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
 			if(curpw){
-				while(1){
-					snprintf(str, STRING_LONG, "Move \"%s\" to where?", curpw->name);
-					ui_statusline_ask_str(str, answer, STRING_MEDIUM);
+				for (;;) {
+					snprintf(str, sizeof(str), "Move \"%s\" to where?", curpw->name);
+					answer = ui_statusline_ask_str(str);
 					
 					/* if user just enters nothing do nothing */
-					if(answer[0] == 0){
+					if (answer[0] == 0) {
+						free(answer);
 						return;
 					}
 					
 					for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
-						if( strcmp(iter->name, answer) == 0 ){
-							pwlist_detach_pw(current_pw_sublist, curpw);
-							pwlist_add_ptr(iter, curpw);
-							uilist_refresh();
-							return;
-						}
+						if (strcmp(iter->name, answer) != 0)
+							continue;
+
+						pwlist_detach_pw(current_pw_sublist, curpw);
+						pwlist_add_ptr(iter, curpw);
+						uilist_refresh();
+						free(answer);
+						return;
 					}
+
+					free(answer);
 					ui_statusline_msg("Sublist does not exist, try again");
 					getch();
 				}
 			}
 			break;
+
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
-			if(curpwl){
-				while(1){
-					snprintf(str, STRING_LONG, "Move sublist \"%s\" to where?", curpwl->name);
-					ui_statusline_ask_str(str, answer, STRING_MEDIUM);
+			if (curpwl) {
+				for (;;) {
+					snprintf(str, sizeof(str), "Move sublist \"%s\" to where?", curpwl->name);
+					answer = ui_statusline_ask_str(str);
 					
 					/* if user just enters nothing, do nothing */
-					if(answer[0] == 0){
+					if (answer[0] == 0) {
+						free(answer);
 						return;
 					}
-					if( strcmp(answer, curpwl->name) == 0 ){
+
+					if (strcmp(answer, curpwl->name) == 0) {
+						free(answer);
 						return;
 					}
 
 					for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
-						if( strcmp(iter->name, answer) == 0 ){
-							pwlist_detach_sublist(current_pw_sublist, curpwl);
-							pwlist_add_sublist(iter, curpwl);
-							uilist_refresh();
-							return;
-						}
+						if (strcmp(iter->name, answer) != 0)
+							continue;
+
+						pwlist_detach_sublist(current_pw_sublist, curpwl);
+						pwlist_add_sublist(iter, curpwl);
+						uilist_refresh();
+						free(answer);
+						return;
 					}
+
 					ui_statusline_msg("Sublist does not exist, try again");
 					getch();
 				}
@@ -603,7 +583,6 @@ action_list_move_item()
 			break;
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -613,18 +592,14 @@ void
 action_list_move_item_up_level()
 {
 	Pw* curpw;
-	PWList *curpwl, *iter;
-	int i;
-	char str[STRING_LONG];
-	char answer[STRING_MEDIUM];
+	PWList *curpwl;
 
 	/* Do nothing if searching */
-	if(search_results != NULL) {
+	if(search_results != NULL)
 		return;
-	}
 
 	/* Do the right thing based on type */
-	switch(uilist_get_highlighted_type()){
+	switch (uilist_get_highlighted_type()) {
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
 			if(curpw && current_pw_sublist->parent){
@@ -633,6 +608,7 @@ action_list_move_item_up_level()
 				uilist_refresh();
 			}
 			break;
+
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl && current_pw_sublist->parent){
@@ -641,9 +617,9 @@ action_list_move_item_up_level()
 				uilist_refresh();
 			}
 			break;
+
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -683,17 +659,16 @@ action_list_export()
 			break;
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
 }
 
-void _create_information_field(char* name, InputField* field)
+static void
+_create_information_field(char* name, InputField* field)
 {
 	field->name = name;
 	field->value = NULL;
-	field->max_length = 0;
 	field->type = INFORMATION;
 }
 
@@ -701,7 +676,7 @@ void
 action_list_locate()
 {
 	int depth = 0, count = 0;
-	char* currentName;
+	char* currentName = NULL;
 	InputField* fields;
 	Pw* curpw = NULL;
 	PWList *curpwl = NULL;
@@ -724,10 +699,13 @@ action_list_locate()
 			case PW_ITEM:
 				curpw = uilist_get_highlighted_item();
 				break;
+
 			case PW_SUBLIST:
 				curpwl = uilist_get_highlighted_sublist();
 				break;
-			default:
+
+			case PW_NULL:
+			case PW_UPLEVEL:
 				/* do nothing */
 				break;
 		}
@@ -739,7 +717,8 @@ action_list_locate()
 	} else if(curpwl) {
 		currentName = curpwl->name;
 		depth = 1;
-	}
+	} else
+		return;
 
 	/* Figure out how many parents we have */
 	curpwl = parent;
@@ -750,7 +729,7 @@ action_list_locate()
 	count = depth;
 
 	/* Now grab their names */
-	fields = calloc(sizeof(InputField), depth);
+	fields = xcalloc(depth, sizeof(InputField));
 	if(currentName){
 		depth--;
 		_create_information_field(currentName, &fields[depth]);
@@ -776,20 +755,20 @@ action_list_launch()
 	Pw* curpw;
 	char msg[STRING_LONG];
 
-	switch(uilist_get_highlighted_type()){
+	switch (uilist_get_highlighted_type()) {
 		case PW_ITEM:
 			debug("list_launch: is a pw");
 			curpw = uilist_get_highlighted_item();
-			if(curpw){
+			if (curpw) {
 				i = launch(curpw);
 				snprintf(msg, STRING_LONG, "Application exited with code %d", i);
 				ui_statusline_msg(msg);
 			}
 			break;
+
 		case PW_SUBLIST:
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -829,7 +808,6 @@ action_list_move_item_up()
 			break;
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}
@@ -856,13 +834,14 @@ action_list_move_item_down()
 			curpw = uilist_get_highlighted_item();
 			worked = pwlist_change_item_order(curpw, current_pw_sublist, 0);
 			break;
+
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			worked = pwlist_change_list_order(curpwl, 0);
 			break;
+
 		case PW_UPLEVEL:
 		case PW_NULL:
-		default:
 			/* do nothing */
 			break;
 	}

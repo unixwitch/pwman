@@ -30,6 +30,8 @@ pw_abort(char const *fmt, ... )
 va_list	ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
 	fputs("\n", stderr);
 	exit(1);
 }
@@ -42,6 +44,8 @@ debug(char const *fmt, ... )
 	fputs("PWMan Debug% ", stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
 	fputs("\n", stderr);
 #endif
 }

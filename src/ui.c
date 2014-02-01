@@ -21,6 +21,7 @@
 
 #include	<time.h>
 #include	<stdlib.h>
+#include	<assert.h>
 
 #include	"pwman.h"
 #include	"ui.h"
@@ -28,12 +29,19 @@
 #include	"actions.h"
 #include	"gnupg.h"
 
-int should_resize = FALSE;
-int can_resize = FALSE;
+static void	ui_draw_top(void);
+static void	ui_draw_bottom(void);
+static void	ui_init_windows(void);
+static void	ui_free_windows(void);
+static void	ui_display_help(void);
+static void	ui_resize_windows(void);
 
-WINDOW *top = NULL, *bottom = NULL;
+static int should_resize = FALSE;
+static int can_resize = FALSE;
 
-void
+static WINDOW *top = NULL, *bottom = NULL;
+
+static void
 ui_draw_top()
 {
 	werase(top);
@@ -49,7 +57,7 @@ ui_draw_top()
 	wrefresh(top);
 }
 
-void
+static void
 ui_draw_bottom()
 {
 	werase(bottom);
@@ -69,13 +77,15 @@ ui_refresh_windows()
 	refresh();
 }
 
-void
+static void
 ui_resize_windows()
 {
+#ifdef notyet
 	wresize(top, 2, COLS);
+#endif
 }
 
-void
+static void
 ui_init_windows()
 {
 	top = newwin(2, COLS,0,0);
@@ -84,7 +94,7 @@ ui_init_windows()
 	uilist_init();
 }
 
-void 
+static void 
 ui_free_windows()
 {
 	uilist_free();
@@ -128,8 +138,7 @@ ui_resize()
 
 	} else {
 		should_resize = FALSE;
-		/*	resize_windows();
-		resize_list();*/
+		ui_resize_windows();
 		ui_free_windows();
 		ui_init_windows();
 		ui_refresh_windows();
@@ -176,7 +185,7 @@ ui_init()
 	return 0;
 }
 
-void 
+static void 
 ui_display_help()
 {
 	int i;
@@ -203,14 +212,11 @@ ui_display_help()
 int
 ui_run()
 {
-	Pw *current_item;
 	int ch;
-	int i = 0;
 	int load_worked = 0;
 #ifdef DEBUG
 	int debug_i = 0;
 #endif
-	char msg[80];
 
 	time_base = time(NULL);
 
@@ -441,7 +447,7 @@ ui_end()
 }
 
 int 
-ui_statusline_msg(char * msg)
+ui_statusline_msg(char const *msg)
 {
 	ui_statusline_clear();
 	mvwaddstr(bottom, 1, 0, msg);
@@ -460,10 +466,11 @@ ui_statusline_clear()
 	return 0;
 }
 
-void
-ui_statusline_ask_num(char *msg, int *i)
+int
+ui_statusline_ask_num(char const *msg)
 {
 	int x = strlen(msg) + 5;
+	int i;
 	char input[STRING_SHORT];
 
 	ui_statusline_clear();
@@ -473,24 +480,24 @@ ui_statusline_ask_num(char *msg, int *i)
 	show_cursor();
 
 	mvwgetnstr(bottom, 1, x, input, STRING_SHORT);
-	*i = atoi(input);
+	i = atoi(input);
 	
 	noecho();
 	hide_cursor();
 
 	ui_statusline_clear();
+	return i;
 }
 
-void
-ui_statusline_ask_char(char *msg, char *c, char* valid)
+int
+ui_statusline_ask_char(char const *msg, char* valid)
 {
 	int x = strlen(msg) + 5;
-	char input[STRING_SHORT];
+	char c = 0;
 
-	*c = 0;
 	do {
 		ui_statusline_clear();
-		if(*c != 0){
+		if (c != 0){
 			ui_statusline_msg("Bad choice, press any key to try again");
 			getch();
 			ui_statusline_clear();
@@ -500,27 +507,29 @@ ui_statusline_ask_char(char *msg, char *c, char* valid)
 		echo();
 		show_cursor();
 
-		*c = mvwgetch(bottom, 1, x);
+		c = mvwgetch(bottom, 1, x);
 
 		noecho();
 		hide_cursor();
 		
-	} while ( !strchr(valid, *c) );
+	} while (!strchr(valid, c));
 	
 	ui_statusline_clear();
+	return c;
 }
 
 char *
-ui_statusline_ask_str(char *msg, char *input, int len)
+ui_statusline_ask_str(char const *msg)
 {
 	char *tmp;
 	char *tmp2;
 	char *tmp3;
+	int len = STRING_LONG;
 	int x = strlen(msg) + 5;
+	char *input;
 
-	if(input == NULL){
-		input = malloc(len);
-	}
+	input = xmalloc(len + 1);
+
 	ui_statusline_clear();
 	ui_statusline_msg(msg);
 
@@ -545,28 +554,28 @@ ui_statusline_ask_str(char *msg, char *input, int len)
 	tmp = input;
 	while(*tmp != 0) {
 		if(*tmp == 8) {
-         /* tmp2 is where to copy to, tmp3 is where to copy from */
-         tmp3 = tmp + 1;
-         if(tmp == input) {
-            tmp2 = tmp;
-         } else {
-            tmp2 = tmp - 1;
-         }
+			/* tmp2 is where to copy to, tmp3 is where to copy from */
+			tmp3 = tmp + 1;
+			if(tmp == input) {
+				tmp2 = tmp;
+			} else {
+				tmp2 = tmp - 1;
+			}
 
-         /* When we're done, start from the character */
-         /*  we copied in to */
-         tmp = tmp2;
+			/* When we're done, start from the character */
+			/*  we copied in to */
+			tmp = tmp2;
 
-         /* Process forward */
-         while(*tmp3 != 0) {
-            *tmp2 = *tmp3;
-            tmp2++;
-            tmp3++;
-         }
-         *tmp2 = 0;
-      } else {
-   		tmp++;
-      }
+			/* Process forward */
+			while(*tmp3 != 0) {
+				*tmp2 = *tmp3;
+				tmp2++;
+				tmp3++;
+			}
+			*tmp2 = 0;
+		} else {
+			tmp++;
+		}
 	}
 	
 	/* All done */
@@ -574,20 +583,21 @@ ui_statusline_ask_str(char *msg, char *input, int len)
 }
 
 char *
-ui_statusline_ask_str_with_autogen(char *msg, char *input, int len, char *(*autogen)(char *), int ch)
+ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch)
 {
 	int i = 0;
 	int c;
 	char *text[2], *s;
 	int x;
+	char *input;
+	int len = STRING_LONG;
 
-	if(input == NULL){
-		input = malloc(len);
-	}
+	input = xmalloc(len + 1);
+
 	text[0] = malloc(STRING_MEDIUM);
 	text[1] = malloc(STRING_SHORT);
 	
-	strncpy(text[1], msg, STRING_SHORT);
+	strlcpy(text[1], msg, STRING_SHORT);
 	if ((s = strrchr(text[1], ':')) != NULL)
 		*s = 0;
 
@@ -634,15 +644,18 @@ ui_statusline_ask_str_with_autogen(char *msg, char *input, int len, char *(*auto
 }
 
 char *
-ui_statusline_ask_passwd(char *msg, char *input, int len, int cancel)
+ui_statusline_ask_passwd(msg, cancel)
+	char const	*msg;
 {
-	int i = 0;
-	int c;
-	int x = strlen(msg) + 5;
+int	c;
+int	i = 0;
+int	x = (int)strlen(msg) + 5;
+int	len = STRING_LONG;
+char	*ret;
 
-	if(!input){
-		input = malloc(len);
-	}
+	assert(len > 0);
+	ret = malloc((size_t)len + 1);
+
 	ui_statusline_clear();
 	ui_statusline_msg(msg);
 
@@ -651,40 +664,37 @@ ui_statusline_ask_passwd(char *msg, char *input, int len, int cancel)
 
 	wmove(bottom, 1, x);
 
-	while(i < len){
+	while (i < (int)len){
 		c = wgetch(bottom);
-		if(c == 0x7f){ /* 0x7f = delete */
-			if(i){
+		if (c == 0x7f) { /* 0x7f = delete */
+			if (i) {
 				i--;
-				mvwaddch(bottom, 1, x+i, ' ');
-				wmove(bottom, 1, x+i);
+				mvwaddch(bottom, 1, x + i, ' ');
+				wmove(bottom, 1, x + i);
 			}
-		} else if(c == 0xd){ /* 0xd == enter/return */
-			input[i] = 0;
+		} else if (c == 0xd) { /* 0xd == enter/return */
+			ret[i] = 0;
 			break;
-		} else if(c == cancel){
-			free(input);
-			input = NULL;
-
-			return input;
+		} else if (c == cancel){
+			free(ret);
+			return NULL;
 		} else {
-			input[i] = c;
+			ret[i] = (char) c;
 			mvwaddch(bottom, 1, x + i, '*');
 			i++;
 		}
 	}
 	
 	hide_cursor();
-	
 	ui_statusline_clear();
-	
-	return input;
+	return ret;
 }
 
 int 
-ui_statusline_yes_no(char *msg, int def)
+ui_statusline_yes_no(char const *msg, int def)
 {
-	int ret = -1, len;
+	int ret = -1;
+	size_t len;
 	char *msg2;
 	int ch;
 	

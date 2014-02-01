@@ -24,6 +24,10 @@
 #include	"ui.h"
 #include	"pwman.h"
 
+static void	uilist_highlight_line(int line);
+static int	_uilist_render_sublist(PWList *sublist, int i, int num_shown);
+static int	_uilist_render_entry(Pw *entry, int i, int num_shown);
+
 static WINDOW *list;
 static int lines = 0;
 static int first_list_item = 0;
@@ -31,9 +35,7 @@ static int first_list_item = 0;
 void
 uilist_init()
 {
-	char str[80];
 	list = newwin(LIST_LINES, COLS, LIST_TOP, 0);
-	
 	scrollok(list, TRUE);
 }
 /*
@@ -51,7 +53,7 @@ uilist_free()
 	list = NULL;
 }
 
-void 
+static void 
 uilist_highlight_line(int line)
 {
 int	i;
@@ -161,7 +163,7 @@ uilist_get_highlighted_type()
 }
 
 /* Draw a sublist on the screen */
-int
+static int
 _uilist_render_sublist(PWList *sublist, int i, int num_shown)
 {
 	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
@@ -179,7 +181,7 @@ _uilist_render_sublist(PWList *sublist, int i, int num_shown)
 }
 
 /* Draw an entry summary on the screen */
-int
+static int
 _uilist_render_entry(Pw *entry, int i, int num_shown)
 {
 	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
@@ -316,8 +318,6 @@ uilist_clear()
 void
 uilist_headerline()
 {
-	int i;
-
 	show_cursor();
 	attrset(A_BOLD);
 

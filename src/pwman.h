@@ -30,18 +30,7 @@
 #include <stdarg.h>
 
 #define CONF_FILE 	".pwmanrc" 
-/*
-#define NAME_LEN	40
-#define HOST_LEN	40
-#define USER_LEN	40
-#define PASS_LEN	40
-#define LAUNCH_LEN	40
-
-#define SHORT_STR	20
-#define	MED_STR		30
-#define LONG_STR	40
-#define V_LONG_STR	256
-*/
+#define	DB_FILE		".pwman.db"
 
 /* string lengths */
 #define STRING_SHORT	64
@@ -55,8 +44,12 @@
 
 #define DEFAULT_UMASK 066
 
-
 #define FF_VERSION 3 
+
+#define	xstrdup(s)	strdup(s)
+#define	xmalloc(s)	malloc(s)
+#define	xcalloc(n,s)	calloc(n,s)
+#define	xfree(s)	do { if (s) free(s); } while (0)
 
 struct _PW {
 	int id;
@@ -138,7 +131,7 @@ void search_remove(void);
 
 int pwlist_add_ptr(PWList*, Pw*);
 Pw* pwlist_new_pw(void);
-PWList *pwlist_new(char*);
+PWList *pwlist_new(char const*);
 int pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp);
 int pwlist_init(void);
 
@@ -151,8 +144,8 @@ void pwlist_detach_pw(PWList *list, Pw *pw);
 void pwlist_delete_sublist(PWList *parent, PWList *old);
 void pwlist_delete_pw(PWList *list, Pw *pw);
 void pwlist_free_pw(Pw *old);
-void pwlist_rename_item(Pw* pwitem, char* new_name);
-void pwlist_rename_sublist(PWList *pwlist, char* new_name);
+void pwlist_rename_item(Pw* pwitem, char const *new_name);
+void pwlist_rename_sublist(PWList *pwlist, char const *new_name);
 int pwlist_add_sublist(PWList *parent, PWList *new);
 int pwlist_export_list(PWList *pwlist);
 int pwlist_write_file(void);

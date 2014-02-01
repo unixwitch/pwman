@@ -29,82 +29,99 @@
 
 #include	"pwman.h"
 
-char * 
-launch_find_replace(char *haystack, char* needle, char* cow)
-{
-	char *pos;
-	int len,i;
-	char *ret, *ret_p;
-
-	pos = strstr(haystack, needle);
-	if(pos == NULL){
-		return haystack;
-	}
-
-	/*
-	 * real ugly shit for 
-	 * replacing the strings
-	 */
-	len = (strlen(haystack) - strlen(needle)) + strlen(cow) + 1;
-	ret = malloc(len);
-	ret_p = ret;
-	i = pos - &haystack[0];
-	strncpy(ret_p, haystack, i);
-	ret_p += i;
-	strcpy(ret_p, cow);
-	ret_p += strlen(cow);
-	pos += strlen(needle);
-	strcpy(ret_p, pos);
-
-	return ret;
-}
+static int launch_execute(char const *cmd);
 
 int 
-launch_execute(char *cmd) {
-	int pid, status;
-	char *argv[4];
+launch_execute(cmd)
+	char const	*cmd;
+{
+int	 pid, status;
+char	*argv[4];
 
-	if (cmd == NULL){
+	if (cmd == NULL)
 		return 1;
-	}
 	
 	pid = fork();
-	if (pid == -1){
+	if (pid == -1)
 		return -1;
-	}
+
 	if (pid == 0) {
 		argv[0] = "pwman_exec";
 		argv[1] = "-c";
-		argv[2] = cmd;
+		argv[2] = (char *) cmd; /* safe */
 		argv[3] = NULL;
 
 		execv("/bin/sh", argv);
 		exit(127);
 	}
-	do {
+
+	for (;;) {
 		if (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR){
 				return -1;
 			} 
-		}else {
+		} else {
 			return status;
 		}
-	} while(1);
+	};
 }
 
 int
 launch(Pw *pw)
 {
-	int i;
-	char *cmd;
-	char **cmd_array;
+int	i;
+char	*cmd;
+size_t	 clen = 0;
+char	*p, *q;
 
 	if((pw == NULL) || (pw->launch == NULL)){
 		return -1;
 	}
-	cmd = launch_find_replace(pw->launch, "%h", pw->host);
-	cmd = launch_find_replace(cmd, "%u", pw->user);
-	cmd = launch_find_replace(cmd, "%p", pw->passwd);
+
+	for (p = pw->launch; *p; p++) {
+		if (*p != '%') {
+			clen++;
+			continue;
+		}
+
+		switch (*++p) {
+		case 'h':
+			clen += strlen(pw->host);
+			break;
+		case 'u':
+			clen += strlen(pw->user);
+			break;
+		case 'p':
+			clen += strlen(pw->passwd);
+			break;
+		}
+	}
+
+	cmd = xmalloc(clen + 1);
+	for (p = pw->launch, q = cmd; *p; p++) {
+		if (*p != '%') {
+			*q++ = *p;
+			continue;
+		}
+
+		switch (*++p) {
+		case 'h':
+			bcopy(pw->host, q, strlen(pw->host));
+			q += strlen(pw->host);
+			break;
+
+		case 'u':
+			bcopy(pw->user, q, strlen(pw->user));
+			q += strlen(pw->user);
+			break;
+
+		case 'p':
+			bcopy(pw->passwd, q, strlen(pw->passwd));
+			q += strlen(pw->passwd);
+			break;
+		}
+	}
+	*q = 0;
 
 	def_prog_mode();
 	ui_end();

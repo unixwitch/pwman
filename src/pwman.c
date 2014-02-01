@@ -48,15 +48,13 @@ time_t time_base;
 static int
 pwman_check_lock_file()
 {
-	char fn[STRING_LONG];
-	FILE *fp;
+char	fn[PATH_MAX];
 	
-	snprintf(fn, STRING_LONG, "%s.lock", options->password_file);
-	if(access(fn, F_OK) == 0){
+	snprintf(fn, sizeof(fn), "%s.lock", options->password_file);
+	if (access(fn, F_OK) == 0)
 		return 1;
-	} else {
+	else
 		return 0;
-	}
 }
 
 static void
@@ -146,10 +144,11 @@ pwman_init(int argc, char *argv[])
 	/* get pw database */
 	pwlist_init();
 	load_worked = pwlist_read_file();
-	if(load_worked != 0) {
+	if (load_worked != 0) {
 		debug("Failed to load the database, error was %d", load_worked);
+
 		/* Did they cancel out, or is it a new file? */
-		if(load_worked < 0) {
+		if (load_worked < 0) {
 			pwlist = pwlist_new("Main");
 			current_pw_sublist = pwlist;
 		} else {
@@ -159,9 +158,9 @@ pwman_init(int argc, char *argv[])
 			exit(1);
 		}
 	}
-	if (!options->readonly){
+
+	if (!options->readonly)
 		pwman_create_lock_file();
-	}
 
 	ui_refresh_windows();
 }
@@ -196,29 +195,29 @@ pwman_parse_command_line(int argc, char **argv)
 	int i;
 
 	for(i = 1; i < argc; i++){
-		if( !strcmp(argv[i], "--help") || !strcmp(argv[i], "-h") ){
+		if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
 			pwman_show_usage(argv[0]);
 			exit(1);
-		} else if( !strcmp(argv[i], "--version") || !strcmp(argv[i], "-v") ){
+		} else if(!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
 			pwman_show_version();
 			exit(1);
-		} else if( !strcmp(argv[i], "--gpg-path") ){
+		} else if(!strcmp(argv[i], "--gpg-path")) {
 			write_options = FALSE;
-			strncpy(options->gpg_path, argv[i + 1], STRING_LONG);
+			options->gpg_path = xstrdup(argv[i + 1]);
 			i++;
-		}else if( !strcmp(argv[i], "--gpg-id") ){
+		}else if(!strcmp(argv[i], "--gpg-id")) 	{
 			write_options = FALSE;
-			strncpy(options->gpg_id, argv[i + 1], STRING_LONG);
+			options->gpg_id = xstrdup(argv[i + 1]);
 			i++;
-		} else if( !strcmp(argv[i], "--file") || !strcmp(argv[i], "-f") ){
+		} else if(!strcmp(argv[i], "--file") || !strcmp(argv[i], "-f")) {
 			write_options = FALSE;
-			strncpy(options->password_file, argv[i + 1], STRING_LONG);
+			options->password_file = xstrdup(argv[i + 1]);
 			i++;
-		} else if( !strcmp(argv[i], "--passphrase-timeout") || !strcmp(argv[i], "-t") ){
+		} else if(!strcmp(argv[i], "--passphrase-timeout") || !strcmp(argv[i], "-t")) {
 			write_options = FALSE;
 			options->passphrase_timeout = atoi(argv[i + 1]);
 			i++;
-		} else if ( !strcmp(argv[i], "--readonly") || !strcmp(argv[i], "-r") ){
+		} else if (!strcmp(argv[i], "--readonly") || !strcmp(argv[i], "-r")) {
 			write_options = FALSE;
 			options->readonly = TRUE;
 		} else {

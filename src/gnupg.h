@@ -28,7 +28,7 @@
 void		 gnupg_forget_passphrase(void);
 
 int		 gnupg_check_id(char const *);
-void		 gnupg_get_id(char*);
+char		*gnupg_get_id(void);
 void		 gnupg_get_ids(char **, size_t);
 
 char		*gnupg_get_filename(int mode);

@@ -36,7 +36,8 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-int pwgen_random_number(int max_num);
+static int	 pwgen_random_number(int max_num);
+static char	*pwgen(char *buf, int size);
 
 struct pwgen_element {
 	char	*str;
@@ -52,7 +53,7 @@ struct pwgen_element {
 #define NOT_FIRST	0x0008
 
 
-struct pwgen_element elements[] = {
+static struct pwgen_element elements[] = {
 	{ "a",	VOWEL },
 	{ "ae", VOWEL | DIPTHONG },
 	{ "ah",	VOWEL | DIPTHONG },
@@ -97,9 +98,10 @@ struct pwgen_element elements[] = {
 
 #define NUM_ELEMENTS (sizeof(elements) / sizeof (struct pwgen_element))
 
-char *pwgen(char *buf, int size)
+static char *
+pwgen(char *buf, int size)
 {
-	int	c, i, len, flags, feature_flags;
+	int	c, i, len, flags;
 	int	prev, should_be, first;
 	char	*str;
 
@@ -217,7 +219,8 @@ static int pwgen_get_random_fd(void)
  * Generate a random number n, where 0 <= n < max_num, using
  * /dev/urandom if possible.
  */
-int pwgen_random_number(int max_num)
+static int
+pwgen_random_number(int max_num)
 {
 	int i, fd = pwgen_get_random_fd();
 	int lose_counter = 0, nbytes=4;
@@ -255,14 +258,13 @@ int pwgen_random_number(int max_num)
 char *
 pwgen_ask(char *pw)
 {
-	int i;
-	ui_statusline_ask_num("Length of Password(default 5):\t", &i);
+int	i;
+	i = ui_statusline_ask_num("Length of password (default 16):\t");
 
-	if(i == 0){
-		i = 5;
-	} else if(i > STRING_SHORT) {
+	if (i == 0)
+		i = 16;
+	else if (i > STRING_SHORT)
 		i = STRING_SHORT;
-	}
 	pw = pwgen(pw, i);
 
 	return pw;

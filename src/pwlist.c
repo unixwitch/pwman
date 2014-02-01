@@ -30,22 +30,29 @@
 #include	"gnupg.h"
 #include	"ui.h"
 
-int pwindex = 0;
+static int	pwlist_read(xmlNodePtr parent, PWList *parent_list);
+static int	pwlist_free(PWList *old);
+static void	pwlist_write(xmlNodePtr parent, PWList *list);
+static void	pwlist_read_node(xmlNodePtr parent, PWList *list);
+static void	pwlist_write_node(xmlNodePtr root, Pw* pw);
+static int	pwlist_do_export(PWList *pwlist, Pw *pw);
+#if 0
+static int	pwlist_add(PWList *parent, char const *name, char const *host,
+			   char const *user, char const *passwd, char const *launch);
+#endif
+
+static int pwindex = 0;
 
 PWList *
-pwlist_new(char *name)
+pwlist_new(char const *name)
 {
-	PWList *new;
-	new = malloc( sizeof(PWList) );
-	new->name = malloc(STRING_MEDIUM);
-	strncpy(new->name, name, STRING_MEDIUM);
-	new->parent = NULL;
-	new->list = NULL;
-	new->next = NULL;
-	new->sublists = NULL;
+PWList	*ret;
+
+	ret = xcalloc(1, sizeof(*ret));
+	ret->name = xstrdup(name);
 	debug("new_pwlist: %s", name);
 
-	return new;
+	return ret;
 }
 
 int
@@ -57,7 +64,7 @@ pwlist_init()
 	return 0;
 }
 
-int 
+static int 
 pwlist_free(PWList *old)
 {
 	Pw *current, *next;
@@ -93,27 +100,17 @@ pwlist_free_all()
 Pw*
 pwlist_new_pw()
 {
-	Pw *new;
-	new = malloc(sizeof(Pw));
-	new->id = 0;
-	new->name = malloc(STRING_MEDIUM);
-	new->host = malloc(STRING_MEDIUM);
-	new->user = malloc(STRING_MEDIUM);
-	new->passwd = malloc(STRING_SHORT);
-	new->launch = malloc(STRING_LONG);
-
-	memset(new->name, 0, STRING_MEDIUM);
-	memset(new->host, 0, STRING_MEDIUM);
-	memset(new->user, 0, STRING_MEDIUM);
-	memset(new->passwd, 0, STRING_SHORT);
-	memset(new->launch, 0, STRING_LONG);
-	
-	return new;
+Pw	*ret;
+	ret = calloc(1, sizeof(*ret));
+	return ret;
 }
 
 void
 pwlist_free_pw(Pw *old)
 {
+	if (!old)
+		return;
+
 	free(old->name);
 	free(old->user);
 	free(old->host);
@@ -251,31 +248,37 @@ pwlist_change_list_order(PWList *pw, int moveUp) {
 }
 
 void
-pwlist_rename_item(Pw* pwitem, char* new_name) {
-	strncpy(pwitem->name, new_name, STRING_MEDIUM);
+pwlist_rename_item(Pw* item, char const *new_name) {
+	free(item->name);
+	item->name = xstrdup(new_name);
 }
 
 void
-pwlist_rename_sublist(PWList *pwlist, char* new_name) {
-	strncpy(pwlist->name, new_name, STRING_MEDIUM);
+pwlist_rename_sublist(PWList *list, char const *new_name) {
+	free(list->name);
+	list->name = xstrdup(new_name);
 }
 
-int
-pwlist_add(PWList *parent, char* name, char* host, char* user, char* passwd, char* launch)
+#if 0
+static int
+pwlist_add(parent, name, host, user, passwd, launch)
+	PWList		*parent;
+	char const	*name, *host, *user, *passwd, *launch;
 {
 	Pw* new = pwlist_new_pw();
 	
 	new->id = pwindex++;
-	strncpy(new->name, name, STRING_MEDIUM);
-	strncpy(new->host, host, STRING_MEDIUM);
-	strncpy(new->user, user, STRING_MEDIUM);
-	strncpy(new->passwd, passwd, STRING_SHORT);
-	strncpy(new->launch, launch, STRING_LONG);
+	new->name = xstrdup(name);
+	new->host = xstrdup(host);
+	new->user = xstrdup(user);
+	new->passwd = xstrdup(passwd);
+	new->launch = xstrdup(launch);
 
 	pwlist_add_ptr(parent, new);
 
 	return 0;
 }
+#endif
 
 int 
 pwlist_add_sublist(PWList *parent, PWList *new)
@@ -413,7 +416,7 @@ pwlist_delete_sublist(PWList *parent, PWList *old)
 	}
 }
 
-void 
+static void 
 pwlist_write_node(xmlNodePtr root, Pw* pw)
 {
 	xmlNodePtr node;
@@ -449,7 +452,7 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 	xmlFree(escapedLaunch);
 }
 
-void
+static void
 pwlist_write(xmlNodePtr parent, PWList *list)
 {
 	xmlNodePtr node;
@@ -474,15 +477,15 @@ pwlist_write_file()
 	xmlDocPtr doc;
 	xmlNodePtr root;
 
-	if(options->readonly){
+	if (options->readonly)
 		return 0;
-	}
 
-	if(!pwlist){
+	if (!pwlist) {
 		debug("write_file: bad password file");
 		ui_statusline_msg("Bad password list");
 		return -1;
 	}
+
 	snprintf(vers, 5, "%d", FF_VERSION);
 	doc = xmlNewDoc((xmlChar const *)"1.0");
 	
@@ -499,72 +502,73 @@ pwlist_write_file()
 	return 0;
 }
 
-void
+static void
 pwlist_read_node(xmlNodePtr parent, PWList *list)
 {
-	Pw* new;
-	xmlNodePtr node;
-	char *text;
+Pw*		new;
+xmlNodePtr	node;
 	
 	new = pwlist_new_pw();
 
-	for(node = parent->children; node != NULL; node = node->next){
-		if(!node || !node->name){
+	for (node = parent->children; node != NULL; node = node->next) {
+	char const	*text;
+
+		if (!node || !node->name) {
 			debug("Messed up xml node");
-		} else if( strcmp((char*)node->name, "name") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(new->name, text, STRING_MEDIUM);
-		} else if( strcmp((char*)node->name, "user") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(new->user, text, STRING_MEDIUM);
-		} else if( strcmp((char*)node->name, "passwd") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(new->passwd, text, STRING_SHORT);
-		} else if( strcmp((char*)node->name, "host") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(new->host, text, STRING_MEDIUM);
-		} else if( strcmp((char*)node->name, "launch") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(new->launch, text, STRING_LONG);
-		} 
+			continue;
+		}
+
+		text = (char const *) xmlNodeGetContent(node);
+		if (!text)
+			continue;
+
+		if (strcmp((char const *)node->name, "name") == 0)
+			new->name = xstrdup(text);
+		else if (strcmp((char const *)node->name, "user") == 0)
+			new->user = xstrdup(text);
+		else if (strcmp((char const *)node->name, "passwd") == 0)
+			new->passwd = xstrdup(text);
+		else if (strcmp((char const *)node->name, "host") == 0)
+			new->host = xstrdup(text);
+		else if (strcmp((char const *)node->name, "launch") == 0)
+			new->launch = xstrdup(text);
 	}
+
 	pwlist_add_ptr(list, new);
 }
 
-int
+static int
 pwlist_read(xmlNodePtr parent, PWList *parent_list)
 {
-	xmlNodePtr node;
-	PWList *new;
+xmlNodePtr	 node;
+PWList		*new;
+char const	*name;
 
-	char name[STRING_MEDIUM];
-	if(!parent || !parent->name){
+	if (!parent || !parent->name) {
 		ui_statusline_msg("Messed up xml node");
 		return -1;
 	}
-	if(strcmp((char const*)parent->name,"PwList") == 0){
-		strncpy(name, (char const *) xmlGetProp(parent, (xmlChar const *)"name"), STRING_MEDIUM);
+
+	if (strcmp((char const*)parent->name, "PwList") != 0)
+		return 0;
+
+		name = (char const *) xmlGetProp(parent, (xmlChar const *)"name");
 		new = pwlist_new(name);
 
-		for(node = parent->children; node != NULL; node = node->next){
-			if(!node || !node->name){
+		for (node = parent->children; node != NULL; node = node->next) {
+			if (!node || !node->name)
 				debug("read_pwlist: messed up child node");
-			} else if (strcmp((char const *) node->name, "PwList") == 0){
+			else if (strcmp((char const *) node->name, "PwList") == 0)
 				pwlist_read(node, new);
-			} else if (strcmp((char const *) node->name, "PwItem") == 0){
+			else if (strcmp((char const *) node->name, "PwItem") == 0)
 				pwlist_read_node(node, new);
-			}
 		}
-	}
 
-	if(parent_list == NULL){
-		pwlist = new;
-		current_pw_sublist = pwlist;
-
-		pwlist->current_item = 0;
-	} else {
+	if (parent_list)
 		pwlist_add_sublist(parent_list, new);
-	}
+	else
+		pwlist = current_pw_sublist = new;
+
 	return 0;
 }
 
@@ -579,12 +583,12 @@ pwlist_read_file()
 	xmlDocPtr doc;
 
 	/* Have the defined a file yet? */
-	if(!options->password_file){
+	if(!options->password_file)
 		return -1;
-	}
+
 	/* Do we need to create a new file? */
 	snprintf(fn, STRING_LONG, "%s", options->password_file);
-	if(access(fn, F_OK) != 0){
+	if (access(fn, F_OK) != 0){
 		ui_statusline_msg("Database not found, created. Press any key to begin  "); getch();
 		return -1;
 	}
@@ -598,12 +602,12 @@ pwlist_read_file()
 	}
 	
 	if(!doc){
-		ui_statusline_msg("Bad xml Data");
+		ui_statusline_msg("Bad XML data");
 		return -1;
 	}
 	root = xmlDocGetRootElement(doc);
 	if(!root || !root->name	|| (strcmp((char const *)root->name, "PWMan_PasswordList") != 0) ){
-		ui_statusline_msg("Badly Formed password data");
+		ui_statusline_msg("Badly formed password data");
 		return -1;
 	}
 
@@ -611,54 +615,48 @@ pwlist_read_file()
 		i = atoi(buf);
 
 	if(i < FF_VERSION){
-		ui_statusline_msg("Password File in older format, use convert_pwdb");
+		ui_statusline_msg("Password file in older format, use convert_pwdb");
 		return -1;
 	}
 
 	for (node = root->children; node != NULL; node = node->next){
 		if (strcmp((char const *) node->name, "PwList") == 0){
 			pwlist_read(node, NULL);
-
 			break;
 		}
 	}
+
 	xmlFreeDoc(doc);
 	return 0;
 }
 
-int
-pwlist_do_export(PWList *pwlist, Pw *pw)
+static int
+pwlist_do_export(PWList *list, Pw *pw)
 {
 #define	MAX_ID_NUM	5
 char	vers[5], *ids[MAX_ID_NUM], *file;
 int	i = 0, valid_ids = 0;
 	
+	bzero(ids, sizeof(ids));
+
 	xmlDocPtr doc;
 	xmlNodePtr root;
 
-	if (!pwlist && !pw) {
+	if (!list && !pw) {
 		debug("export_passwd: bad password");
 		ui_statusline_msg("Bad password");
 		return -1;
-	}
-
-	/* We need the IDs to default to empty strings */
-	for (i=0; i < MAX_ID_NUM; i++) {
-		ids[i] = malloc(STRING_LONG);
-		snprintf(ids[i], STRING_LONG, "");
 	}
 
 	/* Fetch the IDs */
 	gnupg_get_ids(ids, MAX_ID_NUM);
 
 	/* Check we really got one */
-	for (i=0; i < MAX_ID_NUM; i++) {
-		if (ids[i][0] != 0) {
+	for (i=0; i < MAX_ID_NUM; i++)
+		if (ids[i])
 			valid_ids++;
-		}
-	}
 
-	if (valid_ids == 0){
+	if (valid_ids == 0) {
 		debug("export_passwd: cancel because id is blank");
 		return -1;
 	} else {
@@ -675,8 +673,8 @@ int	i = 0, valid_ids = 0;
 
 	xmlSetProp(root, (xmlChar const *) "version", (xmlChar const *) vers);
 	
-	if(pwlist)
-		pwlist_write(root, pwlist);
+	if(list)
+		pwlist_write(root, list);
 	else
 		pwlist_write_node(root, pw);
 
@@ -700,9 +698,9 @@ pwlist_export_passwd(Pw *pw)
 }
 
 int
-pwlist_export_list(PWList *pwlist)
+pwlist_export_list(PWList *list)
 {
-   return pwlist_do_export(pwlist, NULL);
+   return pwlist_do_export(list, NULL);
 }
 
 

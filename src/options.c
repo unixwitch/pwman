@@ -20,96 +20,112 @@
  */
 
 #include	<stdlib.h>
+#include	<unistd.h>
+#include	<pwd.h>
 
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
 
 #include	"pwman.h"
 
+static char *options_get_file(void);
+static char *options_get_database(void);
+
 Options*
 options_new()
 {
-	Options *new;
+Options	*ret;
+	ret = xcalloc(1, sizeof(*ret));
+	ret->passphrase_timeout = 180;
+	ret->readonly = FALSE;
 
-	new = malloc(sizeof(Options));
-	new->gpg_id = malloc(STRING_LONG);
-	new->gpg_path = malloc(STRING_LONG);
-	new->password_file = malloc(STRING_LONG);
-	new->passphrase_timeout = 180;
-	new->readonly = FALSE;
+	ret->filter = filter_new();
+	ret->search = search_new();
 
-	new->filter = filter_new();
-	new->search = search_new();
+	return ret;
+}
 
-	return new;
+static char *
+options_get_file()
+{
+char const	*home;
+char		*ret;
+
+	if ((home = getenv("HOME")) == NULL) {
+	struct passwd	*pwd;
+		if ((pwd = getpwuid(getuid())) == NULL)
+			return NULL;
+		home = pwd->pw_dir;
+	}
+
+	ret = xmalloc(strlen(home) + 1 + strlen(CONF_FILE) + 1);
+	sprintf(ret, "%s/%s", home, CONF_FILE);
+	return ret;
 }
 
 char*
-options_get_file()
+options_get_database()
 {
-	char *conf_file;
+char const	*home;
+char		*ret;
 
-	conf_file = malloc(STRING_LONG);
-	
-	if(!getenv("HOME")){
-		return NULL;
-	} else {
-		snprintf(conf_file, STRING_LONG, "%s/%s", getenv("HOME"), CONF_FILE);
+	if ((home = getenv("HOME")) == NULL) {
+	struct passwd	*pwd;
+		if ((pwd = getpwuid(getuid())) == NULL)
+			return NULL;
+		home = pwd->pw_dir;
 	}
 
-	return conf_file;
+	ret = xmalloc(strlen(home) + 1 + strlen(DB_FILE) + 1);
+	sprintf(ret, "%s/%s", home, DB_FILE);
+	return ret;
 }
 
 int
 options_read()
 {
-	char *file, *text;
+	char *file;
 	xmlDocPtr doc;
 	xmlNodePtr node, root;
 	
 	file = options_get_file();
-	if(file == NULL){
+	if(file == NULL)
 		return -1;
-	}
 
 	doc = xmlParseFile(file);
-	if(!doc){
+	if(!doc)
 		return -1;
-	}
 
 	root = xmlDocGetRootElement(doc);
 
-	if(!root || !root->name || (strcmp((char*)root->name, "pwm_config") != 0) ){
-		fprintf(stderr,"PWM-Warning: Badly Formed .pwmanrc\n");
+	if (!root || !root->name || (strcmp((char*)root->name, "pwm_config") != 0)) {
+		fprintf(stderr,"PWM-Warning: Badly formed .pwmanrc\n");
 		return -1;
 	}
 
 	for(node = root->children; node != NULL; node = node->next){
-		if(!node || !node->name){
+	char const	*text = (char const *) xmlNodeGetContent(node);
+
+		if(!node || !node->name)
 			debug("read_config: Fucked up xml node");
-		} else if( strcmp((char*)node->name, "gpg_id") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(options->gpg_id, text, STRING_LONG);
-		} else if( strcmp((char*)node->name, "gpg_path") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(options->gpg_path, text, STRING_LONG);
-		} else if( strcmp((char*)node->name, "password_file") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(options->password_file, text, STRING_LONG);
-		} else if( strcmp((char*)node->name, "passphrase_timeout") == 0){
-			text = (char*)xmlNodeGetContent(node);
-			if(text){ options->passphrase_timeout = atoi(text); }
-		} else if( strcmp((char*)node->name, "filter") == 0){
+		else if (strcmp((char*)node->name, "gpg_id") == 0)
+			options->gpg_id = xstrdup(text);
+		else if (strcmp((char*)node->name, "gpg_path") == 0)
+			options->gpg_path = xstrdup(text);
+		else if (strcmp((char*)node->name, "password_file") == 0)
+			options->password_file = xstrdup(text);
+		else if (strcmp((char*)node->name, "passphrase_timeout") == 0)
+			options->passphrase_timeout = atoi(text);
+		else if (strcmp((char*)node->name, "filter") == 0) {
 			options->filter->field = atoi((char const *) xmlGetProp(node, (xmlChar const *) "field"));
-			text = (char*)xmlNodeGetContent(node);
-			if(text) strncpy(options->filter->filter, text, STRING_LONG);
-		} else if( strcmp((char*)node->name, "readonly") == 0){
+			options->filter->filter = xstrdup(text);
+		} else if (strcmp((char*)node->name, "readonly") == 0)
 			options->readonly = TRUE;
-		} else if( strcmp((char*)node->name, "text") == 0){
+		else if (strcmp((char*)node->name, "text") == 0)
 			/* Safe to ignore. This is whitespace etc */
-		} else {
+			;
+		else
 			debug("read_config: Unrecognised xml node '%s'", (char*)node->name);
-		}
 	}
 	write_options = TRUE;
 	xmlFreeDoc(doc);
@@ -165,43 +181,39 @@ options_write()
 void
 options_get()
 {
-	char pw_file[STRING_LONG];
-	char text[STRING_SHORT];
+char	*dbfile;
+char	 line[1024];
 	
 	puts("Hmm... can't open ~/.pwmanrc, we'll create one manually now.");
 	
 	printf("GnuPG ID [you@yourdomain.com] or [012345AB]: ");
-	fgets(options->gpg_id, STRING_LONG, stdin);
-	if( strcmp(options->gpg_id, "\n") == 0 ){
-		strncpy(options->gpg_id, "you@yourdomain.com", STRING_SHORT);
-	} else {
-		options->gpg_id[ strlen(options->gpg_id) - 1] = 0;
-	}
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+	line[strlen(line) - 1] = 0;
+	options->gpg_id = *line ? xstrdup(line) : xstrdup("you@yourdomain.com");
 	
 	printf("Path to GnuPG [/usr/bin/gpg]: ");
-	fgets(options->gpg_path, STRING_LONG, stdin);
-	if( strcmp(options->gpg_path, "\n") == 0){
-		strncpy(options->gpg_path, "/usr/bin/gpg", STRING_LONG);
-	} else {
-		options->gpg_path[ strlen(options->gpg_path) - 1] = 0;
-	}
-	
-	snprintf(pw_file, STRING_LONG, "%s/.pwman.db", getenv("HOME") );
-	printf("Password Database File [%s]: ", pw_file );
-	fgets(options->password_file, STRING_LONG, stdin);
-	if( strcmp(options->password_file, "\n") == 0){
-		strncpy(options->password_file, pw_file, STRING_LONG);
-	} else {
-		options->password_file[ strlen(options->password_file) - 1] = 0;
-	}
-	
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+	line[strlen(line) - 1] = 0;
+	options->gpg_path = *line ? xstrdup(line) : xstrdup("/usr/bin/gpg");
+
+	dbfile = options_get_database();
+	printf("Password database file [%s]: ", dbfile);
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+	line[strlen(line) - 1] = 0;
+	options->password_file = *line ? xstrdup(line) : xstrdup(dbfile);
+	xfree(dbfile);
+
 	printf("Passphrase Timeout(in minutes) [180]: ");
-	fgets(text, STRING_SHORT, stdin);
-	if( strcmp(text, "\n") == 0){
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+
+	if (strcmp(line, "\n") == 0)
 		options->passphrase_timeout = 180;
-	} else {
-		options->passphrase_timeout = atoi(text);
-	}
+	else
+		options->passphrase_timeout = atoi(line);
 
 	write_options = TRUE;
 	options_write();

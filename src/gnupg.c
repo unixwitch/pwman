@@ -57,8 +57,8 @@
 #define STDIN 1
 #define STDERR 2
 
-int passphrase_good = 0;
-int gnupg_hit_sigpipe = 0;
+static int passphrase_good = 0;
+static int gnupg_hit_sigpipe = 0;
 
 static char	*gnupg_expand_filename(char const *);
 
@@ -80,13 +80,13 @@ size_t	size;
 
 	if (buf == NULL) {
 		buf = malloc(strlen(new) + 1);
-		strncpy(buf, new, strlen(new) + 1);
+		strcpy(buf, new);
 		return buf;
 	}
 	
 	size = strlen(buf) + strlen(new) + 1;
 	buf = realloc(buf, size);
-	strncat(buf, new, size);
+	strcat(buf, new);
 	
 	return buf;
 }
@@ -250,7 +250,7 @@ int	 size;
 
 	size = end - start;
 	user = malloc(size+1);
-	strncpy(user, start, size);
+	strcpy(user, start);
 	debug("Recipient is %s", user);
 	return user;
 }
@@ -344,18 +344,19 @@ int	 id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 /**
  * Get a single GnuPG Recipient ID
  */
-void
-gnupg_get_id(id)
-	char	*id;
+char *
+gnupg_get_id()
 {
 	for (;;) {
-		id = ui_statusline_ask_str("GnuPG Recipient ID:", id, STRING_LONG);
+	char	*id;
+		id = ui_statusline_ask_str("GnuPG Recipient ID:");
 		if (id[0] == 0)
-			return;
+			return id;
 
 		if (gnupg_check_id(id) == 0)
-			return;
+			return id;
 
+		xfree(id);
 		debug("get_gnupg_id: if here is reached id is bad");
 		ui_statusline_msg("Bad recipient, try again");
 		getch();
@@ -370,20 +371,26 @@ gnupg_get_ids(ids, max_id_num)
 	char	**ids;
 	size_t	  max_id_num;
 {
-InputField	fields[max_id_num];
-char		names[max_id_num][STRING_LONG];
+InputField	*fields;
 size_t		i;
 
-	for (i=0; i < max_id_num; i++) {
-		fields[i].name = names[i]; /* Needs a local string to write into */
-		snprintf(fields[i].name, STRING_LONG, "Recipient %d: ", (int) (i + 1));
-		fields[i].value = ids[i]; /* String to write into comes from caller */
-		fields[i].max_length = STRING_LONG;
+	fields = xcalloc(max_id_num, sizeof(*fields));
+
+	for (i = 0; i < max_id_num; i++) {
+		fields[i].value = &ids[i]; /* String to write into comes from caller */
 		fields[i].type = STRING;
+
+		fields[i].name = xmalloc(STRING_LONG + 1); /* Needs a local string to write into */
+		snprintf(fields[i].name, STRING_LONG + 1,
+			 "Recipient %d: ", (int) (i + 1));
 	}
 
 	/* Prompt to edit the recipients. This will verify the IDs for us. */
 	action_input_gpgid_dialog(fields, max_id_num, "Edit Recipients");
+
+	for (i = 0; i < max_id_num; i++)
+		free(fields[i].name);
+	free(fields);
 }
 
 char *
@@ -394,9 +401,7 @@ char	*ret;
 	assert(rw == 'r' || rw == 'w');
 
 	ret = malloc(PATH_MAX + 1);
-	ui_statusline_ask_str(rw == 'r' ? "File to read from:" : "File to write to:",
-			      ret, PATH_MAX);
-
+	ret = ui_statusline_ask_str(rw == 'r' ? "File to read from:" : "File to write to:");
 	return ret;
 }
 
@@ -410,8 +415,7 @@ static char	*passphrase = NULL;
 		return passphrase;
 	
 	passphrase_good = 0;
-	passphrase = ui_statusline_ask_passwd("Enter GnuPG passphrase (^G to Cancel):", passphrase, 
-			STRING_LONG, 0x07); /* 0x07 == ^G */
+	passphrase = ui_statusline_ask_passwd("Enter GnuPG passphrase (^G to Cancel):", 0x07); /* 0x07 == ^G */
 	passphrase_good = 1;
 
 	return passphrase;
@@ -478,9 +482,9 @@ char	*expfile;
 	/* Ensure all IDs are valid, and we have enough */
 	num_valid_ids = 0;
 	for (i=0; i < num_ids; i++) {
-		if (ids[i][0] != 0) {
+		if (ids[i]) {
 			if (gnupg_check_id(ids[i]) != 0) {
-				gnupg_get_id(ids[i]);
+				ids[i] = gnupg_get_id();
 				
 				if(ids[i][0] == 0)
 					return -1;

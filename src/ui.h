@@ -76,8 +76,7 @@ typedef enum {
 
 typedef struct {
 	char *name;
-	void *value; // int* or char*
-	int max_length;
+	void *value; /* int* or char* */
 	TYPE type;
 	char *(*autogen)(char*);
 } InputField;
@@ -92,13 +91,13 @@ void ui_refresh_windows(void);
 
 int view_pw(int i);
 
-int ui_statusline_yes_no(char *, int);
-int ui_statusline_msg(char *msg);
-void ui_statusline_ask_num(char *, int *);
-void ui_statusline_ask_char(char *, char *, char*);
-char * ui_statusline_ask_str(char *, char *, int len);
-char * ui_statusline_ask_passwd(char *, char *, int, int);
-char * ui_statusline_ask_str_with_autogen(char *msg, char *input, int len, char *(*autogen)(char *), int ch);
+int	 ui_statusline_yes_no(char const *, int);
+int	 ui_statusline_msg(char const *msg);
+int	 ui_statusline_ask_num(char const *);
+int	 ui_statusline_ask_char(char const *, char *);
+char	*ui_statusline_ask_str(char const *);
+char	*ui_statusline_ask_passwd(char const *, int);
+char	*ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch);
 
 void	uilist_up(void);
 void	uilist_down(void);
@@ -109,7 +108,7 @@ PWSearchResult *uilist_get_highlighted_searchresult(void);
 void uilist_page_up(void);
 void uilist_page_down(void);
 
-void statusline_readonly();
+void statusline_readonly(void);
 
 int filter_apply(Pw *pw, PwFilter* fil);
 void filter_alert(PwFilter* fil);
