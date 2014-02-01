@@ -30,23 +30,23 @@
 #include	"gnupg.h"
 #include	"ui.h"
 
-static int	pwlist_read(xmlNodePtr parent, PWList *parent_list);
-static int	pwlist_free(PWList *old);
-static void	pwlist_write(xmlNodePtr parent, PWList *list);
-static void	pwlist_read_node(xmlNodePtr parent, PWList *list);
-static void	pwlist_write_node(xmlNodePtr root, Pw* pw);
-static int	pwlist_do_export(PWList *pwlist, Pw *pw);
+static int	pwlist_read(xmlNodePtr parent, pwlist_t *parent_list);
+static int	pwlist_free(pwlist_t *old);
+static void	pwlist_write(xmlNodePtr parent, pwlist_t *list);
+static void	pwlist_read_node(xmlNodePtr parent, pwlist_t *list);
+static void	pwlist_write_node(xmlNodePtr root, password_t* pw);
+static int	pwlist_do_export(pwlist_t *pwlist, password_t *pw);
 #if 0
-static int	pwlist_add(PWList *parent, char const *name, char const *host,
+static int	pwlist_add(pwlist_t *parent, char const *name, char const *host,
 			   char const *user, char const *passwd, char const *launch);
 #endif
 
 static int pwindex = 0;
 
-PWList *
+pwlist_t *
 pwlist_new(char const *name)
 {
-PWList	*ret;
+pwlist_t	*ret;
 
 	ret = xcalloc(1, sizeof(*ret));
 	ret->name = xstrdup(name);
@@ -65,10 +65,10 @@ pwlist_init()
 }
 
 static int 
-pwlist_free(PWList *old)
+pwlist_free(pwlist_t *old)
 {
-	Pw *current, *next;
-	PWList *curlist, *nlist;
+	password_t *current, *next;
+	pwlist_t *curlist, *nlist;
 
 	if(old == NULL){
 		return 0;
@@ -97,16 +97,16 @@ pwlist_free_all()
 	return 0;
 }
 
-Pw*
+password_t*
 pwlist_new_pw()
 {
-Pw	*ret;
+password_t	*ret;
 	ret = calloc(1, sizeof(*ret));
 	return ret;
 }
 
 void
-pwlist_free_pw(Pw *old)
+pwlist_free_pw(password_t *old)
 {
 	if (!old)
 		return;
@@ -120,12 +120,12 @@ pwlist_free_pw(Pw *old)
 }
 
 int
-pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
-	Pw *iter = NULL;
-	Pw *pprev = NULL;
-	Pw *prev = NULL;
-	Pw *next = NULL;
-	Pw *nnext = NULL;
+pwlist_change_item_order(password_t* pw, pwlist_t *parent, int moveUp) {
+	password_t *iter = NULL;
+	password_t *pprev = NULL;
+	password_t *prev = NULL;
+	password_t *next = NULL;
+	password_t *nnext = NULL;
 
 	/* Find us, in our parents list of children */
 	for(iter = parent->list; iter != NULL; iter = iter->next){
@@ -181,18 +181,18 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 }
 
 int
-pwlist_change_list_order(PWList *pw, int moveUp) {
+pwlist_change_list_order(pwlist_t *pw, int moveUp) {
 	/* Grab the parent, assuming there is one */
-	PWList *parent = pw->parent;
+	pwlist_t *parent = pw->parent;
 	if(parent==NULL) { return 0; }
 
 
 	/* Find us */
-	PWList *iter = NULL;
-	PWList *pprev = NULL;
-	PWList *prev = NULL;
-	PWList *next = NULL;
-	PWList *nnext = NULL;
+	pwlist_t *iter = NULL;
+	pwlist_t *pprev = NULL;
+	pwlist_t *prev = NULL;
+	pwlist_t *next = NULL;
+	pwlist_t *nnext = NULL;
 
 	/* Find us, in our parents list of children */
 	for(iter = parent->sublists; iter != NULL; iter = iter->next){
@@ -248,13 +248,13 @@ pwlist_change_list_order(PWList *pw, int moveUp) {
 }
 
 void
-pwlist_rename_item(Pw* item, char const *new_name) {
+pwlist_rename_item(password_t* item, char const *new_name) {
 	free(item->name);
 	item->name = xstrdup(new_name);
 }
 
 void
-pwlist_rename_sublist(PWList *list, char const *new_name) {
+pwlist_rename_sublist(pwlist_t *list, char const *new_name) {
 	free(list->name);
 	list->name = xstrdup(new_name);
 }
@@ -262,10 +262,10 @@ pwlist_rename_sublist(PWList *list, char const *new_name) {
 #if 0
 static int
 pwlist_add(parent, name, host, user, passwd, launch)
-	PWList		*parent;
+	pwlist_t		*parent;
 	char const	*name, *host, *user, *passwd, *launch;
 {
-	Pw* new = pwlist_new_pw();
+	password_t* new = pwlist_new_pw();
 	
 	new->id = pwindex++;
 	new->name = xstrdup(name);
@@ -281,9 +281,9 @@ pwlist_add(parent, name, host, user, passwd, launch)
 #endif
 
 int 
-pwlist_add_sublist(PWList *parent, PWList *new)
+pwlist_add_sublist(pwlist_t *parent, pwlist_t *new)
 {
-	PWList *current;
+	pwlist_t *current;
 
 	current = parent->sublists;
 	new->parent = parent;
@@ -305,16 +305,16 @@ pwlist_add_sublist(PWList *parent, PWList *new)
 }
 
 int
-pwlist_add_ptr(PWList *list, Pw *new)
+pwlist_add_ptr(pwlist_t *list, password_t *new)
 {
-	Pw *current;
+	password_t *current;
 	
 	if(list == NULL){
 		debug("add_pw_ptr : Bad PwList");
 		return -1;
 	}
 	if(new == NULL){
-		debug("add_pw_ptr : Bad Pw");
+		debug("add_pw_ptr : Bad password_t");
 		return -1;
 	}
 	if(list->list == NULL){
@@ -335,9 +335,9 @@ pwlist_add_ptr(PWList *list, Pw *new)
 }
 
 void 
-pwlist_detach_pw(PWList *list, Pw *pw)
+pwlist_detach_pw(pwlist_t *list, password_t *pw)
 {
-	Pw *iter, *prev;
+	password_t *iter, *prev;
 
 	prev = NULL;
 	for(iter = list->list; iter != NULL; iter = iter->next){
@@ -355,9 +355,9 @@ pwlist_detach_pw(PWList *list, Pw *pw)
 }
 
 void 
-pwlist_delete_pw(PWList *list, Pw *pw)
+pwlist_delete_pw(pwlist_t *list, password_t *pw)
 {
-	Pw *iter, *prev;
+	password_t *iter, *prev;
 
 	prev = NULL;
 	for(iter = list->list; iter != NULL; iter = iter->next){
@@ -376,12 +376,12 @@ pwlist_delete_pw(PWList *list, Pw *pw)
 }
 
 void 
-pwlist_detach_sublist(PWList *parent, PWList *old)
+pwlist_detach_sublist(pwlist_t *parent, pwlist_t *old)
 {
-	PWList *iter, *prev;
+	pwlist_t *iter, *prev;
 
 	prev = NULL;
-	for(iter = parent->sublists; iter != NULL; iter = iter->next){
+	for (iter = parent->sublists; iter != NULL; iter = iter->next){
 
 		if(iter == old){
 			if(prev == NULL){
@@ -396,9 +396,9 @@ pwlist_detach_sublist(PWList *parent, PWList *old)
 }
 
 void
-pwlist_delete_sublist(PWList *parent, PWList *old)
+pwlist_delete_sublist(pwlist_t *parent, pwlist_t *old)
 {
-	PWList *iter, *prev;
+	pwlist_t *iter, *prev;
 
 	prev = NULL;
 	for(iter = parent->sublists; iter != NULL; iter = iter->next){
@@ -417,7 +417,7 @@ pwlist_delete_sublist(PWList *parent, PWList *old)
 }
 
 static void 
-pwlist_write_node(xmlNodePtr root, Pw* pw)
+pwlist_write_node(xmlNodePtr root, password_t* pw)
 {
 	xmlNodePtr node;
 
@@ -453,11 +453,11 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 }
 
 static void
-pwlist_write(xmlNodePtr parent, PWList *list)
+pwlist_write(xmlNodePtr parent, pwlist_t *list)
 {
 	xmlNodePtr node;
-	Pw *iter;
-	PWList *pwliter;
+	password_t *iter;
+	pwlist_t *pwliter;
 	
 	node = xmlNewChild(parent, NULL, (xmlChar const *)"PwList", NULL);
 	xmlSetProp(node, (xmlChar const *)"name", (xmlChar*)list->name);
@@ -503,9 +503,9 @@ pwlist_write_file()
 }
 
 static void
-pwlist_read_node(xmlNodePtr parent, PWList *list)
+pwlist_read_node(xmlNodePtr parent, pwlist_t *list)
 {
-Pw*		new;
+password_t*		new;
 xmlNodePtr	node;
 	
 	new = pwlist_new_pw();
@@ -538,10 +538,10 @@ xmlNodePtr	node;
 }
 
 static int
-pwlist_read(xmlNodePtr parent, PWList *parent_list)
+pwlist_read(xmlNodePtr parent, pwlist_t *parent_list)
 {
 xmlNodePtr	 node;
-PWList		*new;
+pwlist_t		*new;
 char const	*name;
 
 	if (!parent || !parent->name) {
@@ -631,7 +631,7 @@ pwlist_read_file()
 }
 
 static int
-pwlist_do_export(PWList *list, Pw *pw)
+pwlist_do_export(pwlist_t *list, password_t *pw)
 {
 #define	MAX_ID_NUM	5
 char	vers[5], *ids[MAX_ID_NUM], *file;
@@ -692,13 +692,13 @@ int	i = 0, valid_ids = 0;
 }
 
 int
-pwlist_export_passwd(Pw *pw)
+pwlist_export_passwd(password_t *pw)
 {
    return pwlist_do_export(NULL, pw);
 }
 
 int
-pwlist_export_list(PWList *list)
+pwlist_export_list(pwlist_t *list)
 {
    return pwlist_do_export(list, NULL);
 }

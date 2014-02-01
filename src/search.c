@@ -25,35 +25,27 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-static PWSearchResult	*_search_add_if_matches(PWSearchResult *, Pw *, PWList *);
+static search_result_t	*_search_add_if_matches(search_result_t *, password_t *, pwlist_t *);
 static void		 _search_free(void);
-static int		 search_active(PwSearch* srch);
+static int		 search_active(search_t* srch);
 static int		 search_apply(void);
 
-PwSearch *
+search_t *
 search_new()
 {
-	PwSearch *new;
+search_t	*new;
 
-	new = malloc(sizeof(PwSearch));
-	if(new == NULL) {
-		pw_abort("Failed to allocate memory to hold search details!");
-	}
-
-	new->search_term = malloc(STRING_LONG);
-	if(new->search_term == NULL) {
-		pw_abort("Failed to allocate memory to hold search term!");
-	}
-	new->search_term[0] = 0;
-
+	new = xcalloc(1, sizeof(*new));
 	return new;
 }
 
 /*
  * String checking only case insensitive using gnu glibc
  */
-static char*
-search_strcasestr(char *haystack, char *needle){
+static char *
+search_strcasestr(haystack, needle)
+	char const	*haystack, *needle;
+{
 	/* Never matches if null/empty string given */
 	if (haystack == NULL)
 		return 0;
@@ -69,9 +61,10 @@ search_strcasestr(char *haystack, char *needle){
 }
 
 
-static PWSearchResult* 
-_search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
-	PWSearchResult* next = NULL;
+static search_result_t* 
+_search_add_if_matches(search_result_t* current, password_t* entry, pwlist_t* list)
+{
+	search_result_t* next = NULL;
 
 	/* Did we get an entry of a list? */
 	if(entry != NULL) {
@@ -81,14 +74,14 @@ _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 			 || search_strcasestr(entry->passwd, options->search->search_term)
 			 || search_strcasestr(entry->launch, options->search->search_term)
 		) {
-			next = malloc( sizeof(PWSearchResult) );
+			next = xcalloc(1, sizeof(*next));
 			next->entry = entry;
 			next->sublist = list;
 			debug("Matched entry on host '%s'", entry->host);
 		}
 	} else {
 		if(search_strcasestr(list->name, options->search->search_term)) {
-			next = malloc( sizeof(PWSearchResult) );
+			next = xcalloc(1, sizeof(*next));
 			next->sublist = list;
 			next->entry = NULL;
 			debug("Matched sublist '%s'", list->name);
@@ -96,7 +89,7 @@ _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 	}
 
 	/* If we matched, append */
-	if(next == NULL) {
+	if (next == NULL) {
 		return current;
 	} else {
 		if(current == NULL) {
@@ -116,27 +109,25 @@ _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 static int
 search_apply()
 {
-	PWList *stack[MAX_SEARCH_DEPTH];
-	PWList *tmpList = NULL; 
-	Pw *tmp = NULL; 
-	int depth;
-	int stepping_back;
+pwlist_t	*stack[MAX_SEARCH_DEPTH];
+pwlist_t	*tmpList = NULL; 
+password_t	*tmp = NULL; 
+int		 depth;
+int		 stepping_back;
 
-	PWSearchResult *cur = NULL;
+	search_result_t *cur = NULL;
 
 	/* Tidy up any existing search results */
-	if(search_results != NULL) {
+	if (search_results != NULL)
 		_search_free();
-	}
+
 	/* If no search term, then nothing to do! */
-	if( search_active(options->search) == 0 ) {
+	if (search_active(options->search) == 0)
 		return 1;
-	}
 
 	/* Make sure we have a clean search stack so we won't get confused */
-	for(depth=0; depth<MAX_SEARCH_DEPTH; depth++) {
+	for (depth = 0; depth < MAX_SEARCH_DEPTH; depth++)
 		stack[depth] = NULL;
-	}
 
 	/* Setup for start */
 	depth = 0;
@@ -144,10 +135,9 @@ search_apply()
 	stepping_back = 0;
 
 	/* Find anything we like the look of */
-	while(depth >= 0) {
+	while (depth >= 0) {
 		/* Any sublists? */
-		if(!stepping_back && 
-				tmpList->sublists != NULL && depth < MAX_SEARCH_DEPTH) {
+		if (!stepping_back && tmpList->sublists != NULL && depth < MAX_SEARCH_DEPTH) {
 			/* Prepare to descend */
 			stack[depth] = tmpList;
 			depth++;
@@ -162,9 +152,9 @@ search_apply()
 		stepping_back = 0;
 
 		/* Any entries? */
-		if(tmpList->list) {
+		if (tmpList->list) {
 			tmp = tmpList->list;
-			while(tmp != NULL) {
+			while (tmp != NULL) {
 				/* Test this entry */
 				cur = _search_add_if_matches(cur, tmp, tmpList);
 				/* Next entry */
@@ -173,7 +163,7 @@ search_apply()
 		}
 
 		/* Next sibling if there is one */
-		if(tmpList->next != NULL) {
+		if (tmpList->next != NULL) {
 			tmpList = tmpList->next;
 			/* Test sibling */
 			cur = _search_add_if_matches(cur, NULL, tmpList);
@@ -184,7 +174,7 @@ search_apply()
 		/* Otherwise step up */
 		depth--;
 		stepping_back = 1;
-		if(depth >= 0) {
+		if (depth >= 0) {
 			tmpList = stack[depth];
 			stack[depth] = NULL;
 		}
@@ -214,14 +204,14 @@ search_remove()
 void 
 _search_free()
 {
-	PWSearchResult *cur;
-	PWSearchResult *next;
+search_result_t	*cur;
+search_result_t	*next;
 
 	/* Free the memory held by the search results */
 	cur = search_results;
 	while(cur != NULL) {
 		next = cur->next;
-		free(cur);
+		xfree(cur);
 		cur = next;
 	}
 	search_results = NULL;
@@ -230,7 +220,7 @@ _search_free()
 void
 search_get()
 {
-	if(options->search == NULL) {
+	if (options->search == NULL) {
 		debug("No options->search");
 	} else {
 		if(options->search->search_term == NULL) {
@@ -250,7 +240,7 @@ search_get()
 }
 
 void
-search_alert(PwSearch* srch)
+search_alert(search_t* srch)
 {
 	char alert[80];	
 
@@ -268,7 +258,7 @@ search_alert(PwSearch* srch)
 
 
 int
-search_active(PwSearch* srch)
+search_active(search_t* srch)
 {
 	if ((srch == NULL) || (srch->search_term == NULL))
 		/* no search object */

@@ -25,7 +25,7 @@
 #include <libxml/parser.h>
 
 int
-export_passwd(Pw *pw)
+export_passwd(password_t *pw)
 {
 	char vers[5];
 	char id[STRING_LONG], file[STRING_LONG];
@@ -70,7 +70,7 @@ export_passwd(Pw *pw)
 }
 
 int
-export_passwd_list(PWList *pwlist)
+export_passwd_list(pwlist_t *pwlist)
 {
 	char vers[5];
 	char id[STRING_LONG], file[STRING_LONG];

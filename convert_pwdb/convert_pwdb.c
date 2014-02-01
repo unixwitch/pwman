@@ -33,16 +33,16 @@
 static void		 show_version(void);
 static void		 show_usage(char*);
 static void		 get_options(int argc, char *argv[]);
-static void		 free_pw(Pw *old);
-static PWList		*parse_old_doc(xmlDocPtr doc);
-static xmlDocPtr	 write_new_doc(PWList *list);
-static PWList *		 new_pwlist(char const *name);
-static void		 write_password_node(xmlNodePtr root, Pw *pw);
-static int		 add_pw_ptr(PWList *list, Pw *new);
+static void		 free_pw(password_t *old);
+static pwlist_t		*parse_old_doc(xmlDocPtr doc);
+static xmlDocPtr	 write_new_doc(pwlist_t *list);
+static pwlist_t *		 new_pwlist(char const *name);
+static void		 write_password_node(xmlNodePtr root, password_t *pw);
+static int		 add_pw_ptr(pwlist_t *list, password_t *new);
 static xmlDocPtr	 get_data(void);
-static Pw		*new_pw(void);
-static Pw		*read_pw_node(xmlNodePtr parent);
-static void		 write_pwlist(xmlNodePtr parent, PWList *list);
+static password_t		*new_pw(void);
+static password_t		*read_pw_node(xmlNodePtr parent);
+static void		 write_pwlist(xmlNodePtr parent, pwlist_t *list);
 static char		*add_to_buf(char *buf, char *new);
 static void		 put_data(xmlDocPtr doc);
 static char		*ask(char *msg);
@@ -69,11 +69,11 @@ debug(char const *fmt, ... )
 #endif
 }
 
-static PWList *
+static pwlist_t *
 new_pwlist(char const *name)
 {
-	PWList *new;
-	new = malloc( sizeof(PWList) );
+	pwlist_t *new;
+	new = malloc( sizeof(pwlist_t) );
 	new->name = malloc(STRING_MEDIUM);
 	strncpy(new->name, name, STRING_MEDIUM);
 	new->parent = NULL;
@@ -85,10 +85,10 @@ new_pwlist(char const *name)
 }
 
 static int 
-free_pwlist(PWList *old)
+free_pwlist(pwlist_t *old)
 {
-	Pw *current, *next;
-	PWList *curlist, *nlist;
+	password_t *current, *next;
+	pwlist_t *curlist, *nlist;
 
 	if (!old)
 		return 0;
@@ -108,11 +108,11 @@ free_pwlist(PWList *old)
 	return 0;
 }
 
-static Pw*
+static password_t*
 new_pw()
 {
-	Pw *new;
-	new = malloc(sizeof(Pw));
+	password_t *new;
+	new = malloc(sizeof(password_t));
 	new->id = 0;
 	new->name = malloc(STRING_MEDIUM);
 	new->host = malloc(STRING_MEDIUM);
@@ -130,7 +130,7 @@ new_pw()
 }
 
 void
-free_pw(Pw *old)
+free_pw(password_t *old)
 {
 	free(old->name);
 	free(old->user);
@@ -141,16 +141,16 @@ free_pw(Pw *old)
 }
 
 static int
-add_pw_ptr(PWList *list, Pw *new)
+add_pw_ptr(pwlist_t *list, password_t *new)
 {
-	Pw *current;
+	password_t *current;
 	
 	if(list == NULL){
-		debug("add_pw_ptr : Bad PwList");
+		debug("add_pw_ptr : Bad pwlist_t");
 		return -1;
 	}
 	if(new == NULL){
-		debug("add_pw_ptr : Bad Pw");
+		debug("add_pw_ptr : Bad password_t");
 		return -1;
 	}
 	if(list->list == NULL){
@@ -171,7 +171,7 @@ add_pw_ptr(PWList *list, Pw *new)
 }
 
 static void 
-write_password_node(xmlNodePtr root, Pw *pw)
+write_password_node(xmlNodePtr root, password_t *pw)
 {
 	xmlNodePtr node;
 
@@ -184,10 +184,10 @@ write_password_node(xmlNodePtr root, Pw *pw)
 }
 
 static void
-write_pwlist(xmlNodePtr parent, PWList *list)
+write_pwlist(xmlNodePtr parent, pwlist_t *list)
 {
 	xmlNodePtr node;
-	Pw* iter;
+	password_t* iter;
 
 	node = xmlNewChild(parent, NULL, (xmlChar const*)"PwList", NULL);
 	xmlSetProp(node, (xmlChar const*)"name", (xmlChar*)list->name);
@@ -197,7 +197,7 @@ write_pwlist(xmlNodePtr parent, PWList *list)
 }
 
 static xmlDocPtr
-write_new_doc(PWList *list)
+write_new_doc(pwlist_t *list)
 {
 char	vers[5];
 	xmlDocPtr doc;
@@ -225,10 +225,10 @@ char	vers[5];
 	return doc;
 }
 
-static Pw *
+static password_t *
 read_pw_node(xmlNodePtr parent)
 {
-	Pw *new;
+	password_t *new;
 	xmlNodePtr node;
 	char *text;
 
@@ -259,11 +259,11 @@ read_pw_node(xmlNodePtr parent)
 	return new;
 }
 
-static PWList*
+static pwlist_t*
 parse_old_doc(xmlDocPtr doc)
 {
-PWList		*list;
-Pw		*pw;
+pwlist_t		*list;
+password_t		*pw;
 xmlNodePtr	 root, node;
 
 	list = new_pwlist("Main");
@@ -425,7 +425,7 @@ int
 main(int argc, char *argv[])
 {
 xmlDocPtr	 doc;
-PWList		*list;
+pwlist_t		*list;
 	
 	get_options(argc, argv);
 

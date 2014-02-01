@@ -26,7 +26,7 @@
 #include	"gnupg.h"
 #include	"actions.h"
 
-static void	action_edit_pw(Pw *pw);
+static void	action_edit_pw(password_t *pw);
 static void	_create_information_field(char* name, InputField* field);
 
 static int disp_h = 15, disp_w = 60;
@@ -34,7 +34,7 @@ static int disp_h = 15, disp_w = 60;
 void
 action_list_add_pw()
 {
-Pw	*pw;
+password_t	*pw;
 
 	InputField fields[] = {
 		{"Name: ",		NULL, STRING},
@@ -86,7 +86,7 @@ end:
 }
 
 static void
-action_edit_pw(Pw *pw)
+action_edit_pw(password_t *pw)
 {
 	InputField fields[] = {
 		{"Name: ",		&pw->name,	STRING},
@@ -102,8 +102,8 @@ action_edit_pw(Pw *pw)
 void 
 action_list_rename()
 {
-	Pw* curpw;
-	PWList* curpwl;
+	password_t* curpw;
+	pwlist_t* curpwl;
 	char *new_name;
 
 	new_name = malloc(STRING_MEDIUM);
@@ -354,7 +354,7 @@ void
 action_list_add_sublist()
 {
 char	*name;
-PWList	*sublist, *iter;
+pwlist_t	*sublist, *iter;
 
 	name = ui_ask_str("Sublist name:", NULL);
 	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
@@ -386,9 +386,9 @@ action_list_at_top_level()
 void
 action_list_select_item()
 {
-	Pw* curpw;
-	PWList* curpwl;
-	PWSearchResult* cursearch;
+	password_t* curpw;
+	pwlist_t* curpwl;
+	search_result_t* cursearch;
 
 	/* Are they searching, or in normal mode? */
 	if(search_results != NULL) {
@@ -434,9 +434,9 @@ action_list_select_item()
 void
 action_list_delete_item()
 {
-	Pw* curpw;
-	PWList* curpwl;
-	PWSearchResult* cursearch;
+	password_t* curpw;
+	pwlist_t* curpwl;
+	search_result_t* cursearch;
 	int i;
 	char str[STRING_LONG];
 	
@@ -509,8 +509,8 @@ action_list_delete_item()
 void
 action_list_move_item()
 {
-Pw*	 curpw;
-PWList	*curpwl, *iter;
+password_t*	 curpw;
+pwlist_t	*curpwl, *iter;
 char	 str[STRING_LONG];
 char	*answer;
 
@@ -590,8 +590,8 @@ char	*answer;
 void
 action_list_move_item_up_level()
 {
-	Pw* curpw;
-	PWList *curpwl;
+	password_t* curpw;
+	pwlist_t *curpwl;
 
 	/* Do nothing if searching */
 	if(search_results != NULL)
@@ -637,8 +637,8 @@ action_list_up_one_level()
 void
 action_list_export()
 {
-	Pw* curpw;
-	PWList *curpwl;
+	password_t* curpw;
+	pwlist_t *curpwl;
 
 	debug("list_export: enter switch");
 	switch(uilist_get_highlighted_type()){
@@ -677,10 +677,10 @@ action_list_locate()
 	int depth = 0, count = 0;
 	char* currentName = NULL;
 	InputField* fields;
-	Pw* curpw = NULL;
-	PWList *curpwl = NULL;
-	PWList *parent = NULL;
-	PWSearchResult* cursearch;
+	password_t* curpw = NULL;
+	pwlist_t *curpwl = NULL;
+	pwlist_t *parent = NULL;
+	search_result_t* cursearch;
 
 	if(search_results != NULL) {
 		cursearch = uilist_get_highlighted_searchresult();
@@ -751,7 +751,7 @@ void
 action_list_launch()
 {
 	int i;
-	Pw* curpw;
+	password_t* curpw;
 	char msg[STRING_LONG];
 
 	switch (uilist_get_highlighted_type()) {
@@ -787,8 +787,8 @@ action_list_read_file()
 void
 action_list_move_item_up()
 {
-	Pw* curpw;
-	PWList *curpwl;
+	password_t* curpw;
+	pwlist_t *curpwl;
 	int worked = 0;
 
 	/* Do nothing if searching */
@@ -819,8 +819,8 @@ action_list_move_item_up()
 void
 action_list_move_item_down()
 {
-	Pw* curpw;
-	PWList *curpwl;
+	password_t* curpw;
+	pwlist_t *curpwl;
 	int worked = 0;
 
 	/* Do nothing if searching */

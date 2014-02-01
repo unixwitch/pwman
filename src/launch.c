@@ -67,7 +67,7 @@ char	*argv[4];
 }
 
 int
-launch(Pw *pw)
+launch(password_t *pw)
 {
 int	i;
 char	*cmd;

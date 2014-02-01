@@ -19,8 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef PW_MINDER_H
-#define PW_MINDER_H
+#ifndef PWMAN_H
+#define PWMAN_H
 
 #include	<sys/types.h>
 
@@ -63,65 +63,64 @@
 #define	xcalloc(n,s)	calloc(n,s)
 #define	xfree(s)	do { if (s) free(s); } while (0)
 
-struct _PW {
-	int id;
-	char *name;
-	char *host;
-	char *user;
-	char *passwd;
-	char *launch;
-	struct _PW *next;
-};
-typedef struct _PW Pw;
+typedef struct password {
+	int	id;
+	char	*name;
+	char	*host;
+	char	*user;
+	char	*passwd;
+	char	*launch;
 
-struct _PWList {
-	char *name;
-	Pw *list;
-	struct _PWList *parent;
-	struct _PWList *sublists;
-	struct _PWList *next;
+	struct password *next;
+} password_t;
+
+typedef struct pwlist {
+	char		*name;
+	password_t		*list;
+
+	struct pwlist	*parent;
+	struct pwlist	*sublists;
+	struct pwlist	*next;
 
 	/* ui stuff, shouldn't be here but this is a quick hack */
 	int current_item;
-};
-typedef struct _PWList PWList;
+} pwlist_t;
 
-struct _PWSearchResult {
+typedef struct search_result {
 	/* Always has a sublist, whether the list or child matches */
-	PWList *sublist;
+	pwlist_t	*sublist;
+
 	/* If the entry itself matches, will be present */
-	Pw *entry;
+	password_t	*entry;
 
-	/* The next one along, as with other structs */
-	struct _PWSearchResult* next;
-};
-typedef struct _PWSearchResult PWSearchResult;
+	struct search_result *next;
+} search_result_t;
 
 
-typedef struct {
-	int field;
-	char *filter;
-} PwFilter;
+typedef struct filter {
+	int	 field;
+	char	*filter;
+} filter_t;
 
-typedef struct {
+typedef struct search {
 	char *search_term;
-} PwSearch;
+} search_t;
 
 typedef struct {
 	char *gpg_id;
 	char *gpg_path;
 	char *password_file;
 	int passphrase_timeout;
-	PwFilter *filter;
-	PwSearch *search;
+	filter_t *filter;
+	search_t *search;
 	int readonly;
 } Options;
 
 extern Options *options;
 extern int write_options;
-extern PWList *pwlist;
-extern PWList *current_pw_sublist;
-extern PWSearchResult *search_results;
+extern pwlist_t *pwlist;
+extern pwlist_t *current_pw_sublist;
+extern search_result_t *search_results;
 extern time_t time_base;
 
 char *trim_ws(char*);
@@ -131,8 +130,8 @@ int ui_init(void);
 int ui_run(void);
 int ui_end(void);
 
-PwFilter * filter_new(void);
-PwSearch * search_new(void);
+filter_t * filter_new(void);
+search_t * search_new(void);
 Options * options_new(void);
 int options_read(void);
 int options_write(void);
@@ -141,32 +140,32 @@ void options_get(void);
 void search_get(void);
 void search_remove(void);
 
-int pwlist_add_ptr(PWList*, Pw*);
-Pw* pwlist_new_pw(void);
-PWList *pwlist_new(char const*);
-int pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp);
+int pwlist_add_ptr(pwlist_t*, password_t*);
+password_t* pwlist_new_pw(void);
+pwlist_t *pwlist_new(char const*);
+int pwlist_change_item_order(password_t* pw, pwlist_t *parent, int moveUp);
 int pwlist_init(void);
 
-int pwlist_export_passwd(Pw *pw);
+int pwlist_export_passwd(password_t *pw);
 int pwlist_free_all(void);
 int pwlist_read_file(void);
-int pwlist_change_list_order(PWList *pw, int moveUp);
-void pwlist_detach_sublist(PWList *parent, PWList *old);
-void pwlist_detach_pw(PWList *list, Pw *pw);
-void pwlist_delete_sublist(PWList *parent, PWList *old);
-void pwlist_delete_pw(PWList *list, Pw *pw);
-void pwlist_free_pw(Pw *old);
-void pwlist_rename_item(Pw* pwitem, char const *new_name);
-void pwlist_rename_sublist(PWList *pwlist, char const *new_name);
-int pwlist_add_sublist(PWList *parent, PWList *new);
-int pwlist_export_list(PWList *pwlist);
+int pwlist_change_list_order(pwlist_t *pw, int moveUp);
+void pwlist_detach_sublist(pwlist_t *parent, pwlist_t *old);
+void pwlist_detach_pw(pwlist_t *list, password_t *pw);
+void pwlist_delete_sublist(pwlist_t *parent, pwlist_t *old);
+void pwlist_delete_pw(pwlist_t *list, password_t *pw);
+void pwlist_free_pw(password_t *old);
+void pwlist_rename_item(password_t* pwitem, char const *new_name);
+void pwlist_rename_sublist(pwlist_t *pwlist, char const *new_name);
+int pwlist_add_sublist(pwlist_t *parent, pwlist_t *new);
+int pwlist_export_list(pwlist_t *pwlist);
 int pwlist_write_file(void);
 int pwlist_import_passwd(void);
 
 char *pwgen_ask(void);
 void pwgen_indep(void);
 
-int launch(Pw *pw);
+int launch(password_t *pw);
 
 #ifndef HAVE_ARC4RANDOM
 uint32_t arc4random(void);

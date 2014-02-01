@@ -48,9 +48,9 @@ static void pwman_quit();
 
 Options *options;
 int write_options;
-PWList *pwlist;
-PWList *current_pw_sublist;
-PWSearchResult *search_results;
+pwlist_t *pwlist;
+pwlist_t *current_pw_sublist;
+search_result_t *search_results;
 time_t time_base;
 
 static int

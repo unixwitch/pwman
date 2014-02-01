@@ -97,18 +97,18 @@ char	*ui_ask_str_with_autogen(char const *msg, char const *, char *(*autogen)(vo
 void	uilist_up(void);
 void	uilist_down(void);
 LIST_ITEM_TYPE uilist_get_highlighted_type(void);
-Pw * uilist_get_highlighted_item(void);
-PWList *uilist_get_highlighted_sublist(void);
-PWSearchResult *uilist_get_highlighted_searchresult(void);
+password_t * uilist_get_highlighted_item(void);
+pwlist_t *uilist_get_highlighted_sublist(void);
+search_result_t *uilist_get_highlighted_searchresult(void);
 void uilist_page_up(void);
 void uilist_page_down(void);
 
 void statusline_readonly(void);
 
-int filter_apply(Pw *pw, PwFilter* fil);
-void filter_alert(PwFilter* fil);
+int filter_apply(password_t *pw, filter_t* fil);
+void filter_alert(filter_t* fil);
 void filter_get(void);
 
-void search_alert(PwSearch* srch);
+void search_alert(search_t* srch);
 
 #endif	/* !PWMAN_UI_H */

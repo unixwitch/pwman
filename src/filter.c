@@ -25,12 +25,12 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-PwFilter *
+filter_t *
 filter_new()
 {
-	PwFilter *new;
+	filter_t *new;
 
-	new = malloc(sizeof(PwFilter));
+	new = malloc(sizeof(filter_t));
 	if(new == NULL) {
 		pw_abort("Failed to allocate memory to hold filtering details!");
 	}
@@ -66,7 +66,7 @@ filter_strcasestr(char *haystack, char *needle){
 }
 
 int
-filter_apply(Pw *pw, PwFilter* fil)
+filter_apply(password_t *pw, filter_t* fil)
 {
 	if( (fil == NULL) || (fil->filter == NULL) ){
 		/* no filter object */
@@ -143,7 +143,7 @@ filter_get()
 
 
 void
-filter_alert(PwFilter* fil)
+filter_alert(filter_t* fil)
 {
 	char alert[80];	
 

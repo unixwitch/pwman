@@ -25,8 +25,8 @@
 #include	"pwman.h"
 
 static void	uilist_highlight_line(int line);
-static int	_uilist_render_sublist(PWList *sublist, int i, int num_shown);
-static int	_uilist_render_entry(Pw *entry, int i, int num_shown);
+static int	_uilist_render_sublist(pwlist_t *sublist, int i, int num_shown);
+static int	_uilist_render_entry(password_t *entry, int i, int num_shown);
 
 static WINDOW *list;
 static int lines = 0;
@@ -67,9 +67,9 @@ int	i;
         scrollok(list, TRUE);
 }
 
-PWSearchResult *
+search_result_t *
 uilist_get_highlighted_searchresult() {
-	PWSearchResult *srchiter;
+	search_result_t *srchiter;
 	int i = -1;
 
 	for(srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
@@ -81,10 +81,10 @@ uilist_get_highlighted_searchresult() {
 	return srchiter;
 }
 
-PWList *
+pwlist_t *
 uilist_get_highlighted_sublist()
 {
-	PWList *iter;
+	pwlist_t *iter;
 	int i = -1;
 
 	if(!current_pw_sublist){ return NULL; }
@@ -99,11 +99,11 @@ uilist_get_highlighted_sublist()
 	return iter;
 }
 
-Pw *
+password_t *
 uilist_get_highlighted_item()
 {	
-	Pw *iter;
-	PWList *listiter;
+	password_t *iter;
+	pwlist_t *listiter;
 	int i = -1;
 
 	if(current_pw_sublist->parent){ i++; }
@@ -134,8 +134,8 @@ uilist_get_highlighted_item()
 LIST_ITEM_TYPE
 uilist_get_highlighted_type()
 {
-	Pw *iter;
-	PWList *listiter;
+	password_t *iter;
+	pwlist_t *listiter;
 	int i = -1;
 
 	if(current_pw_sublist->parent){
@@ -164,7 +164,7 @@ uilist_get_highlighted_type()
 
 /* Draw a sublist on the screen */
 static int
-_uilist_render_sublist(PWList *sublist, int i, int num_shown)
+_uilist_render_sublist(pwlist_t *sublist, int i, int num_shown)
 {
 	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
 		if(lines == current_pw_sublist->current_item){
@@ -182,7 +182,7 @@ _uilist_render_sublist(PWList *sublist, int i, int num_shown)
 
 /* Draw an entry summary on the screen */
 static int
-_uilist_render_entry(Pw *entry, int i, int num_shown)
+_uilist_render_entry(password_t *entry, int i, int num_shown)
 {
 	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
 		if(lines == current_pw_sublist->current_item){
@@ -200,9 +200,9 @@ _uilist_render_entry(Pw *entry, int i, int num_shown)
 void
 uilist_refresh()
 {
-	Pw *iter;
-	PWList *listiter;
-	PWSearchResult *srchiter;
+	password_t *iter;
+	pwlist_t *listiter;
+	search_result_t *srchiter;
 	int i = 0;
 	int num_shown = 0;
 
