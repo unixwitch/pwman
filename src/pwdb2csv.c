@@ -2,6 +2,7 @@
  *  PWDB2CSV - Convert pwman database files into Comma Separated Values
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,17 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#include	<stdlib.h>
+#include	<stdio.h>
+
+#include	<libxml/parser.h>
+
+#include	"pwman.h"
+
 #define STR_LEN 255
 #define PWDB2CSV_PACKAGE "PWDB2CSV"
 #define PWDB2CSV_VERSION "0.1.0"
 
-#include <libxml/parser.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <pwman.h>
-
-static void show_version();
+static void show_version(void);
 static void show_usage(char*);
+
+void free_pw(Pw *old);
 
 struct PWDB2CSV_Options {
 	char *gpg_id;
@@ -46,31 +52,7 @@ debug(char *fmt, ... )
 	fputs("PWDB2CSV Debug% ", stderr);
 	
 	va_start(ap, fmt);
-	while(*fmt){
-		if(*fmt == '%'){
-			switch(*++fmt){
-				case 's': 	/* string */
-					s = va_arg(ap, char*);
-					fputs(s, stderr);
-					break;
-				case 'd':	/* int */
-					d = va_arg(ap, int);
-					fprintf(stderr, "%d", d);
-					break;
-				case 'c':	/* char */
-					c = va_arg(ap, int);
-					fputc(c, stderr);
-					break;
-				default:
-					fputc('%', stderr);
-					fputc(*fmt, stderr);
-					break;
-			}
-		} else {
-			fputc(*fmt, stderr);
-		}
-		*fmt++;
-	}
+	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fputc('\n', stderr);
 #endif
@@ -140,7 +122,7 @@ new_pw()
 	return new;
 }
 
-int
+void
 free_pw(Pw *old)
 {
 	debug("free_pw: free a password");
@@ -209,13 +191,14 @@ escape_string(char *str)
 	char *str2, *iter, *iter2, *c;
 	int i = 0;
 	
-	str2 = malloc( strlen(str) + 100 ); /* any string with 100 quotes is a pisstake , it's just here for safety */
+	str2 = malloc(strlen(str) + 100); /* any string with 100 quotes is a pisstake , it's just here for safety */
 	
-	for(iter = str, iter2 = str2; iter != 0, i < 100; iter++, iter2++, i++){
-		if(*iter != '"'){
+	for (iter = str, iter2 = str2; *iter != 0 && i < 100; iter++, iter2++, i++){
+		if(*iter != '"') {
 			*iter2 = *iter;
 		} else {
-			*iter2 = '\\'; iter2++;
+			*iter2 = '\\';
+			iter2++;
 			*iter2 = *iter;
 		}
 	}
@@ -226,7 +209,7 @@ escape_string(char *str)
 	return str;
 }
 
-int 
+void
 write_password_node(FILE *fp, Pw *pw)
 {
 	fprintf(fp, "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", escape_string(pw->name), escape_string(pw->host), 
@@ -296,7 +279,7 @@ read_pwlist(xmlNodePtr parent, PWList *parent_list)
 	debug("Parent name is %s\n", parent->name);
 
 	if(strcmp((char*)parent->name, "PwList") == 0){
-		strncpy(name, xmlGetProp(parent, (xmlChar*)"name"), STRING_MEDIUM);
+		strncpy(name, (char const *) xmlGetProp(parent, (xmlChar const*)"name"), STRING_MEDIUM);
 		new = new_pwlist(name);
 
 		for(node = parent->children; node != NULL; node = node->next){
@@ -306,9 +289,9 @@ read_pwlist(xmlNodePtr parent, PWList *parent_list)
 			// Doesn't appear to be a problem
 //			} else if(!node->next){
 //				fprintf(stderr, "read_pwlist: messed up node - no next sibling\n");
-			} else if(strcmp(node->name, "PwList") == 0){
+			} else if(strcmp((char const *)node->name, "PwList") == 0){
 				read_pwlist(node, new);
-			} else if(strcmp(node->name, "PwItem") == 0){
+			} else if(strcmp((char const *)node->name, "PwItem") == 0){
 				read_password_node(node, new);
 			}
 		}
@@ -330,26 +313,25 @@ parse_doc(xmlDocPtr doc)
 	char *buf;
 	int i;
 	
-	if(!doc){
+	if(!doc)
 		return NULL;
-	}
+
 
 	root = xmlDocGetRootElement(doc);
-	if(!root || !root->name || (strcmp((char*)root->name, "PWMan_PasswordList") != 0) ){
+	if (!root || !root->name || (strcmp((char*)root->name, "PWMan_PasswordList") != 0) )
 		return NULL;
-	}
-	if(buf = xmlGetProp(root, (xmlChar*)"version")){
-		i = atoi( buf );
-	} else {
+
+	if (buf = (char *) xmlGetProp(root, (xmlChar const *)"version"))
+		i = atoi(buf);
+	else
 		i = 0;
-	}
-	if(i < FF_VERSION){
+
+	if (i < FF_VERSION)
 		return NULL;
-	}
 
 	pwlist = new_pwlist("Main");
-	for(node = root->children; node != NULL; node = node->next){
-		if(strcmp(node->name, "PwList") == 0){
+	for (node = root->children; node != NULL; node = node->next) {
+		if(strcmp((char const *) node->name, "PwList") == 0) {
 			read_pwlist(node, pwlist);
 
 			break;
