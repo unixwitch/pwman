@@ -84,13 +84,13 @@ void ui_refresh_windows(void);
 
 int view_pw(int i);
 
-int	 ui_statusline_yes_no(char const *, int);
 int	 ui_statusline_msg(char const *msg);
-int	 ui_statusline_ask_num(char const *);
-int	 ui_statusline_ask_char(char const *, char *);
-char	*ui_statusline_ask_str(char const *);
-char	*ui_statusline_ask_passwd(char const *, int);
-char	*ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch);
+int	 ui_ask_yes_no(char const *, int);
+int	 ui_ask_num(char const *);
+int	 ui_ask_char(char const *, char *);
+char	*ui_ask_str(char const *);
+char	*ui_ask_passwd(char const *, int);
+char	*ui_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch);
 
 void	uilist_up(void);
 void	uilist_down(void);

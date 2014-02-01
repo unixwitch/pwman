@@ -472,7 +472,7 @@ ui_statusline_clear()
 }
 
 int
-ui_statusline_ask_num(char const *msg)
+ui_ask_num(char const *msg)
 {
 char	*line;
 int	 ret;
@@ -487,7 +487,7 @@ int	 ret;
 }
 
 int
-ui_statusline_ask_char(char const *msg, char* valid)
+ui_ask_char(char const *msg, char* valid)
 {
 	int x = strlen(msg) + 5;
 	char c = 0;
@@ -516,13 +516,13 @@ ui_statusline_ask_char(char const *msg, char* valid)
 }
 
 char *
-ui_statusline_ask_str(char const *msg)
+ui_ask_str(char const *msg)
 {
 	return ui_statusline_prompt(msg, NULL, 0);
 }
 
 char *
-ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch)
+ui_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch)
 {
 	int i = 0;
 	int c;
@@ -583,14 +583,14 @@ ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), in
 }
 
 char *
-ui_statusline_ask_passwd(msg, cancel)
+ui_ask_passwd(msg, cancel)
 	char const	*msg;
 {
 	return ui_statusline_prompt(msg, NULL, 1);
 }
 
 int 
-ui_statusline_yes_no(char const *msg, int def)
+ui_ask_yes_no(char const *msg, int def)
 {
 	int ret = -1;
 	size_t len;

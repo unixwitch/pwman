@@ -186,7 +186,7 @@ char *
 pwgen_ask(char *pw)
 {
 int	i;
-	i = ui_statusline_ask_num("Length of password (default 16):\t");
+	i = ui_ask_num("Length of password (default 16):\t");
 
 	if (i == 0)
 		i = 16;

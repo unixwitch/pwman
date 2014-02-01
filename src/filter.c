@@ -109,7 +109,7 @@ filter_get()
 {
 	char c;
 
-	c = ui_statusline_ask_char("Filter which field? (n)ame (h)ost (u)ser (l)aunch n(o)ne", "nhulo\n");
+	c = ui_ask_char("Filter which field? (n)ame (h)ost (u)ser (l)aunch n(o)ne", "nhulo\n");
 	switch(c){
 		case 'n':
 			options->filter->field = 0;
@@ -135,7 +135,7 @@ filter_get()
 			uilist_refresh();
 			return;
 	}
-	options->filter->filter = ui_statusline_ask_str("String to search for: ");
+	options->filter->filter = ui_ask_str("String to search for: ");
 
 	current_pw_sublist->current_item = -1;
 	uilist_refresh();

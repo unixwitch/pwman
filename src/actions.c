@@ -46,20 +46,20 @@ Pw	*pw;
 	int i;
 
 	pw = pwlist_new_pw(); 
-	if ((pw->name = ui_statusline_ask_str(fields[0].name)) == NULL)
+	if ((pw->name = ui_ask_str(fields[0].name)) == NULL)
 		goto end;
 
-	if ((pw->host = ui_statusline_ask_str(fields[1].name)) == NULL)
+	if ((pw->host = ui_ask_str(fields[1].name)) == NULL)
 		goto end;
 
-	if ((pw->user = ui_statusline_ask_str(fields[2].name)) == NULL)
+	if ((pw->user = ui_ask_str(fields[2].name)) == NULL)
 		goto end;
 
-	if ((pw->passwd = ui_statusline_ask_str_with_autogen(fields[3].name,
+	if ((pw->passwd = ui_ask_str_with_autogen(fields[3].name,
 			fields[3].autogen, 0x07)) == NULL)
 		goto end;
 	
-	if ((pw->launch = ui_statusline_ask_str(fields[4].name)) == NULL)
+	if ((pw->launch = ui_ask_str(fields[4].name)) == NULL)
 		goto end;
 	
 	fields[0].value = &pw->name;
@@ -112,7 +112,7 @@ action_list_rename()
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
 			if (curpw) {
-				new_name = ui_statusline_ask_str("New name");
+				new_name = ui_ask_str("New name");
 				if (strlen(new_name) > 0)
 					pwlist_rename_item(curpw, new_name);
 				free(new_name);
@@ -122,7 +122,7 @@ action_list_rename()
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl){
-				new_name = ui_statusline_ask_str("New sublist name");
+				new_name = ui_ask_str("New sublist name");
 				if (strlen(new_name) > 0)
 					pwlist_rename_sublist(curpwl, new_name);
 				free(new_name);
@@ -234,13 +234,13 @@ action_input_dialog(InputField *fields, int num_fields, char *title)
 		if ((ch >= '1') && (ch <= NUM_TO_CHAR(num_fields))) {
 			i = CHAR_TO_NUM(ch);
 			if (fields[i].autogen != NULL) {
-				*(char **)fields[i].value = ui_statusline_ask_str_with_autogen(
+				*(char **)fields[i].value = ui_ask_str_with_autogen(
 							fields[i].name, 
 							fields[i].autogen, 0x07); 
 			} else if (fields[i].type == STRING){
-				*(char **)fields[i].value = ui_statusline_ask_str(fields[i].name);
+				*(char **)fields[i].value = ui_ask_str(fields[i].name);
 			} else if (fields[i].type == INT) {
-				*(int *)fields[i].value = ui_statusline_ask_num(fields[i].name);
+				*(int *)fields[i].value = ui_ask_num(fields[i].name);
 			} else if(fields[i].type == INFORMATION) {
 				/* Easy, do nothing! */
 			}
@@ -284,7 +284,7 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 
 		if( (ch >= '1') && (ch <= NUM_TO_CHAR(num_fields)) ){
 			i = CHAR_TO_NUM(ch);
-			*(char **)fields[i].value = ui_statusline_ask_str(fields[i].name);
+			*(char **)fields[i].value = ui_ask_str(fields[i].name);
 			
 			/* Now verify it's a valid recipient */
 			if (strlen(fields[i].value)) {
@@ -336,7 +336,7 @@ WINDOW	*dialog_win;
 
 	action_input_dialog_draw_items(dialog_win, fields, num_fields, title, NULL);
 	
-	i = ui_statusline_yes_no(question, 1);
+	i = ui_ask_yes_no(question, 1);
 
 	/*
 	 * clean up
@@ -353,7 +353,7 @@ action_list_add_sublist()
 char	*name;
 PWList	*sublist, *iter;
 
-	name = ui_statusline_ask_str("Sublist name:");
+	name = ui_ask_str("Sublist name:");
 	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
 		if (strcmp(iter->name, name) == 0) {
 			free(name);
@@ -444,7 +444,7 @@ action_list_delete_item()
 
 		if (curpw) {
 			snprintf(str, STRING_LONG, "Really delete \"%s\"", curpw->name);
-			if ((i = ui_statusline_yes_no(str, 0)) != 0) {
+			if ((i = ui_ask_yes_no(str, 0)) != 0) {
 				pwlist_delete_pw(curpwl, curpw);
 				ui_statusline_msg("Password deleted");
 			} else {
@@ -456,7 +456,7 @@ action_list_delete_item()
 		}
 
 		snprintf(str, STRING_LONG, "Really delete Sublist \"%s\"", curpwl->name);
-		if ((i = ui_statusline_yes_no(str, 0)) != 0) {
+		if ((i = ui_ask_yes_no(str, 0)) != 0) {
 			pwlist_delete_sublist(curpwl->parent, curpwl);
 			ui_statusline_msg("Password Sublist deleted");
 		} else {
@@ -472,7 +472,7 @@ action_list_delete_item()
 			curpw = uilist_get_highlighted_item();
 			if(curpw){
 				snprintf(str, STRING_LONG, "Really delete \"%s\"", curpw->name);
-				i = ui_statusline_yes_no(str, 0);
+				i = ui_ask_yes_no(str, 0);
 				if(i){
 					pwlist_delete_pw(current_pw_sublist, curpw);
 					ui_statusline_msg("Password deleted");
@@ -486,7 +486,7 @@ action_list_delete_item()
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl){
 				snprintf(str, STRING_LONG, "Really delete Sublist \"%s\"", curpwl->name);
-				i = ui_statusline_yes_no(str, 0);
+				i = ui_ask_yes_no(str, 0);
 				if(i){
 					pwlist_delete_sublist(curpwl->parent, curpwl);
 					ui_statusline_msg("Password Sublist deleted");
@@ -517,7 +517,7 @@ char	*answer;
 			if(curpw){
 				for (;;) {
 					snprintf(str, sizeof(str), "Move \"%s\" to where?", curpw->name);
-					answer = ui_statusline_ask_str(str);
+					answer = ui_ask_str(str);
 					
 					/* if user just enters nothing do nothing */
 					if (answer[0] == 0) {
@@ -548,7 +548,7 @@ char	*answer;
 			if (curpwl) {
 				for (;;) {
 					snprintf(str, sizeof(str), "Move sublist \"%s\" to where?", curpwl->name);
-					answer = ui_statusline_ask_str(str);
+					answer = ui_ask_str(str);
 					
 					/* if user just enters nothing, do nothing */
 					if (answer[0] == 0) {
