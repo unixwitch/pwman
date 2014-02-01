@@ -326,36 +326,28 @@ int		debug_i = 0;
 		case ' ':
 		case 13:	/* return/enter key */
 			action_list_select_item();
-
-			/*
-			 * current_item = get_current_item();
-			 * if(current_item){ edit_pw(current_item); }
-			 */
 			break;
 
 		case 'd':
 		case 0x14A:	/* DEL key */
-			if (!options->readonly) {
+			if (!options->readonly)
 				action_list_delete_item();
-			} else {
+			else 
 				statusline_readonly();
-			}
 			break;
 
 		case 'm':
-			if (!options->readonly) {
+			if (!options->readonly)
 				action_list_move_item();
-			} else {
+			else
 				statusline_readonly();
-			}
 			break;
 
 		case 'M':
-			if (!options->readonly) {
+			if (!options->readonly)
 				action_list_move_item_up_level();
-			} else {
+			else
 				statusline_readonly();
-			}
 			break;
 
 		case 'h':
@@ -370,11 +362,10 @@ int		debug_i = 0;
 			break;
 
 		case 0x17:	/* control-w */
-			if (!options->readonly) {
+			if (!options->readonly)
 				pwlist_write_file();
-			} else {
+			else
 				statusline_readonly();
-			}
 			break;
 
 		case 0x12:	/* control-r */
