@@ -816,6 +816,11 @@ char		msg[STRING_LONG];
 		debug("list_launch: is a pw");
 		curpw = uilist_get_highlighted_item();
 		if (curpw) {
+			if (!curpw->launch || !*curpw->launch) {
+				ui_statusline_msg("Launch command not defined");
+				return;
+			}
+
 			i = launch(curpw);
 			snprintf(msg, STRING_LONG, "Application exited with code %d", i);
 			ui_statusline_msg(msg);

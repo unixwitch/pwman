@@ -74,7 +74,7 @@ char           *cmd;
 size_t		clen = 0;
 char           *p, *q;
 
-	if ((pw == NULL) || (pw->launch == NULL))
+	if ((pw == NULL) || (pw->launch == NULL) || !(*pw->launch))
 		return -1;
 
 	for (p = pw->launch; *p; p++) {
