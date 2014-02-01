@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT([src/ui.c])
-AM_INIT_AUTOMAKE(pwman, 0.4.4+ft.R.1.2)
+AM_INIT_AUTOMAKE(pwman, 0.4.4+ft.D.1.3)
 AM_CONFIG_HEADER(config.h)
 
 # Checks for programs.
