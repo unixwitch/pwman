@@ -149,6 +149,11 @@ InputField	fields[] = {
 	{"Passphrase timeout (in minutes): ",	&options->passphrase_timeout,	INT}
 };
 
+	if (options->safemode) {
+		ui_statusline_msg("Options cannot be changed in safe mode");
+		return;
+	}
+
 	action_input_dialog(fields, (sizeof(fields) / sizeof(InputField)), "Edit Preferences");
 	write_options = TRUE;
 }
