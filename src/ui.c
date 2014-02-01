@@ -540,7 +540,7 @@ ui_statusline_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), in
 	if ((s = strrchr(text[1], ':')) != NULL)
 		*s = 0;
 
-	snprintf(text[0], STRING_MEDIUM, "%s(%c for autogen):\t", text[1],ch);
+	snprintf(text[0], STRING_MEDIUM, "%s (^%c for autogen):\t", text[1], 0x40 + ch);
 	x = strlen(text[0]) + 5;
 
 	ui_statusline_clear();
@@ -724,7 +724,6 @@ size_t		 pos = 0;
 			pos = strlen(input);
 			break;
 
-		case 0x07:	/* ^G */
 		case 0x1B:	/* ESC */
 			curs_set(0);
 			delwin(pwin);

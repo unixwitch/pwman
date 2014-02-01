@@ -37,23 +37,30 @@ action_list_add_pw()
 Pw	*pw;
 
 	InputField fields[] = {
-		{"Name:\t", NULL, STRING},
-		{"Host:\t", NULL, STRING},
-		{"User:\t", NULL, STRING},
-		{"Password:\t", NULL, STRING, pwgen_ask},
-		{"Launch Command:\t", NULL, STRING}
+		{"Name:\t",		NULL, STRING},
+		{"Host:\t",		NULL, STRING},
+		{"User:\t",		NULL, STRING},
+		{"Password:\t",		NULL, STRING, pwgen_ask},
+		{"Launch command:\t",	NULL, STRING}
 	};
 	int i;
 
 	pw = pwlist_new_pw(); 
-	pw->name = ui_statusline_ask_str(fields[0].name);
-	pw->host = ui_statusline_ask_str(fields[1].name);
-	pw->user = ui_statusline_ask_str(fields[2].name);
+	if ((pw->name = ui_statusline_ask_str(fields[0].name)) == NULL)
+		goto end;
 
-	pw->passwd = ui_statusline_ask_str_with_autogen(fields[3].name,
-			fields[3].autogen, 0x07);
+	if ((pw->host = ui_statusline_ask_str(fields[1].name)) == NULL)
+		goto end;
+
+	if ((pw->user = ui_statusline_ask_str(fields[2].name)) == NULL)
+		goto end;
+
+	if ((pw->passwd = ui_statusline_ask_str_with_autogen(fields[3].name,
+			fields[3].autogen, 0x07)) == NULL)
+		goto end;
 	
-	pw->launch = ui_statusline_ask_str(fields[4].name);
+	if ((pw->launch = ui_statusline_ask_str(fields[4].name)) == NULL)
+		goto end;
 	
 	fields[0].value = &pw->name;
 	fields[1].value = &pw->host;
@@ -63,7 +70,7 @@ Pw	*pw;
 
 	i = action_yes_no_dialog(fields, (sizeof(fields)/sizeof(InputField)), NULL, "Add this entry");
 
-	if(i){
+	if (i) {
 		pwlist_add_ptr(current_pw_sublist, pw);
 		ui_statusline_msg("New password added");
 	} else {
@@ -72,6 +79,10 @@ Pw	*pw;
 	}
 
 	uilist_refresh();
+	return;
+
+end:
+	pwlist_free_pw(pw);
 }
 
 static void
@@ -309,8 +320,8 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 int 
 action_yes_no_dialog(InputField *fields, int num_fields, char *title, char *question)
 {
-	int i;
-	WINDOW *dialog_win;
+int	 i;
+WINDOW	*dialog_win;
 
 	/*
 	 * initialize the info window
