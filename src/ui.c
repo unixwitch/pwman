@@ -237,7 +237,11 @@ ui_run()
 				break;
 			}
 
+			if (search_results != NULL)
+				search_remove();
+
 			time_base = time(NULL);
+			continue;
 		}
 		
 		switch(ch){
