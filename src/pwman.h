@@ -171,7 +171,7 @@ uint32_t arc4random(void);
 #endif
 
 #ifndef HAVE_ARC4RANDOM_UNIFORM
-uint32_t arc4random(uint32_t);
+uint32_t arc4random_uniform(uint32_t);
 #endif
 
 #endif
