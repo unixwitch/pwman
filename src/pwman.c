@@ -214,43 +214,64 @@ main(argc, argv)
 	return 0;
 }
 
+static struct pw_option longopts[] = {
+	{ "help",		pw_no_argument, NULL,		'h' },
+	{ "version",		pw_no_argument, NULL,		'v' },
+	{ "gpg-path",		pw_required_argument, NULL,	'G' },
+	{ "gpg-id",		pw_required_argument, NULL,	'i' },
+	{ "file",		pw_required_argument, NULL,	'f' },
+	{ "passphrase-timeout",	pw_required_argument, NULL,	't' },
+	{ "readonly",		pw_no_argument, NULL,		'r' },
+	{ "safe",		pw_no_argument, NULL, 		's' },
+	{ }
+};
+
 static void
 pwman_parse_command_line(argc, argv)
 	char	**argv;
 {
 int		i;
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
+	while ((i = pw_getopt(argc, argv, "hvrsG:i:f:t:", longopts, NULL)) != -1) {
+		switch (i) {
+		case 'h':
 			pwman_show_usage(argv[0]);
 			exit(1);
-		} else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
+
+		case 'v':
 			pwman_show_version();
 			exit(1);
-		} else if (!strcmp(argv[i], "--gpg-path")) {
+
+		case 'G':
 			write_options = FALSE;
-			options->gpg_path = xstrdup(argv[i + 1]);
-			i++;
-		} else if (!strcmp(argv[i], "--gpg-id")) {
+			options->gpg_path = xstrdup(optarg);
+			break;
+
+		case 'i':
 			write_options = FALSE;
-			options->gpg_id = xstrdup(argv[i + 1]);
-			i++;
-		} else if (!strcmp(argv[i], "--file") || !strcmp(argv[i], "-f")) {
+			options->gpg_id = xstrdup(optarg);
+			break;
+
+		case 'f':
 			write_options = FALSE;
-			options->password_file = xstrdup(argv[i + 1]);
-			i++;
-		} else if (!strcmp(argv[i], "--passphrase-timeout") || !strcmp(argv[i], "-t")) {
+			options->password_file = xstrdup(optarg);
+			break;
+
+		case 't':
 			write_options = FALSE;
-			options->passphrase_timeout = atoi(argv[i + 1]);
-			i++;
-		} else if (!strcmp(argv[i], "--readonly") || !strcmp(argv[i], "-r")) {
+			options->passphrase_timeout = atoi(optarg);
+			break;
+
+		case 'r':
 			write_options = FALSE;
 			options->readonly = TRUE;
-		} else if (!strcmp(argv[i], "--safe") || !strcmp(argv[i], "-s")) {
+			break;
+
+		case 's':
 			options->safemode = TRUE;
-		} else {
-			printf("option %s not recognised\n", argv[i]);
-			printf("try %s --help for more info\n", argv[0]);
+			break;
+
+		default:
 			exit(1);
 		}
 	}
@@ -282,14 +303,14 @@ pwman_show_usage(progname)
 	char const	*progname;
 {
 	printf("Usage: %s [OPTIONS]...\n", progname);
-	puts("Store you passwords securely using public key encryption\n");
-	puts("  --help                 show usage");
-	puts("  --version              display version information");
-	puts("  --gpg-path <path>      Path to GnuPG executable");
-	puts("  --gpg-id <id>          GnuPG ID to use");
-	puts("  --file <file>          file to read passwords from");
-	puts("  --passphrase-timeout <mins>    time before app forgets passphrase(in minutes)");
-	puts("  --readonly             open the database readonly");
-	puts("  --safe-mode            disable 'l'aunch command\n\n");
+	puts("Store your passwords securely using public key encryption\n");
+	puts("  -h, --help a                               show usage");
+	puts("  -v, --version                              display version information");
+	puts("  -G <path>, --gpg-path <path>               Path to GnuPG executable");
+	puts("  -i <id>, --gpg-id <id>                     GnuPG ID to use");
+	puts("  -f <file>, --file <file>                   file to read passwords from");
+	puts("  -t <mins>, --passphrase-timeout <mins>     time before app forgets passphrase(in minutes)");
+	puts("  -r, --readonly                             open the database readonly");
+	puts("  -s, --safe-mode                            disable 'l'aunch command\n\n");
 	puts("Report bugs to <felicity@loreley.flyingparchment.org.uk>");
 }

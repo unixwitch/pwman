@@ -187,4 +187,18 @@ size_t		strlcat (char *dst, const char *src, size_t size);
 
 #endif
 
+struct pw_option {
+	const char	*name;
+	int		 has_arg;
+	int		*flag;
+	int		 val;
+};
+
+#define pw_no_argument        0
+#define pw_required_argument  1
+#define pw_optional_argument  2
+
+int pw_getopt(int nargc, char * const *, const char *,
+	const struct pw_option *, int *);
+
 #endif
