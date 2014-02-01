@@ -2714,7 +2714,7 @@ fi
 # Define the identity of the package.
 
  PACKAGE=pwman
- VERSION=0.4.4+ft.D.1.0
+ VERSION=0.4.4+ft.D.1.1
 
 
 cat >>confdefs.h <<_ACEOF
