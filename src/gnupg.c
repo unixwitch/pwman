@@ -780,8 +780,8 @@ FILE           *streams[3];
 		snprintf(kstr, sizeof(kstr), "%s: %s (%s bits, created %s)",
 			 id, name, bits, date);
 
-		*ids = realloc(*ids, *nids * (sizeof(char *)));
-		(*ids)[*nids] = strdup(kstr);
+		*ids = realloc(*ids, (*nids + 1) * (sizeof(char *)));
+		(*ids)[*nids] = xstrdup(kstr);
 		(*nids)++;
 	}
 
