@@ -58,8 +58,8 @@
 #define STDIN 1
 #define STDERR 2
 
-static int passphrase_good = 0;
-static int gnupg_hit_sigpipe = 0;
+static int	 gnupg_hit_sigpipe = 0;
+static char	*passphrase = NULL;
 
 static char	*gnupg_expand_filename(char const *);
 
@@ -409,15 +409,10 @@ char	*ret;
 const char *
 gnupg_get_passphrase()
 {
-static char	*passphrase = NULL;
-
-/*	passphrase == malloc(V_LONG_STR);*/
-	if ((time_base >= (time(NULL) - (options->passphrase_timeout*60))) && (passphrase_good == 1))
+	if ((time_base >= (time(NULL) - (options->passphrase_timeout*60))) && passphrase)
 		return passphrase;
-	
-	passphrase_good = 0;
+
 	passphrase = ui_statusline_ask_passwd("Enter GnuPG passphrase (^G to Cancel):", 0x07); /* 0x07 == ^G */
-	passphrase_good = 1;
 
 	return passphrase;
 }
@@ -425,7 +420,9 @@ static char	*passphrase = NULL;
 void
 gnupg_forget_passphrase()
 {
-	passphrase_good = 0;
+	bzero(passphrase, strlen(passphrase));
+	free(passphrase);
+	passphrase = NULL;
 
 	debug("forget_passphrase: passphrase forgotten");
 	ui_statusline_msg("Passphrase forgotten");
@@ -585,7 +582,7 @@ gnupg_read(filename, doc)
 	xmlDocPtr	*doc;
 {
 char		*args[9], *data, *err, buf[STRING_LONG], *user, *expfile;
-char const	*passphrase;
+char const	*pass;
 FILE		*streams[3];
 int		 pid;
 int		 ret = 0;
@@ -626,9 +623,9 @@ int		 ret = 0;
 			data = NULL;
 		}
 		
-		passphrase = gnupg_get_passphrase();
+		pass = gnupg_get_passphrase();
 
-		if (passphrase == NULL) {
+		if (pass == NULL) {
 			/* They hit cancel on the password prompt */
 			write_options = 0;
 			ret = 255;
@@ -637,7 +634,7 @@ int		 ret = 0;
 
 		pid = gnupg_exec(options->gpg_path, args, streams);
 
-		fputs(passphrase, streams[STDIN]);
+		fputs(pass, streams[STDIN]);
 		fputc('\n' , streams[STDIN]);
 		fclose(streams[STDIN]);
 		streams[STDIN] = NULL;
@@ -662,7 +659,7 @@ int		 ret = 0;
 			ui_statusline_msg("Bad passphrase, please re-enter");
 			getch();
 
-			passphrase_good = 0;
+			gnupg_forget_passphrase();
 			continue;
 		}
 
