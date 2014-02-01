@@ -114,7 +114,8 @@ typedef struct {
 	filter_t       *filter;
 	search_t       *search;
 	int		readonly;
-}		Options;
+	int		safemode;
+} Options;
 
 extern Options *options;
 extern int	write_options;

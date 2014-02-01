@@ -38,6 +38,9 @@ launch_execute(cmd)
 int		pid, status;
 char           *argv[4];
 
+	if (options->safemode)
+		return -1;
+
 	if (cmd == NULL)
 		return 1;
 
@@ -73,6 +76,9 @@ int		i;
 char           *cmd;
 size_t		clen = 0;
 char           *p, *q;
+
+	if (options->safemode)
+		return -1;
 
 	if ((pw == NULL) || (pw->launch == NULL) || !(*pw->launch))
 		return -1;

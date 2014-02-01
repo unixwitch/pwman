@@ -811,6 +811,11 @@ int		i;
 password_t     *curpw;
 char		msg[STRING_LONG];
 
+	if (options->safemode) {
+		ui_statusline_msg("Launch not allowed in safe mode");
+		return;
+	}
+
 	switch (uilist_get_highlighted_type()) {
 	case PW_ITEM:
 		debug("list_launch: is a pw");

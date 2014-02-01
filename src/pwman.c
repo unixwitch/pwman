@@ -246,6 +246,8 @@ int		i;
 		} else if (!strcmp(argv[i], "--readonly") || !strcmp(argv[i], "-r")) {
 			write_options = FALSE;
 			options->readonly = TRUE;
+		} else if (!strcmp(argv[i], "--safe") || !strcmp(argv[i], "-s")) {
+			options->safemode = TRUE;
 		} else {
 			printf("option %s not recognised\n", argv[i]);
 			printf("try %s --help for more info\n", argv[0]);
@@ -287,6 +289,7 @@ pwman_show_usage(progname)
 	puts("  --gpg-id <id>          GnuPG ID to use");
 	puts("  --file <file>          file to read passwords from");
 	puts("  --passphrase-timeout <mins>    time before app forgets passphrase(in minutes)");
-	puts("  --readonly             open the database readonly\n\n");
+	puts("  --readonly             open the database readonly");
+	puts("  --safe-mode            disable 'l'aunch command\n\n");
 	puts("Report bugs to <felicity@loreley.flyingparchment.org.uk>");
 }
