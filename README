@@ -1,6 +1,11 @@
+# PWMan Password Manager
 
-	PWMan Password Manager
-	----------------------
+**NOTE**: I (Felicity) created this fork of pwman to fix bugs we encountered
+with it at Torchbox.  I did not write this software, and I strongly recommend
+that you don't use it, as the code is fairly awful and in need of a cleanup
+or (preferably) a complete rewrite.  Among other things, pwman is known to
+sometimes drop entries from the database for no reason.  Use it at your own
+risk.
 
 PWMan is a password manager which uses gpg encryption to safeguard your data.
 It provides a simple and easy to use command line (NCurses) interface to 
@@ -8,81 +13,76 @@ manage, store, search and retrieve your passwords.
 
 The look and feel is based on Jaakko Heinonen's abook.
 
+## Installation requirements
 
-INSTALLATION REQUIREMENTS
+PWMan is distributed as source files, and hence needs to be compiled and 
+installed manually. Installation configuration should check and bring in
+all dependencies for you, but ensure you have the following development 
+libraries on your machine before commencing (as configuration will need 
+to be restarted from the beginning each time a dependency fails):
 
- PWMan is distributed as source files, and hence needs to be compiled and 
- installed manually. Installation configuration should check and bring in
- all dependencies for you, but ensure you have the following development 
- libraries on your machine before commencing (as configuration will need 
- to be restarted from the beginning each time a dependency fails):
+* gcc or some other C compiler
+* libc6 standard C development libraries
+* ncurses development libraries
+* libxml2 GNOME XML library
 
-  * gcc or some other C compiler
-  * libc6 standard C development libraries
-  * ncurses development libraries
-  * libxml2 GNOME XML library
+You can install all of these on e.g. Ubuntu with the following command:
 
- You can install all of these on e.g. Ubuntu with the following command:
+	% sudo apt-get install libc6-dev libncurses5-dev libxml2 gcc 
 
-  % sudo apt-get install libc6-dev libncurses5-dev libxml2 gcc 
+Or on Fedora with:
 
- Or on Fedora with:
+	% sudo yum install glibc-devel ncurses-devel libxml2-devel gcc
 
-  % sudo yum install glibc-devel ncurses-devel libxml2-devel gcc
+## Compilation and installation
 
+All tasks related to compilation, deployment etc. are managed by the C
+utility make. First, configure the process: from within the top-level
+directory of the distribution run
 
-COMPILATION AND INSTALLATION
+	% ./configure
 
- All tasks related to compilation, deployment etc. are managed by the C
- utility make. First, configure the process: from within the top-level
- directory of the distribution run
+If you already have all the necessary dependencies installed then this
+will run its course with no errors; otherwise try to fix any failed
+dependencies (on Ubuntu, this will always be possible using standard
+packages).
 
-  % ./configure
+Then run the following sequence of commands to compile, check and then
+install the compiled binary:
 
- If you already have all the necessary dependencies installed then this
- will run its course with no errors; otherwise try to fix any failed
- dependencies (on Ubuntu, this will always be possible using standard
- packages).
+	% make
+	% make check
+	% sudo make install
 
- Then run the following sequence of commands to compile, check and then
- install the compiled binary:
+More detailed information, including other make options, can be found
+in the INSTALL file included in this distribution.
 
-  % make
-  % make check
-  % sudo make install
+## Rollback
 
- More detailed information, including other make options, can be found
- in the INSTALL file included in this distribution.
+Because pwman is installed separately from standard package management, you
+will need to take note of the files mentioned during "sudo make install"
+above in order to roll the installation back. As of v0.4.0, these are:
 
+* /usr/local/bin/pwman
+* /usr/local/bin/convert_pwdb
+* /usr/local/bin/pwdb2csv
+* /usr/local/man/man1/pwman.1
 
-ROLLBACK
+## Before using pwman
 
- Because pwman is installed separately from standard package management, you
- will need to take note of the files mentioned during "sudo make install"
- above in order to roll the installation back. As of v0.4.0, these are:
+While compilation does not directly require it, usage relies on Gnu Privacy 
+Guard (gpg) being installed. You will need to specify a GnuPG ID the
+first time a user runs pwman, so this must be set up beforehand.
 
-  * /usr/local/bin/pwman
-  * /usr/local/bin/convert_pwdb
-  * /usr/local/bin/pwdb2csv
-  * /usr/local/man/man1/pwman.1
+There is more information on the gpg manpage, but you can probably just run
 
+	% gpg --gen-key
 
-BEFORE USING PWMAN
+and follow the on-screen instructions.
 
- While compilation does not directly require it, usage relies on Gnu Privacy 
- Guard (gpg) being installed. You will need to specify a GnuPG ID the
- first time a user runs pwman, so this must be set up beforehand.
+## Setup
 
- There is more information on the gpg manpage, but you can probably just run
-
-  % gpg --gen-key
-
- and follow the on-screen instructions.
-
-
-SETUP
-
- When you first run pwman, it will prompt you for several things:
+When you first run pwman, it will prompt you for several things:
 
 * GnuPG ID
    This is the ID of the GnuPG identity that will be used to encrypt the
@@ -101,30 +101,25 @@ SETUP
     there as a security measure, in case you wander off from your computer
     without logging out.
 
- These configuration settings will be written to your home directory. You can
- change them at any time by running pwman, and pressing 'o' at any time.
+These configuration settings will be written to your home directory. You can
+change them at any time by running pwman, and pressing 'o' at any time.
 
+## Upgrade
 
-UPGRADE
+Currently, all versions of pwman use the same encryption scheme (gpg) and
+the same XML format. As such, to upgrade, simply drop in the new binary.
 
- Currently, all versions of pwman use the same encryption scheme (gpg) and
- the same XML format. As such, to upgrade, simply drop in the new binary.
+## Getting help
 
-
-GETTING HELP
-
- Once pwman is running, and you have entered your (GnuPG) passphrase, you can
- hit '?' to get up the program help. This will tell you what all the keys are
- to perform actions in pwman.
+Once pwman is running, and you have entered your (GnuPG) passphrase, you can
+hit '?' to get up the program help. This will tell you what all the keys are
+to perform actions in pwman.
  
+## License
 
-LICENSE
+All files in this distribution are released under the GNU GENERAL PUBLIC 
+LICENSE.  See COPYING FOR DETAILS.
 
- All files in this distribution are released under the GNU GENERAL PUBLIC 
- LICENSE.
- See COPYING FOR DETAILS.
+## Contact
 
-
-CONTACT AUTHOR
-
- Send bugreports, fixes, wishes etc. to Nick Burch <code@gagravarr.org>
+Send bugreports, fixes, wishes etc. to Felicity Tarnell <felicity@loreley.flyingparchment.org.uk>.
