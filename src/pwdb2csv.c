@@ -321,7 +321,7 @@ parse_doc(xmlDocPtr doc)
 	if (!root || !root->name || (strcmp((char*)root->name, "PWMan_PasswordList") != 0) )
 		return NULL;
 
-	if (buf = (char *) xmlGetProp(root, (xmlChar const *)"version"))
+	if ((buf = (char *) xmlGetProp(root, (xmlChar const *)"version")) != NULL)
 		i = atoi(buf);
 	else
 		i = 0;
