@@ -2,6 +2,7 @@
  *  Convert_PWDB - Convert old pwman files into the new format
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,17 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#include	<stdlib.h>
+#include	<stdio.h>
+
+#include	<libxml/parser.h>
+
+#include	"pwman.h"
+
 #define STR_LEN 255
 #define CONVERT_DB_PACKAGE "Convert_PWDB"
 #define CONVERT_DB_VERSION "0.1.0"
 
-#include <libxml/parser.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <pwman.h>
-
-static void show_version();
+static void show_version(void);
 static void show_usage(char*);
+
+void free_pw(Pw *old);
 
 struct ConvertDB_Options {
 	char *gpg_id;
@@ -48,31 +54,7 @@ debug(char *fmt, ... )
 	fputs("Convert_PWDB Debug% ", stderr);
 	
 	va_start(ap, fmt);
-	while(*fmt){
-		if(*fmt == '%'){
-			switch(*++fmt){
-				case 's': 	/* string */
-					s = va_arg(ap, char*);
-					fputs(s, stderr);
-					break;
-				case 'd':	/* int */
-					d = va_arg(ap, int);
-					fprintf(stderr, "%d", d);
-					break;
-				case 'c':	/* char */
-					c = va_arg(ap, int);
-					fputc(c, stderr);
-					break;
-				default:
-					fputc('%', stderr);
-					fputc(*fmt, stderr);
-					break;
-			}
-		} else {
-			fputc(*fmt, stderr);
-		}
-		*fmt++;
-	}
+	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fputc('\n', stderr);
 #endif
@@ -140,7 +122,7 @@ new_pw()
 	return new;
 }
 
-int
+void
 free_pw(Pw *old)
 {
 	free(old->name);
@@ -181,28 +163,27 @@ add_pw_ptr(PWList *list, Pw *new)
 	return 0;
 }
 
-
-int 
+void 
 write_password_node(xmlNodePtr root, Pw *pw)
 {
 	xmlNodePtr node;
 
-	node = xmlNewChild(root, NULL, (xmlChar*)"PwItem", NULL);
-	xmlNewChild(node, NULL, (xmlChar*)"name", (xmlChar*)pw->name);
-	xmlNewChild(node, NULL, (xmlChar*)"host", (xmlChar*)pw->host);
-	xmlNewChild(node, NULL, (xmlChar*)"user", (xmlChar*)pw->user);
-	xmlNewChild(node, NULL, (xmlChar*)"passwd", (xmlChar*)pw->passwd);
-	xmlNewChild(node, NULL, (xmlChar*)"launch", (xmlChar*)pw->launch);
+	node = xmlNewChild(root, NULL, (xmlChar const*)"PwItem", NULL);
+	xmlNewChild(node, NULL, (xmlChar const*)"name", (xmlChar*)pw->name);
+	xmlNewChild(node, NULL, (xmlChar const*)"host", (xmlChar*)pw->host);
+	xmlNewChild(node, NULL, (xmlChar const*)"user", (xmlChar*)pw->user);
+	xmlNewChild(node, NULL, (xmlChar const*)"passwd", (xmlChar*)pw->passwd);
+	xmlNewChild(node, NULL, (xmlChar const*)"launch", (xmlChar*)pw->launch);
 }
 
-int
+void
 write_pwlist(xmlNodePtr parent, PWList *pwlist)
 {
 	xmlNodePtr node;
 	Pw* iter;
 
-	node = xmlNewChild(parent, NULL, (xmlChar*)"PwList", NULL);
-	xmlSetProp(node, (xmlChar*)"name", (xmlChar*)pwlist->name);
+	node = xmlNewChild(parent, NULL, (xmlChar const*)"PwList", NULL);
+	xmlSetProp(node, (xmlChar const*)"name", (xmlChar*)pwlist->name);
 
 	for(iter = pwlist->list; iter != NULL; iter = iter->next){
 		write_password_node(node, iter);
@@ -221,15 +202,15 @@ write_new_doc(PWList *pwlist)
 		exit(-1);
 	}
 	snprintf(vers, 5, "%d", FF_VERSION);
-	doc = xmlNewDoc((xmlChar*)"1.0");
+	doc = xmlNewDoc((xmlChar const*)"1.0");
 
 	if(!export){
-		root = xmlNewDocNode(doc, NULL, (xmlChar*)"PWMan_PasswordList", NULL);
-		xmlSetProp(root, "version", vers);
+		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_PasswordList", NULL);
+		xmlSetProp(root, (xmlChar const *)"version", (xmlChar *) vers);
 		write_pwlist(root, pwlist);
 	} else {
-		root = xmlNewDocNode(doc, NULL, (xmlChar*)"PWMan_Export", NULL);
-		xmlSetProp(root, "version", vers);
+		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_Export", NULL);
+		xmlSetProp(root, (xmlChar const *) "version", (xmlChar *) vers);
 		write_password_node(root, pwlist->list);	
 	}
 
@@ -285,20 +266,23 @@ parse_old_doc(xmlDocPtr doc)
 		debug("parse_old_doc: Bad xmlDocPtr");
 		return NULL;
 	}
+
 	root = xmlDocGetRootElement(doc);
 	
-	if(!root || !root->name){
+	if (!root || !root->name) {
 		debug("parse_old_doc: Badly formed data");
 		return NULL;
 	}
-	if( strcmp(root->name, "PWMan_Export") == 0){
+
+	if (strcmp((char const *)root->name, "PWMan_Export") == 0)
 		export = 1;
-	} else if( strcmp(root->name, "PWMan_List") == 0){
+	else if (strcmp((char const *)root->name, "PWMan_List") == 0)
 		export = 0;
-	} else {
+	else {
 		debug("parse_old_doc: Not a pwman file");
 		return NULL;
 	}
+
 	for(node = root->children; node != NULL; node = node->next){
 		if(!node || !node->name){
 			debug("parse_old_doc: Bad xml Node");
