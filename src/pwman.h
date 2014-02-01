@@ -22,6 +22,8 @@
 #ifndef PW_MINDER_H
 #define PW_MINDER_H
 
+#include	<sys/types.h>
+
 #include	<curses.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -175,11 +177,11 @@ uint32_t arc4random_uniform(uint32_t);
 #endif
 
 #ifndef	HAVE_STRLCPY
-size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
+size_t strlcpy(char *dst, const char *src, size_t size);
 #endif
 
 #ifndef	HAVE_STRLCAT
-size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
+size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
 #endif
