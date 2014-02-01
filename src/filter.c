@@ -25,23 +25,19 @@
 #include	"pwman.h"
 #include	"ui.h"
 
+#define	FIL_NONE	(-1)
+#define	FIL_NAME	0
+#define	FIL_HOST	1
+#define	FIL_USER	2
+#define	FIL_LAUNCH	3
+
 filter_t *
 filter_new()
 {
-	filter_t *new;
+filter_t       *new;
 
-	new = malloc(sizeof(filter_t));
-	if(new == NULL) {
-		pw_abort("Failed to allocate memory to hold filtering details!");
-	}
-
-	new->field = -1;
-	new->filter = malloc(STRING_LONG);
-	if(new == NULL) {
-		pw_abort("Failed to allocate memory to hold filtering term!");
-	}
-	new->filter[0] = 0;
-
+	new = xcalloc(1, sizeof(*new));
+	new->field = FIL_NONE;
 	return new;
 }
 
@@ -49,92 +45,99 @@ filter_new()
  * String checking only case insensitive using gnu glibc
  */
 static char*
-filter_strcasestr(char *haystack, char *needle){
+filter_strcasestr(haystack, needle)
+	char const	*haystack, *needle;
+{
 	/* Never matches if null/empty string given */
-	if(haystack == NULL) {
+	if (haystack == NULL) {
 		return 0;
 	}
-	if(strlen(haystack) == 0) {
+	if (strlen(haystack) == 0) {
 		return 0;
 	}
 
 #ifdef HAVE_STRCASESTR
-	return (char*)strcasestr(haystack, needle);
+	return (char *)strcasestr(haystack, needle);
 #else
-	return (char*)strstr(haystack, needle);
+	return (char *)strstr(haystack, needle);
 #endif
 }
 
 int
-filter_apply(password_t *pw, filter_t* fil)
+filter_apply(pw, fil)
+	password_t	*pw;
+	filter_t	*fil;
 {
-	if( (fil == NULL) || (fil->filter == NULL) ){
+char const	*field;
+
+	if ((fil == NULL) || (fil->filter == NULL))
 		/* no filter object */
 		return 1;
-	}
-	if( strlen(fil->filter) == 0 ){
+
+	if (strlen(fil->filter) == 0)
 		/* no filter */
 		return 1;
+
+	switch (fil->field) {
+	case FIL_NAME:
+		field = pw->name;
+		break;
+
+	case FIL_HOST:
+		field = pw->host;
+		break;
+
+	case FIL_USER:
+		field = pw->user;
+		break;
+
+	case FIL_LAUNCH:
+		field = pw->launch;
+		break;
+
+	default:
+		return 0;
 	}
-	switch(fil->field){
-		case 0:
-			if( filter_strcasestr(pw->name, fil->filter) ){
-				return 1;
-			}					
-			break;
-		case 1:
-			if( filter_strcasestr(pw->host, fil->filter) ){
-				return 1;
-			}
-			break;
-		case 2:
-			if( filter_strcasestr(pw->user, fil->filter) ){
-				return 1;
-			}
-			break;
-		case 3:
-			if( filter_strcasestr(pw->launch, fil->filter) ){
-				return 1;
-			}
-			break;
-		default:
-/*			fprintf(stderr, "Invalid filter field %d\n", fil->field);*/
-			break;
-	}
+
+	if (filter_strcasestr(field, fil->filter))
+		return 1;
+
 	return 0;
 }
 
 void
 filter_get()
 {
-	char c;
+char		c;
 
 	c = ui_ask_char("Filter which field? (n)ame (h)ost (u)ser (l)aunch n(o)ne", "nhulo\n");
-	switch(c){
-		case 'n':
-			options->filter->field = 0;
-			break;
+	switch (c) {
+	case 'n':
+		options->filter->field = FIL_NAME;
+		break;
 
-		case 'h':
-			options->filter->field = 1;
-			break;
+	case 'h':
+		options->filter->field = FIL_HOST;
+		break;
 
-		case 'u':
-			options->filter->field = 2;
-			break;
+	case 'u':
+		options->filter->field = FIL_USER;
+		break;
 
-		case 'l':
-			options->filter->field = 3;
-			break;
+	case 'l':
+		options->filter->field = FIL_LAUNCH;
+		break;
 
-		case 'o':
-		default:
-			options->filter->field = -1;
-			options->filter->filter[0] = 0;
+	case 'o':
+	default:
+		options->filter->field = FIL_NONE;
+		free(options->filter->filter);
+		options->filter->filter = NULL;
 
-			uilist_refresh();
-			return;
+		uilist_refresh();
+		return;
 	}
+
 	options->filter->filter = ui_ask_str("String to search for: ", NULL);
 
 	current_pw_sublist->current_item = -1;
@@ -143,32 +146,38 @@ filter_get()
 
 
 void
-filter_alert(filter_t* fil)
+filter_alert(fil)
+	filter_t	*fil;
 {
-	char alert[80];	
+char		alert[80];
 
-	if( (fil == NULL) || (fil->filter == NULL) ){
+	if ((fil == NULL) || (fil->filter == NULL))
 		/* no filter object */
 		return;
-	}
-	if( strlen(fil->filter) == 0 ){
+
+	if (strlen(fil->filter) == 0)
 		/* no filter */
 		return;
-	}
-	switch(fil->field){
-		case 0:
-			snprintf(alert, sizeof(alert), " (Filtering on name with '%s')", fil->filter);
-			break;
-		case 1:
-			snprintf(alert, sizeof(alert), " (Filtering on host with '%s')", fil->filter);
-			break;
-		case 2:
-			snprintf(alert, sizeof(alert), " (Filtering on user with '%s')", fil->filter);
-		case 3:
-			snprintf(alert, sizeof(alert), " (Filtering on launch with '%s')", fil->filter);
-		default:
-/*			fprintf(stderr, "Invalid filter field %d\n", fil->field);*/
-			break;
+
+	switch (fil->field) {
+	case FIL_NAME:
+		snprintf(alert, sizeof(alert), " (Filtering on name with '%s')", fil->filter);
+		break;
+
+	case FIL_HOST:
+		snprintf(alert, sizeof(alert), " (Filtering on host with '%s')", fil->filter);
+		break;
+
+	case FIL_USER:
+		snprintf(alert, sizeof(alert), " (Filtering on user with '%s')", fil->filter);
+		break;
+
+	case FIL_LAUNCH:
+		snprintf(alert, sizeof(alert), " (Filtering on launch with '%s')", fil->filter);
+		break;
+
+	default:
+		break;
 	}
 
 	ui_statusline_clear();

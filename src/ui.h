@@ -27,7 +27,7 @@
 #include	<ctype.h>
 
 #ifdef HAVE_TERMIOS_H
-# include	<termios.h>
+#include	<termios.h>
 #endif
 
 #include	"pwman.h"
@@ -35,7 +35,7 @@
 #define MIN_LINES 22
 #define MIN_COLS 60
 
-#define LIST_TOP 3 
+#define LIST_TOP 3
 #define LIST_BOTTOM (LINES -3)
 #define LIST_LINES (LIST_BOTTOM-LIST_TOP)
 
@@ -57,9 +57,9 @@
 #define CNTL(x)	((x) - 0x40)
 
 typedef enum {
-	STRING,     /* A regular string */
-	INT,        /* An integer */
-	INFORMATION /* Name only, no value, so read only */
+	STRING,		/* A regular string */
+	INT,		/* An integer */
+	INFORMATION	/* Name only, no value, so read only */
 } TYPE;
 
 typedef enum {
@@ -70,45 +70,45 @@ typedef enum {
 } LIST_ITEM_TYPE;
 
 typedef struct {
-	char *name;
-	void *value; /* int* or char* */
-	TYPE type;
-	char *(*autogen)(void);
+	char const	*name;
+	void		*value;	/* int* or char** */
+	TYPE		 type;
+	char           *(*autogen) (void);
 } InputField;
 
-void uilist_init(void);
-void uilist_free(void);
-void uilist_refresh(void);
-void uilist_clear(void);
-void uilist_headerline(void);
-int ui_statusline_clear(void);
-void ui_refresh_windows(void);
+void		uilist_init(void);
+void		uilist_free(void);
+void		uilist_refresh(void);
+void		uilist_clear(void);
+void		uilist_headerline(void);
+int		ui_statusline_clear(void);
+void		ui_refresh_windows(void);
 
-int view_pw(int i);
+int		view_pw    (int i);
 
-int	 ui_statusline_msg(char const *msg);
-int	 ui_ask_yes_no(char const *, int);
-int	 ui_ask_num(char const *);
-int	 ui_ask_char(char const *, char *);
-char	*ui_ask_str(char const *, char const *);
-char	*ui_ask_passwd(char const *, char const *);
-char	*ui_ask_str_with_autogen(char const *msg, char const *, char *(*autogen)(void), int ch);
+int		ui_statusline_msg(char const *msg);
+int		ui_ask_yes_no(char const *, int);
+int		ui_ask_num (char const *);
+int		ui_ask_char(char const *, char *);
+char           *ui_ask_str(char const *, char const *);
+char           *ui_ask_passwd(char const *, char const *);
+char           *ui_ask_str_with_autogen(char const *msg, char const *, char *(*autogen) (void), int ch);
 
-void	uilist_up(void);
-void	uilist_down(void);
-LIST_ITEM_TYPE uilist_get_highlighted_type(void);
-password_t * uilist_get_highlighted_item(void);
-pwlist_t *uilist_get_highlighted_sublist(void);
+void		uilist_up (void);
+void		uilist_down(void);
+LIST_ITEM_TYPE	uilist_get_highlighted_type(void);
+password_t     *uilist_get_highlighted_item(void);
+pwlist_t       *uilist_get_highlighted_sublist(void);
 search_result_t *uilist_get_highlighted_searchresult(void);
-void uilist_page_up(void);
-void uilist_page_down(void);
+void		uilist_page_up(void);
+void		uilist_page_down(void);
 
-void statusline_readonly(void);
+void		statusline_readonly(void);
 
-int filter_apply(password_t *pw, filter_t* fil);
-void filter_alert(filter_t* fil);
-void filter_get(void);
+int		filter_apply(password_t *pw, filter_t *fil);
+void		filter_alert(filter_t *fil);
+void		filter_get(void);
 
-void search_alert(search_t* srch);
+void		search_alert(search_t *srch);
 
-#endif	/* !PWMAN_UI_H */
+#endif			/* !PWMAN_UI_H */

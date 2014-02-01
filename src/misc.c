@@ -25,9 +25,10 @@
 #include	"ui.h"
 
 void
-pw_abort(char const *fmt, ... )
+pw_abort(char const *fmt,...)
 {
 va_list	ap;
+
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -37,10 +38,11 @@ va_list	ap;
 }
 
 void
-debug(char const *fmt, ... )
+debug(char const *fmt,...)
 {
 #ifdef DEBUG
-	va_list ap;
+va_list	ap;
+
 	fputs("PWMan Debug% ", stderr);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -48,20 +50,4 @@ debug(char const *fmt, ... )
 
 	fputs("\n", stderr);
 #endif
-}
-
-char *
-trim_ws(char *str)
-{
-	int i;
-
-	for(i = (strlen(str) - 1); i >= 0; i--){
-		if(str[i] != ' '){
-			return str;
-		} else {
-			str[i] = 0;
-		}
-	}
-	ui_statusline_msg(str);
-	return str;
 }

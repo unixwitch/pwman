@@ -28,13 +28,14 @@
 
 #include	"pwman.h"
 
-static char *options_get_file(void);
-static char *options_get_database(void);
+static char    *options_get_file(void);
+static char    *options_get_database(void);
 
-Options*
+Options *
 options_new()
 {
-Options	*ret;
+Options *ret;
+
 	ret = xcalloc(1, sizeof(*ret));
 	ret->passphrase_timeout = 180;
 	ret->readonly = FALSE;
@@ -48,34 +49,34 @@ Options	*ret;
 static char *
 options_get_file()
 {
-char const	*home;
-char		*ret;
+char const     *home;
+char           *ret;
 
 	if ((home = getenv("HOME")) == NULL) {
-	struct passwd	*pwd;
+	struct passwd  *pwd;
+
 		if ((pwd = getpwuid(getuid())) == NULL)
 			return NULL;
 		home = pwd->pw_dir;
 	}
-
 	ret = xmalloc(strlen(home) + 1 + strlen(CONF_FILE) + 1);
 	sprintf(ret, "%s/%s", home, CONF_FILE);
 	return ret;
 }
 
-char*
+char *
 options_get_database()
 {
-char const	*home;
-char		*ret;
+char const     *home;
+char           *ret;
 
 	if ((home = getenv("HOME")) == NULL) {
-	struct passwd	*pwd;
+	struct passwd  *pwd;
+
 		if ((pwd = getpwuid(getuid())) == NULL)
 			return NULL;
 		home = pwd->pw_dir;
 	}
-
 	ret = xmalloc(strlen(home) + 1 + strlen(DB_FILE) + 1);
 	sprintf(ret, "%s/%s", home, DB_FILE);
 	return ret;
@@ -84,48 +85,54 @@ char		*ret;
 int
 options_read()
 {
-	char *file;
-	xmlDocPtr doc;
-	xmlNodePtr node, root;
-	
+char           *file;
+xmlDocPtr	doc;
+xmlNodePtr	node, root;
+
 	file = options_get_file();
-	if(file == NULL)
+	if (file == NULL)
 		return -1;
 
 	doc = xmlParseFile(file);
-	if(!doc)
+	if (!doc)
 		return -1;
 
 	root = xmlDocGetRootElement(doc);
 
-	if (!root || !root->name || (strcmp((char*)root->name, "pwm_config") != 0)) {
-		fprintf(stderr,"PWM-Warning: Badly formed .pwmanrc\n");
+	if (!root || !root->name || (strcmp((char *)root->name, "pwm_config") != 0)) {
+		fprintf(stderr, "PWM-Warning: Badly formed .pwmanrc\n");
 		return -1;
 	}
+	for (node = root->children; node != NULL; node = node->next) {
+	char const     *text = (char const *)xmlNodeGetContent(node);
 
-	for(node = root->children; node != NULL; node = node->next){
-	char const	*text = (char const *) xmlNodeGetContent(node);
-
-		if(!node || !node->name)
+		if (!node || !node->name)
 			debug("read_config: Fucked up xml node");
-		else if (strcmp((char*)node->name, "gpg_id") == 0)
+
+		else if (strcmp((char *)node->name, "gpg_id") == 0)
 			options->gpg_id = xstrdup(text);
-		else if (strcmp((char*)node->name, "gpg_path") == 0)
+
+		else if (strcmp((char *)node->name, "gpg_path") == 0)
 			options->gpg_path = xstrdup(text);
-		else if (strcmp((char*)node->name, "password_file") == 0)
+
+		else if (strcmp((char *)node->name, "password_file") == 0)
 			options->password_file = xstrdup(text);
-		else if (strcmp((char*)node->name, "passphrase_timeout") == 0)
+
+		else if (strcmp((char *)node->name, "passphrase_timeout") == 0)
 			options->passphrase_timeout = atoi(text);
-		else if (strcmp((char*)node->name, "filter") == 0) {
-			options->filter->field = atoi((char const *) xmlGetProp(node, (xmlChar const *) "field"));
+
+		else if (strcmp((char *)node->name, "filter") == 0) {
+			options->filter->field = atoi((char const *)xmlGetProp(node, (xmlChar const *)"field"));
 			options->filter->filter = xstrdup(text);
-		} else if (strcmp((char*)node->name, "readonly") == 0)
+
+		} else if (strcmp((char *)node->name, "readonly") == 0)
 			options->readonly = TRUE;
-		else if (strcmp((char*)node->name, "text") == 0)
+
+		else if (strcmp((char *)node->name, "text") == 0)
 			/* Safe to ignore. This is whitespace etc */
 			;
 		else
-			debug("read_config: Unrecognised xml node '%s'", (char*)node->name);
+			debug("read_config: Unrecognised xml node '%s'", (char *)node->name);
 	}
 	write_options = TRUE;
 	xmlFreeDoc(doc);
@@ -135,63 +142,62 @@ options_read()
 int
 options_write()
 {
-	char *file;
-	char text[STRING_SHORT];
-	xmlDocPtr doc;
-	xmlNodePtr node, root;
+char           *file;
+char		text[STRING_SHORT];
+xmlDocPtr	doc;
+xmlNodePtr	node, root;
 
-	if(!write_options){
+	if (!write_options)
 		return 0;
-	}
+
 	file = options_get_file();
-	if(file == NULL){
+	if (file == NULL)
 		return -1;
-	}
 
-	if(!options){
+	if (!options)
 		return -1;
-	}
-	doc = xmlNewDoc((xmlChar*) "1.0");
-	root = xmlNewDocNode(doc, NULL, (xmlChar*)"pwm_config", NULL);
-	xmlNewChild(root, NULL, (xmlChar*)"gpg_id", (xmlChar*)options->gpg_id);
-	xmlNewChild(root, NULL, (xmlChar*)"gpg_path", (xmlChar*)options->gpg_path);
-	xmlNewChild(root, NULL, (xmlChar*)"password_file", (xmlChar*)options->password_file);
 
-	snprintf(text, STRING_SHORT, "%d", options->passphrase_timeout);
-	xmlNewChild(root, NULL, (xmlChar*)"passphrase_timeout", (xmlChar*)text);
+	doc = xmlNewDoc((xmlChar const *) "1.0");
+	root = xmlNewDocNode(doc, NULL, (xmlChar const *) "pwm_config", NULL);
+	xmlNewChild(root, NULL, (xmlChar const *) "gpg_id", (xmlChar *) options->gpg_id);
+	xmlNewChild(root, NULL, (xmlChar const *) "gpg_path", (xmlChar *) options->gpg_path);
+	xmlNewChild(root, NULL, (xmlChar const *) "password_file", (xmlChar *) options->password_file);
 
-	snprintf(text, STRING_SHORT, "%d", options->filter->field);
-	node = xmlNewChild(root, NULL, (xmlChar*)"filter", (xmlChar*)options->filter->filter);
-	xmlSetProp(node, (xmlChar const *) "field", (xmlChar const *) text);
+	snprintf(text, sizeof(text), "%d", options->passphrase_timeout);
+	xmlNewChild(root, NULL, (xmlChar const *) "passphrase_timeout", (xmlChar *) text);
+
+	snprintf(text, sizeof(text), "%d", options->filter->field);
+	node = xmlNewChild(root, NULL, (xmlChar const *) "filter", (xmlChar *) options->filter->filter);
+	xmlSetProp(node, (xmlChar const *)"field", (xmlChar const *)text);
 
 	/* Note - search isn't serialised, but filter is */
 
 	xmlDocSetRootElement(doc, root);
 
-	if( xmlSaveFormatFile(file, doc, TRUE) != -1 ){
+	if (xmlSaveFormatFile(file, doc, TRUE) != -1) {
 		xmlFreeDoc(doc);
 		return 0;
-	} else {
-		debug("write_options: couldn't write config file");
-		xmlFreeDoc(doc);
-		return -1;
 	}
+
+	debug("write_options: couldn't write config file");
+	xmlFreeDoc(doc);
+	return -1;
 }
 
 void
 options_get()
 {
-char	*dbfile;
-char	 line[1024];
-	
+char           *dbfile;
+char		line[1024];
+
 	puts("Hmm... can't open ~/.pwmanrc, we'll create one manually now.");
-	
+
 	printf("GnuPG ID [you@yourdomain.com] or [012345AB]: ");
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
 	line[strlen(line) - 1] = 0;
 	options->gpg_id = *line ? xstrdup(line) : xstrdup("you@yourdomain.com");
-	
+
 	printf("Path to GnuPG [/usr/bin/gpg]: ");
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
@@ -218,4 +224,3 @@ char	 line[1024];
 	write_options = TRUE;
 	options_write();
 }
-

@@ -28,9 +28,9 @@ static void	uilist_highlight_line(int line);
 static int	_uilist_render_sublist(pwlist_t *sublist, int i, int num_shown);
 static int	_uilist_render_entry(password_t *entry, int i, int num_shown);
 
-static WINDOW *list;
-static int lines = 0;
-static int first_list_item = 0;
+static WINDOW  *list;
+static int	lines = 0;
+static int	first_list_item = 0;
 
 void
 uilist_init()
@@ -38,6 +38,7 @@ uilist_init()
 	list = newwin(LIST_LINES, COLS, LIST_TOP, 0);
 	scrollok(list, TRUE);
 }
+
 /*
 void
 resize_list()
@@ -53,80 +54,81 @@ uilist_free()
 	list = NULL;
 }
 
-static void 
+static void
 uilist_highlight_line(int line)
 {
-int	i;
+int		i;
+
 	wstandout(list);
 /*	mvwchgat(list, i, 0, -1, A_STANDOUT, 0, NULL);*/
 
-        scrollok(list, FALSE);
+	scrollok(list, FALSE);
 	wmove(list, line, 0);
-	for(i = 0; i < COLS; i++)
+	for (i = 0; i < COLS; i++)
 		waddch(list, ' ');
-        scrollok(list, TRUE);
+	scrollok(list, TRUE);
 }
 
 search_result_t *
-uilist_get_highlighted_searchresult() {
-	search_result_t *srchiter;
-	int i = -1;
+uilist_get_highlighted_searchresult()
+{
+search_result_t *srchiter;
+int		i = -1;
 
-	for(srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
+	for (srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
 		i++;
-		if(i == current_pw_sublist->current_item){
+		if (i == current_pw_sublist->current_item) {
 			break;
 		}
 	}
 	return srchiter;
 }
 
-pwlist_t *
+pwlist_t       *
 uilist_get_highlighted_sublist()
 {
-	pwlist_t *iter;
-	int i = -1;
+pwlist_t       *iter;
+int		i = -1;
 
-	if(!current_pw_sublist){ return NULL; }
-	if(current_pw_sublist->parent){ i++; }
+	if (!current_pw_sublist)
+		return NULL;
 
-	for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
+	if (current_pw_sublist->parent)
 		i++;
-		if(i == current_pw_sublist->current_item){
+
+	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
+		i++;
+		if (i == current_pw_sublist->current_item)
 			break;
-		}
+
 	}
+
 	return iter;
 }
 
-password_t *
+password_t     *
 uilist_get_highlighted_item()
-{	
-	password_t *iter;
-	pwlist_t *listiter;
-	int i = -1;
+{
+password_t     *iter;
+pwlist_t       *listiter;
+int		i = -1;
 
-	if(current_pw_sublist->parent){ i++; }
-	
-	for(listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next){
+	if (current_pw_sublist->parent)
 		i++;
-	}
-		
-	for(iter = current_pw_sublist->list; iter != NULL; iter = iter->next){
-		if( filter_apply(iter, options->filter) ){
+
+	for (listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next)
+		i++;
+
+
+	for (iter = current_pw_sublist->list; iter != NULL; iter = iter->next) {
+		if (filter_apply(iter, options->filter))
 			i++;
-		}
-		if( i == current_pw_sublist->current_item ){
+
+		if (i == current_pw_sublist->current_item) {
 			debug("get_highlighted_item: found %d, break now", i);
 			return iter;
 		}
 	}
-/*	fprintf(stderr, "%d.", curitem);
-	for(iter = pwlist; (iter != NULL) && i <= curitem; iter = iter->next){
-		if( apply_filter(iter, options->filter) ){
-			i++;	
-		}	
-	}*/
 	debug("get_highlighted_item: nothing found, return NULL");
 	return NULL;
 }
@@ -134,30 +136,29 @@ uilist_get_highlighted_item()
 LIST_ITEM_TYPE
 uilist_get_highlighted_type()
 {
-	password_t *iter;
-	pwlist_t *listiter;
-	int i = -1;
+password_t     *iter;
+pwlist_t       *listiter;
+int		i = -1;
 
-	if(current_pw_sublist->parent){
-		if(current_pw_sublist->current_item == 0){
+	if (current_pw_sublist->parent) {
+		if (current_pw_sublist->current_item == 0)
 			return PW_UPLEVEL;
-		}
+
 		i++;
 	}
-	for(listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next){
+
+	for (listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next) {
 		i++;
-		if(i == current_pw_sublist->current_item){
+		if (i == current_pw_sublist->current_item)
 			return PW_SUBLIST;
-		}
 	}
-		
-	for(iter = current_pw_sublist->list; iter != NULL; iter = iter->next){
-		if( filter_apply(iter, options->filter) ){
+
+	for (iter = current_pw_sublist->list; iter != NULL; iter = iter->next) {
+		if (filter_apply(iter, options->filter))
 			i++;
-		}
-		if( i == current_pw_sublist->current_item ){
+
+		if (i == current_pw_sublist->current_item)
 			return PW_ITEM;
-		}
 	}
 	return PW_NULL;
 }
@@ -166,17 +167,18 @@ uilist_get_highlighted_type()
 static int
 _uilist_render_sublist(pwlist_t *sublist, int i, int num_shown)
 {
-	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
-		if(lines == current_pw_sublist->current_item){
+	if ((i >= first_list_item) && (i <= LAST_LIST_ITEM)) {
+		if (lines == current_pw_sublist->current_item)
 			uilist_highlight_line(num_shown);
-		} else {
+		else
 			wattrset(list, A_BOLD);
-		}
+
 		mvwprintw(list, num_shown, NAMEPOS, "%s ->", sublist->name);
 		wattrset(list, A_NORMAL);
 		wstandend(list);
 		num_shown++;
 	}
+
 	return num_shown;
 }
 
@@ -184,10 +186,10 @@ _uilist_render_sublist(pwlist_t *sublist, int i, int num_shown)
 static int
 _uilist_render_entry(password_t *entry, int i, int num_shown)
 {
-	if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
-		if(lines == current_pw_sublist->current_item){
+	if ((i >= first_list_item) && (i <= LAST_LIST_ITEM)) {
+		if (lines == current_pw_sublist->current_item)
 			uilist_highlight_line(num_shown);
-		}
+
 		mvwaddnstr(list, num_shown, NAMEPOS, entry->name, NAMELEN);
 		mvwaddnstr(list, num_shown, HOSTPOS, entry->host, HOSTLEN);
 		mvwaddnstr(list, num_shown, USERPOS, entry->user, USERLEN);
@@ -200,19 +202,18 @@ _uilist_render_entry(password_t *entry, int i, int num_shown)
 void
 uilist_refresh()
 {
-	password_t *iter;
-	pwlist_t *listiter;
-	search_result_t *srchiter;
-	int i = 0;
-	int num_shown = 0;
+password_t     *iter;
+pwlist_t       *listiter;
+search_result_t *srchiter;
+int		i = 0;
+int		num_shown = 0;
 
 	debug("refresh_list: refreshing list");
-	if(list == NULL){
+	if (list == NULL)
 		uilist_init();
-	}
-	if(current_pw_sublist == NULL){
+
+	if (current_pw_sublist == NULL)
 		return;
-	}
 
 	uilist_clear();;
 	first_list_item = 0;
@@ -221,58 +222,59 @@ uilist_refresh()
 	uilist_headerline();
 
 	/* Ensure we don't end up off the screen */
-	if(current_pw_sublist->current_item < 0){
+	if (current_pw_sublist->current_item < 0)
 		current_pw_sublist->current_item = 0;
-	}
-	if(current_pw_sublist->current_item < first_list_item){
-		first_list_item = current_pw_sublist->current_item;		
-	} else if((current_pw_sublist->current_item > LAST_LIST_ITEM)){
-		first_list_item = current_pw_sublist->current_item - (LIST_LINES-1);
-	}
 
-	if(search_results == NULL) {
+	if (current_pw_sublist->current_item < first_list_item)
+		first_list_item = current_pw_sublist->current_item;
+	else if ((current_pw_sublist->current_item > LAST_LIST_ITEM))
+		first_list_item = current_pw_sublist->current_item - (LIST_LINES - 1);
+
+	if (search_results == NULL) {
 		/* If we aren't at the top level, off the "Up One Level" item */
-		if(current_pw_sublist->parent && search_results == NULL){
-			if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
-				if(lines == current_pw_sublist->current_item){
+		if (current_pw_sublist->parent && search_results == NULL) {
+			if ((i >= first_list_item) && (i <= LAST_LIST_ITEM)) {
+				if (lines == current_pw_sublist->current_item)
 					uilist_highlight_line(num_shown);
-				} else {
+				else
 					wattrset(list, A_BOLD);
-				}
+
 				mvwprintw(list, num_shown, NAMEPOS, "<Up One Level - \"%s\">", current_pw_sublist->parent->name);
 				wattrset(list, A_NORMAL);
 				wstandend(list);
 				num_shown++;
 			}
-			i++; 
+			i++;
 			lines++;
 		}
 		/* Draw our sublists */
-		for(listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next){
+		for (listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next) {
 			num_shown = _uilist_render_sublist(listiter, i, num_shown);
 			lines++;
-			i++; 
+			i++;
 		}
 		/* Draw our entries, if the filter says it's ok */
-		for(iter = current_pw_sublist->list; (iter != NULL); iter = iter->next){
+		for (iter = current_pw_sublist->list; (iter != NULL); iter = iter->next) {
+
 			/*
-			 * if line satifies filter criteria increment i and lines
+			 * if line satifies filter criteria increment i and
+			 * lines
 			 */
-			if( filter_apply(iter, options->filter) ){
+			if (filter_apply(iter, options->filter)) {
 				num_shown = _uilist_render_entry(iter, i, num_shown);
 				lines++;
-				i++;	
+				i++;
 			}
 		}
 	} else {
-		for(srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
-			if(srchiter->entry != NULL) {
+		for (srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
+			if (srchiter->entry != NULL)
 				num_shown = _uilist_render_entry(srchiter->entry, i, num_shown);
-			} else {
+			else
 				num_shown = _uilist_render_sublist(srchiter->sublist, i, num_shown);
-			}
+
 			lines++;
-			i++;	
+			i++;
 		}
 	}
 
@@ -283,23 +285,21 @@ uilist_refresh()
 	 * Is the cursor off the screen, after moving up or down the tree?
 	 * (Don't trigger this if we have no entries yet)
 	 */
-	if(current_pw_sublist->current_item) {
-		if((lines-1) < current_pw_sublist->current_item) {
+	if (current_pw_sublist->current_item) {
+		if ((lines - 1) < current_pw_sublist->current_item) {
 			/* Just adjust, then redraw */
-			current_pw_sublist->current_item = lines-1;
+			current_pw_sublist->current_item = lines - 1;
 			uilist_refresh();
 		}
 	}
 
 	/* If we have filtering turned on, then warn the user of that */
-	if(options->filter) {
+	if (options->filter)
 		filter_alert(options->filter);
-	}
 
 	/* If we have searching active, then warn the user of that */
-	if(options->search) {
+	if (options->search)
 		search_alert(options->search);
-	}
 
 	debug("refresh_list: done refreshing list");
 }
@@ -307,12 +307,11 @@ uilist_refresh()
 void
 uilist_clear()
 {
-	int i;
-	
+int		i;
+
 	werase(list);
-	for(i = 0; i < COLS; i++){
+	for (i = 0; i < COLS; i++)
 		mvaddch(2, i, ' ');
-	}
 }
 
 void
@@ -329,14 +328,14 @@ uilist_headerline()
 	hide_cursor();
 }
 
-void 
+void
 uilist_page_up()
 {
 	current_pw_sublist->current_item -= (LIST_LINES - 1);
 
-	if(current_pw_sublist->current_item < 1){
+	if (current_pw_sublist->current_item < 1)
 		current_pw_sublist->current_item = 0;
-	}
+
 	uilist_refresh();
 }
 
@@ -345,30 +344,28 @@ uilist_page_down()
 {
 	current_pw_sublist->current_item += (LIST_LINES - 1);
 
-	if(current_pw_sublist->current_item >= (lines - 1)){
-		current_pw_sublist->current_item = lines -1;
-	}
+	if (current_pw_sublist->current_item >= (lines - 1))
+		current_pw_sublist->current_item = lines - 1;
+
 	uilist_refresh();
 }
 
 void
 uilist_up()
 {
-	if(current_pw_sublist->current_item < 1){
+	if (current_pw_sublist->current_item < 1)
 		return;
-	}
 
 	current_pw_sublist->current_item--;
-	
+
 	uilist_refresh();
 }
 
 void
 uilist_down()
 {
-	if(current_pw_sublist->current_item >= (lines-1)){
+	if (current_pw_sublist->current_item >= (lines - 1))
 		return;
-	}
 
 	current_pw_sublist->current_item++;
 

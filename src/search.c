@@ -25,15 +25,15 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-static search_result_t	*_search_add_if_matches(search_result_t *, password_t *, pwlist_t *);
-static void		 _search_free(void);
-static int		 search_active(search_t* srch);
-static int		 search_apply(void);
+static search_result_t *_search_add_if_matches(search_result_t *, password_t *, pwlist_t *);
+static void	_search_free(void);
+static int	search_active(search_t *srch);
+static int	search_apply(void);
 
 search_t *
 search_new()
 {
-search_t	*new;
+search_t       *new;
 
 	new = xcalloc(1, sizeof(*new));
 	return new;
@@ -44,7 +44,7 @@ search_t	*new;
  */
 static char *
 search_strcasestr(haystack, needle)
-	char const	*haystack, *needle;
+	char const     *haystack, *needle;
 {
 	/* Never matches if null/empty string given */
 	if (haystack == NULL)
@@ -61,26 +61,26 @@ search_strcasestr(haystack, needle)
 }
 
 
-static search_result_t* 
-_search_add_if_matches(search_result_t* current, password_t* entry, pwlist_t* list)
+static search_result_t *
+_search_add_if_matches(search_result_t *current, password_t *entry, pwlist_t *list)
 {
-	search_result_t* next = NULL;
+search_result_t *next = NULL;
 
 	/* Did we get an entry of a list? */
-	if(entry != NULL) {
-		if(search_strcasestr(entry->name, options->search->search_term)
-			 || search_strcasestr(entry->host, options->search->search_term)
-			 || search_strcasestr(entry->user, options->search->search_term)
-			 || search_strcasestr(entry->passwd, options->search->search_term)
-			 || search_strcasestr(entry->launch, options->search->search_term)
-		) {
+	if (entry != NULL) {
+		if (search_strcasestr(entry->name, options->search->search_term)
+				|| search_strcasestr(entry->host, options->search->search_term)
+				|| search_strcasestr(entry->user, options->search->search_term)
+				|| search_strcasestr(entry->passwd, options->search->search_term)
+				|| search_strcasestr(entry->launch, options->search->search_term)
+			) {
 			next = xcalloc(1, sizeof(*next));
 			next->entry = entry;
 			next->sublist = list;
 			debug("Matched entry on host '%s'", entry->host);
 		}
 	} else {
-		if(search_strcasestr(list->name, options->search->search_term)) {
+		if (search_strcasestr(list->name, options->search->search_term)) {
 			next = xcalloc(1, sizeof(*next));
 			next->sublist = list;
 			next->entry = NULL;
@@ -92,13 +92,14 @@ _search_add_if_matches(search_result_t* current, password_t* entry, pwlist_t* li
 	if (next == NULL) {
 		return current;
 	} else {
-		if(current == NULL) {
+		if (current == NULL) {
 			/* First hit */
 			search_results = next;
 		} else {
 			/* Additional hit, append */
 			current->next = next;
 		}
+
 		/* For now, nothing follows us */
 		next->next = NULL;
 		/* We are the new current entry */
@@ -109,13 +110,13 @@ _search_add_if_matches(search_result_t* current, password_t* entry, pwlist_t* li
 static int
 search_apply()
 {
-pwlist_t	*stack[MAX_SEARCH_DEPTH];
-pwlist_t	*tmpList = NULL; 
-password_t	*tmp = NULL; 
-int		 depth;
-int		 stepping_back;
+pwlist_t       *stack[MAX_SEARCH_DEPTH];
+pwlist_t       *tmpList = NULL;
+password_t     *tmp = NULL;
+int		depth;
+int		stepping_back;
 
-	search_result_t *cur = NULL;
+search_result_t *cur = NULL;
 
 	/* Tidy up any existing search results */
 	if (search_results != NULL)
@@ -161,7 +162,6 @@ int		 stepping_back;
 				tmp = tmp->next;
 			}
 		}
-
 		/* Next sibling if there is one */
 		if (tmpList->next != NULL) {
 			tmpList = tmpList->next;
@@ -170,7 +170,6 @@ int		 stepping_back;
 			/* Process sibling */
 			continue;
 		}
-
 		/* Otherwise step up */
 		depth--;
 		stepping_back = 1;
@@ -179,7 +178,7 @@ int		 stepping_back;
 			stack[depth] = NULL;
 		}
 	}
-	
+
 	/* All done */
 	return 1;
 }
@@ -201,15 +200,15 @@ search_remove()
 	uilist_refresh();
 }
 
-void 
+void
 _search_free()
 {
-search_result_t	*cur;
-search_result_t	*next;
+search_result_t *cur;
+search_result_t *next;
 
 	/* Free the memory held by the search results */
 	cur = search_results;
-	while(cur != NULL) {
+	while (cur != NULL) {
 		next = cur->next;
 		xfree(cur);
 		cur = next;
@@ -223,7 +222,7 @@ search_get()
 	if (options->search == NULL) {
 		debug("No options->search");
 	} else {
-		if(options->search->search_term == NULL) {
+		if (options->search->search_term == NULL) {
 			debug("No options->search->search_term");
 		} else {
 			debug("Len was %d", strlen(options->search->search_term));
@@ -240,9 +239,9 @@ search_get()
 }
 
 void
-search_alert(search_t* srch)
+search_alert(search_t *srch)
 {
-	char alert[80];	
+char		alert[80];
 
 	if (search_active(srch) == 0)
 		return;
@@ -258,7 +257,7 @@ search_alert(search_t* srch)
 
 
 int
-search_active(search_t* srch)
+search_active(search_t *srch)
 {
 	if ((srch == NULL) || (srch->search_term == NULL))
 		/* no search object */

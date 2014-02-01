@@ -36,11 +36,11 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-static char	*pwgen(char *buf, int size);
+static char    *pwgen(char *buf, int size);
 
 struct pwgen_element {
-	char	*str;
-	int	flags;
+	char           *str;
+	int		flags;
 };
 
 /*
@@ -53,56 +53,56 @@ struct pwgen_element {
 
 
 static struct pwgen_element elements[] = {
-	{ "a",	VOWEL },
-	{ "ae", VOWEL | DIPTHONG },
-	{ "ah",	VOWEL | DIPTHONG },
-	{ "ai", VOWEL | DIPTHONG },
-	{ "b",  CONSONANT },
-	{ "c",	CONSONANT },
-	{ "ch", CONSONANT | DIPTHONG },
-	{ "d",	CONSONANT },
-	{ "e",	VOWEL },
-	{ "ee", VOWEL | DIPTHONG },
-	{ "ei",	VOWEL | DIPTHONG },
-	{ "f",	CONSONANT },
-	{ "g",	CONSONANT },
-	{ "gh", CONSONANT | DIPTHONG | NOT_FIRST },
-	{ "h",	CONSONANT },
-	{ "i",	VOWEL },
-	{ "ie", VOWEL | DIPTHONG },
-	{ "j",	CONSONANT },
-	{ "k",	CONSONANT },
-	{ "l",	CONSONANT },
-	{ "m",	CONSONANT },
-	{ "n",	CONSONANT },
-	{ "ng",	CONSONANT | DIPTHONG | NOT_FIRST },
-	{ "o",	VOWEL },
-	{ "oh",	VOWEL | DIPTHONG },
-	{ "oo",	VOWEL | DIPTHONG},
-	{ "p",	CONSONANT },
-	{ "ph",	CONSONANT | DIPTHONG },
-	{ "qu",	CONSONANT | DIPTHONG},
-	{ "r",	CONSONANT },
-	{ "s",	CONSONANT },
-	{ "sh",	CONSONANT | DIPTHONG},
-	{ "t",	CONSONANT },
-	{ "th",	CONSONANT | DIPTHONG},
-	{ "u",	VOWEL },
-	{ "v",	CONSONANT },
-	{ "w",	CONSONANT },
-	{ "x",	CONSONANT },
-	{ "y",	CONSONANT },
-	{ "z",	CONSONANT }
+	{"a",	VOWEL},
+	{"ae",	VOWEL | DIPTHONG},
+	{"ah",	VOWEL | DIPTHONG},
+	{"ai",	VOWEL | DIPTHONG},
+	{"b",	CONSONANT},
+	{"c",	CONSONANT},
+	{"ch",	CONSONANT | DIPTHONG},
+	{"d",	CONSONANT},
+	{"e",	VOWEL},
+	{"ee",	VOWEL | DIPTHONG},
+	{"ei",	VOWEL | DIPTHONG},
+	{"f",	CONSONANT},
+	{"g",	CONSONANT},
+	{"gh",	CONSONANT | DIPTHONG | NOT_FIRST},
+	{"h",	CONSONANT},
+	{"i",	VOWEL},
+	{"ie",	VOWEL | DIPTHONG},
+	{"j",	CONSONANT},
+	{"k",	CONSONANT},
+	{"l",	CONSONANT},
+	{"m",	CONSONANT},
+	{"n",	CONSONANT},
+	{"ng",	CONSONANT | DIPTHONG | NOT_FIRST},
+	{"o",	VOWEL},
+	{"oh",	VOWEL | DIPTHONG},
+	{"oo",	VOWEL | DIPTHONG},
+	{"p",	CONSONANT},
+	{"ph",	CONSONANT | DIPTHONG},
+	{"qu",	CONSONANT | DIPTHONG},
+	{"r",	CONSONANT},
+	{"s",	CONSONANT},
+	{"sh",	CONSONANT | DIPTHONG},
+	{"t",	CONSONANT},
+	{"th",	CONSONANT | DIPTHONG},
+	{"u",	VOWEL},
+	{"v",	CONSONANT},
+	{"w",	CONSONANT},
+	{"x",	CONSONANT},
+	{"y",	CONSONANT},
+	{"z",	CONSONANT}
 };
 
 #define NUM_ELEMENTS (sizeof(elements) / sizeof (struct pwgen_element))
 
-static char *
+static char    *
 pwgen(char *buf, int size)
 {
-	int	c, i, len, flags;
-	int	prev, should_be, first;
-	char	*str;
+int		c, i, len, flags;
+int		prev, should_be, first;
+char           *str;
 
 	if (buf == NULL)
 		buf = malloc(size);
@@ -113,64 +113,68 @@ pwgen(char *buf, int size)
 	first = 1;
 
 	should_be = arc4random_uniform(1) ? VOWEL : CONSONANT;
-	
+
 	while (c < size) {
 		i = arc4random_uniform(NUM_ELEMENTS);
 		str = elements[i].str;
 		len = strlen(str);
 		flags = elements[i].flags;
+
 		/* Filter on the basic type of the next element */
 		if ((flags & should_be) == 0)
 			continue;
+
 		/* Handle the NOT_FIRST flag */
 		if (first && (flags & NOT_FIRST))
 			continue;
+
 		/* Don't allow VOWEL followed a Vowel/Dipthong pair */
 		if ((prev & VOWEL) && (flags & VOWEL) &&
-		    (flags & DIPTHONG))
+				(flags & DIPTHONG))
 			continue;
+
 		/* Don't allow us to overflow the buffer */
-		if (len > size-c)
+		if (len > size - c)
 			continue;
+
 		/*
-		 * OK, we found an element which matches our criteria,
-		 * let's do it!
+		 * OK, we found an element which matches our criteria, let's
+		 * do it!
 		 */
-		strcpy(buf+c, str);
+		strcpy(buf + c, str);
 
 		/* Handle PW_ONE_CASE */
-		if ((first || flags & CONSONANT) && (arc4random_uniform(10) < 3)) {
+		if ((first || flags & CONSONANT) && (arc4random_uniform(10) < 3))
 			buf[c] = toupper(buf[c]);
-		}
-		
+
 		c += len;
-		
+
 		/* Time to stop? */
 		if (c >= size)
 			break;
-		
+
 		/*
 		 * Handle PW_ONE_NUMBER
 		 */
 		if (!first && (arc4random_uniform(10) < 3)) {
-			buf[c++] = arc4random_uniform(9)+'0';
+			buf[c++] = arc4random_uniform(9) + '0';
 			buf[c] = 0;
-				
+
 			first = 1;
 			prev = 0;
 			should_be = arc4random_uniform(1) ? VOWEL : CONSONANT;
 			continue;
 		}
-				
+
 		/*
 		 * OK, figure out what the next element should be
 		 */
 		if (should_be == CONSONANT) {
 			should_be = VOWEL;
-		} else { /* should_be == VOWEL */
+		} else {	/* should_be == VOWEL */
 			if ((prev & VOWEL) ||
-			    (flags & DIPTHONG) ||
-			    (arc4random_uniform(10) > 3))
+					(flags & DIPTHONG) ||
+					(arc4random_uniform(10) > 3))
 				should_be = CONSONANT;
 			else
 				should_be = VOWEL;
@@ -185,8 +189,8 @@ pwgen(char *buf, int size)
 char *
 pwgen_ask()
 {
-int	i;
-char	*ret;
+int		i;
+char           *ret;
 
 	i = ui_ask_num("Length of password (default 16):\t");
 
@@ -201,10 +205,10 @@ char	*ret;
 	return ret;
 }
 
-void 
+void
 pwgen_indep()
 {
-char	*p, text[128];
+char           *p, text[128];
 
 	p = pwgen_ask();
 

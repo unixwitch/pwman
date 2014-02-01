@@ -29,18 +29,18 @@
 
 #include	"pwman.h"
 
-static int launch_execute(char const *cmd);
+static int	launch_execute(char const *cmd);
 
-int 
+int
 launch_execute(cmd)
-	char const	*cmd;
+	char const     *cmd;
 {
-int	 pid, status;
-char	*argv[4];
+int		pid, status;
+char           *argv[4];
 
 	if (cmd == NULL)
 		return 1;
-	
+
 	pid = fork();
 	if (pid == -1)
 		return -1;
@@ -48,7 +48,7 @@ char	*argv[4];
 	if (pid == 0) {
 		argv[0] = "pwman_exec";
 		argv[1] = "-c";
-		argv[2] = (char *) cmd; /* safe */
+		argv[2] = (char *)cmd;	/* deconst safe */
 		argv[3] = NULL;
 
 		execv("/bin/sh", argv);
@@ -57,9 +57,9 @@ char	*argv[4];
 
 	for (;;) {
 		if (waitpid(pid, &status, 0) == -1) {
-			if (errno != EINTR){
+			if (errno != EINTR) {
 				return -1;
-			} 
+			}
 		} else {
 			return status;
 		}
@@ -69,14 +69,13 @@ char	*argv[4];
 int
 launch(password_t *pw)
 {
-int	i;
-char	*cmd;
-size_t	 clen = 0;
-char	*p, *q;
+int		i;
+char           *cmd;
+size_t		clen = 0;
+char           *p, *q;
 
-	if((pw == NULL) || (pw->launch == NULL)){
+	if ((pw == NULL) || (pw->launch == NULL))
 		return -1;
-	}
 
 	for (p = pw->launch; *p; p++) {
 		if (*p != '%') {
@@ -88,9 +87,11 @@ char	*p, *q;
 		case 'h':
 			clen += strlen(pw->host);
 			break;
+
 		case 'u':
 			clen += strlen(pw->user);
 			break;
+
 		case 'p':
 			clen += strlen(pw->passwd);
 			break;
@@ -130,7 +131,7 @@ char	*p, *q;
 
 	puts("Press any key to continue");
 	getch();
-	
+
 	ui_init();
 	reset_prog_mode();
 

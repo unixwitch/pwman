@@ -39,27 +39,27 @@ static void	ui_free_windows(void);
 static void	ui_display_help(void);
 static void	ui_resize_windows(void);
 
-static char *	ui_statusline_prompt(char const *, char const *, int,
-				     char *(*) (void), int);
+static char	*ui_statusline_prompt(char const *, char const *, int,
+		     char *(*) (void), int);
 
-static int should_resize = FALSE;
-static int can_resize = FALSE;
+static int	should_resize = FALSE;
+static int	can_resize = FALSE;
 
-static WINDOW *top = NULL, *bottom = NULL;
+static WINDOW  *top = NULL, *bottom = NULL;
 
 static void
 ui_draw_top()
 {
 	werase(top);
 	mvwhline(top, 1, 0, ACS_HLINE, COLS);
-	if( !options->readonly) {
+	if (!options->readonly) {
 		mvwprintw(top, 0, 0, "%s | %s", PACKAGE " " VERSION,
 			  MAIN_HELPLINE);
 	} else {
 		mvwprintw(top, 0, 0, "%s | %s | %s", PACKAGE " " VERSION,
 			  READONLY_MSG, MAIN_HELPLINE);
 	}
-	
+
 	wrefresh(top);
 }
 
@@ -73,7 +73,7 @@ ui_draw_bottom()
 	wrefresh(bottom);
 }
 
-void 
+void
 ui_refresh_windows()
 {
 	ui_draw_top();
@@ -86,6 +86,7 @@ ui_refresh_windows()
 static void
 ui_resize_windows()
 {
+
 #ifdef notyet
 	wresize(top, 2, COLS);
 #endif
@@ -94,13 +95,13 @@ ui_resize_windows()
 static void
 ui_init_windows()
 {
-	top = newwin(2, COLS,0,0);
+	top = newwin(2, COLS, 0, 0);
 	bottom = newwin(3, COLS, LINES - 3, 0);
 
 	uilist_init();
 }
 
-static void 
+static void
 ui_free_windows()
 {
 	uilist_free();
@@ -115,9 +116,9 @@ ui_too_small_warning()
 {
 	clear();
 	attron(A_BOLD);
-	mvprintw(((LINES-2)/2),0,"Your window is too small\n\n"
-			"Minimum size is %dx%d\n\n"
-			"Please resize and press any key", MIN_LINES, MIN_COLS);
+	mvprintw(((LINES - 2) / 2), 0, "Your window is too small\n\n"
+		 "Minimum size is %dx%d\n\n"
+		 "Please resize and press any key", MIN_LINES, MIN_COLS);
 	attroff(A_BOLD);
 	getch();
 }
@@ -126,19 +127,19 @@ ui_too_small_warning()
 static void
 ui_resize()
 {
-	struct winsize winsz;
+struct winsize	winsz;
+
 	ioctl(0, TIOCGWINSZ, &winsz);
 
 	resizeterm(winsz.ws_row, winsz.ws_col);
-	if((winsz.ws_col < MIN_COLS) || (winsz.ws_row < MIN_LINES)) {
-		
+	if ((winsz.ws_col < MIN_COLS) || (winsz.ws_row < MIN_LINES)) {
+
 		/*
-		 * if window is too small notify user 
-		 * until he changes it
+		 * if window is too small notify user until he changes it
 		 */
 		do {
 			ui_too_small_warning();
-			ioctl (0, TIOCGWINSZ, &winsz);
+			ioctl(0, TIOCGWINSZ, &winsz);
 			resizeterm(winsz.ws_row, winsz.ws_col);
 		} while ((winsz.ws_col < MIN_COLS) || (winsz.ws_row < MIN_LINES));
 
@@ -150,14 +151,16 @@ ui_resize()
 		ui_refresh_windows();
 	}
 }
+
 #endif
 
 static void
 ui_win_changed(int i)
 {
-	if( can_resize ){
+	if (can_resize) {
 		ui_resize();
-		ui_refresh_windows(); /* dunno why i need this but it wont work without it */
+		ui_refresh_windows();	/* dunno why i need this but it wont
+					 * work without it */
 	} else {
 		should_resize = TRUE;
 	}
@@ -174,8 +177,10 @@ ui_init()
 	intrflush(stdscr, FALSE);
 	keypad(stdscr, TRUE);
 
-	if((LINES < MIN_LINES) || (COLS < MIN_COLS)){
-		clear(); refresh(); endwin();
+	if ((LINES < MIN_LINES) || (COLS < MIN_COLS)) {
+		clear();
+		refresh();
+		endwin();
 		fprintf(stderr, "Your terminal is to small\n");
 		fprintf(stderr, "Min size is %dx%d\n", MIN_COLS, MIN_LINES);
 
@@ -191,19 +196,19 @@ ui_init()
 	return 0;
 }
 
-static void 
+static void
 ui_display_help()
 {
-	int i;
-	WINDOW *helpwin;
+int		i;
+WINDOW         *helpwin;
 
 	helpwin = newwin(LINES - 5, COLS - 6, 3, 3);
 	uilist_clear();
 
-	for(i = 0; help[i] != NULL; i++){
+	for (i = 0; help[i] != NULL; i++) {
 		waddstr(helpwin, help[i]);
-		if( !((i+1) % (LINES - 9)) || (help[i+1] == NULL) ){
-	/*		refresh();*/
+		if (!((i + 1) % (LINES - 9)) || (help[i + 1] == NULL)) {
+			/* refresh(); */
 			wrefresh(helpwin);
 			ui_statusline_msg("Press any key to continue...");
 			getch();
@@ -218,224 +223,227 @@ ui_display_help()
 int
 ui_run()
 {
-	int ch;
-	int load_worked = 0;
+int		ch;
+int		load_worked = 0;
+
 #ifdef DEBUG
-	int debug_i = 0;
+int		debug_i = 0;
+
 #endif
 
 	time_base = time(NULL);
 
-	while(1){
+	while (1) {
 		can_resize = TRUE;
-		if( should_resize ){
+		if (should_resize) {
 			ui_resize();
 		}
 		ch = getch();
 		ui_statusline_clear();
 		can_resize = FALSE;
 
-		if((time_base < (time(NULL) - (options->passphrase_timeout*60)))
-				&& options->passphrase_timeout != 0 && tolower(ch) != 'q'){
+		if ((time_base < (time(NULL) - (options->passphrase_timeout * 60)))
+		&& options->passphrase_timeout != 0 && tolower(ch) != 'q') {
 			pwlist_write_file();
 			pwlist_free_all();
 
 			ui_statusline_msg("Passphrase has timed out and you must enter it again.");
 			getch();
-			
+
 			load_worked = pwlist_read_file();
-			if(load_worked != 0) {
+			if (load_worked != 0) {
 				ui_statusline_msg("Error - unable to re-load the password file!");
 				break;
 			}
-
 			if (search_results != NULL)
 				search_remove();
 
 			time_base = time(NULL);
 			continue;
 		}
-		
-		switch(ch){
-			case 'Q':
-			case 'q':
-				if (search_results != NULL)
-					search_remove();
-				else if (action_list_at_top_level())
-					return 0;
-				break;
+		switch (ch) {
+		case 'Q':
+		case 'q':
+			if (search_results != NULL)
+				search_remove();
+			else if (action_list_at_top_level())
+				return 0;
+			break;
 
-			case '?':
-				ui_display_help();
-				break;
+		case '?':
+			ui_display_help();
+			break;
 
-			case KEY_PPAGE:
-				uilist_page_up();
-				break;
+		case KEY_PPAGE:
+			uilist_page_up();
+			break;
 
-			case KEY_NPAGE:
-				uilist_page_down();
-				break;
+		case KEY_NPAGE:
+			uilist_page_down();
+			break;
 
-			case KEY_UP:
-			case 'k':
-				uilist_up();
-				break;
+		case KEY_UP:
+		case 'k':
+			uilist_up();
+			break;
 
-			case KEY_DOWN:
-			case 'j':
-				uilist_down();
-				break;
+		case KEY_DOWN:
+		case 'j':
+			uilist_down();
+			break;
 
-			case 'A':
-				if (!options->readonly)
-					action_list_add_sublist();
-				else
-					statusline_readonly();
-				break;
+		case 'A':
+			if (!options->readonly)
+				action_list_add_sublist();
+			else
+				statusline_readonly();
+			break;
 
-			case 'U':
-				action_list_up_one_level();
-				break;
+		case 'U':
+			action_list_up_one_level();
+			break;
 
-			case 'r':
-				if (!options->readonly){
-					action_list_rename();
-					pwlist_write_file();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'r':
+			if (!options->readonly) {
+				action_list_rename();
+				pwlist_write_file();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 'a':
-				if (!options->readonly){
-					action_list_add_pw();
-					pwlist_write_file();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'a':
+			if (!options->readonly) {
+				action_list_add_pw();
+				pwlist_write_file();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 'e':
-			case ' ':
-			case 13: /* return/enter key */
-				action_list_select_item();
-				/*current_item = get_current_item();
-				if(current_item){
-					edit_pw(current_item);
-				}*/
-				break;
+		case 'e':
+		case ' ':
+		case 13:	/* return/enter key */
+			action_list_select_item();
 
-			case 'd':
-			case 0x14A: /* DEL key */
-				if (!options->readonly){
-					action_list_delete_item();
-				} else {
-					statusline_readonly();
-				}
-				break;
+			/*
+			 * current_item = get_current_item();
+			 * if(current_item){ edit_pw(current_item); }
+			 */
+			break;
 
-			case 'm':
-				if (!options->readonly){
-					action_list_move_item();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'd':
+		case 0x14A:	/* DEL key */
+			if (!options->readonly) {
+				action_list_delete_item();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 'M':
-				if (!options->readonly){
-					action_list_move_item_up_level();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'm':
+			if (!options->readonly) {
+				action_list_move_item();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 'h':
-				hide_cursor();
-				break;
-				case 's':
-				show_cursor();
-				break;
+		case 'M':
+			if (!options->readonly) {
+				action_list_move_item_up_level();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 'o':
-				action_edit_options();
-				break;
+		case 'h':
+			hide_cursor();
+			break;
+		case 's':
+			show_cursor();
+			break;
 
-			case 0x17: /* control-w */
-				if (!options->readonly){
-					pwlist_write_file();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'o':
+			action_edit_options();
+			break;
 
-			case 0x12: /* control-r */
-				action_list_read_file();
-				break;
+		case 0x17:	/* control-w */
+			if (!options->readonly) {
+				pwlist_write_file();
+			} else {
+				statusline_readonly();
+			}
+			break;
 
-			case 0x07: /* control-g */
-				pwgen_indep();
-				break;
+		case 0x12:	/* control-r */
+			action_list_read_file();
+			break;
 
-			case 0x06: /* control-f */
-				gnupg_forget_passphrase();
-				break;
+		case 0x07:	/* control-g */
+			pwgen_indep();
+			break;
 
-			case 0x0C: /* control-l */
-				ui_refresh_windows();
-				break;
+		case 0x06:	/* control-f */
+			gnupg_forget_passphrase();
+			break;
 
-			case '/':
-			case 'F':
-				search_get();
-				break;
+		case 0x0C:	/* control-l */
+			ui_refresh_windows();
+			break;
 
-			case 'f':
-				filter_get();
-				break;
+		case '/':
+		case 'F':
+			search_get();
+			break;
 
-			case 'E':
-				action_list_export();
-				break;
+		case 'f':
+			filter_get();
+			break;
 
-			case 'I':
-				if (!options->readonly){
-					pwlist_import_passwd();
-					uilist_refresh();
-				} else {
-					statusline_readonly();
-				}
-				break;
+		case 'E':
+			action_list_export();
+			break;
 
-			case 'L':
-				action_list_locate();
-				break;
-
-			case 'l':
-				action_list_launch();
-				break;
-
-			case 0x0B: /* control-k (up) */
-			case '[':
-				action_list_move_item_up();
-				break;
-
-			case 0x0A: /* control-j (down) */
-			case ']':
-				action_list_move_item_down();
-				break;
-#ifdef DEBUG
-			case '$':
-				debug_i++;
-				snprintf(msg, 80, "Name %d", debug_i);
-					
-				pwlist_add(current_pw_sublist, msg, "myhost", "myuser", "mypasswd", "mylaucnh");
+		case 'I':
+			if (!options->readonly) {
+				pwlist_import_passwd();
 				uilist_refresh();
-				break;
+			} else {
+				statusline_readonly();
+			}
+			break;
+
+		case 'L':
+			action_list_locate();
+			break;
+
+		case 'l':
+			action_list_launch();
+			break;
+
+		case 0x0B:	/* control-k (up) */
+		case '[':
+			action_list_move_item_up();
+			break;
+
+		case 0x0A:	/* control-j (down) */
+		case ']':
+			action_list_move_item_down();
+			break;
+
+#ifdef DEBUG
+		case '$':
+			debug_i++;
+			snprintf(msg, 80, "Name %d", debug_i);
+
+			pwlist_add(current_pw_sublist, msg, "myhost", "myuser", "mypasswd", "mylaucnh");
+			uilist_refresh();
+			break;
 #endif
-			default:
-				break;
+
+		default:
+			break;
 		}
 	}
 	return 0;
@@ -452,7 +460,7 @@ ui_end()
 	return 0;
 }
 
-int 
+int
 ui_statusline_msg(char const *msg)
 {
 	ui_statusline_clear();
@@ -462,7 +470,7 @@ ui_statusline_msg(char const *msg)
 	return 0;
 }
 
-int 
+int
 ui_statusline_clear()
 {
 	wmove(bottom, 1, 0);
@@ -475,8 +483,8 @@ ui_statusline_clear()
 int
 ui_ask_num(char const *msg)
 {
-char	*line;
-int	 ret;
+char           *line;
+int		ret;
 
 	line = ui_statusline_prompt(msg, NULL, 0, NULL, 0);
 	if (!line)
@@ -488,14 +496,14 @@ int	 ret;
 }
 
 int
-ui_ask_char(char const *msg, char* valid)
+ui_ask_char(char const *msg, char *valid)
 {
-	int x = strlen(msg) + 5;
-	char c = 0;
+int		x = strlen(msg) + 5;
+char		c = 0;
 
 	do {
 		ui_statusline_clear();
-		if (c != 0){
+		if (c != 0) {
 			ui_statusline_msg("Bad choice, press any key to try again");
 			getch();
 			ui_statusline_clear();
@@ -509,70 +517,71 @@ ui_ask_char(char const *msg, char* valid)
 
 		noecho();
 		hide_cursor();
-		
+
 	} while (!strchr(valid, c));
-	
+
 	ui_statusline_clear();
 	return c;
 }
 
-char *
+char           *
 ui_ask_str(msg, def)
-	char const	*msg, *def;
+	char const     *msg, *def;
 {
 	return ui_statusline_prompt(msg, def, 0, NULL, 0);
 }
 
-char *
+char           *
 ui_ask_str_with_autogen(msg, def, autogen, ch)
-	char const	*msg, *def;
-	char		*(*autogen) (void);
+	char const     *msg, *def;
+	char           *(*autogen) (void);
 {
-char	prompt[128];
+char		prompt    [128];
+
 	snprintf(prompt, sizeof(prompt), "Password (^%c for autogen): ", 0x40 + ch);
 	return ui_statusline_prompt(prompt, def, 0, autogen, ch);
 }
 
-char *
+char           *
 ui_ask_passwd(msg, def)
-	char const	*msg, *def;
+	char const     *msg, *def;
 {
 	return ui_statusline_prompt(msg, def, 1, NULL, 0);
 }
 
-int 
+int
 ui_ask_yes_no(char const *msg, int def)
 {
-	int ret = -1;
-	size_t len;
-	char *msg2;
-	int ch;
-	
+int		ret = -1;
+size_t		len;
+char           *msg2;
+int		ch;
+
 	len = strlen(msg) + 10;
 	msg2 = malloc(len);
 
 	snprintf(msg2, len, "%s%s", msg, def ? " (Y/n)?" : " (y/N)?");
 
-	while(ret == -1){
+	while (ret == -1) {
 		ui_statusline_msg(msg2);
-		
+
 		ch = getch();
-		switch( ch ){
-			case 'n':
-			case 'N':
-				ret = FALSE;
-				break;
-			case 'y':
-			case 'Y':
-				ret = TRUE;
-				break;
-			case 13:
-				ret = def;
-				break;
-			default:
-				ui_statusline_msg("Bad option, try again.");
-				getch();
-				break;
+		switch (ch) {
+		case 'n':
+		case 'N':
+			ret = FALSE;
+			break;
+		case 'y':
+		case 'Y':
+			ret = TRUE;
+			break;
+		case 13:
+			ret = def;
+			break;
+		default:
+			ui_statusline_msg("Bad option, try again.");
+			getch();
+			break;
 		}
 	}
 
@@ -582,22 +591,21 @@ ui_ask_yes_no(char const *msg, int def)
 	return ret;
 }
 
-static char *
+static char    *
 ui_statusline_prompt(msg, def, secret, gen, genc)
-	char const	*msg, *def;
-	char		*(*gen) (void);
+	char const     *msg, *def;
+	char           *(*gen) (void);
 {
-WINDOW		*pwin;
-char		 input[256];
-size_t		 pos = 0;
-int		 old_curs;
+WINDOW         *pwin;
+char		input[256];
+size_t		pos = 0;
+int		old_curs;
 
 	bzero(input, sizeof(input));
 	if (def) {
 		strlcpy(input, def, sizeof(input));
 		pos = strlen(input);
 	}
-
 	pwin = newwin(1, COLS, LINES - 2, 0);
 	keypad(pwin, TRUE);
 
@@ -610,10 +618,12 @@ int		 old_curs;
 
 	for (;;) {
 	int	c;
+
 		wmove(pwin, 0, strlen(msg) + 1);
 
 		if (secret) {
-		size_t	i = 0, len = strlen(input);
+		size_t	i = 0,	len = strlen(input);
+
 			for (; i < len; i++)
 				waddch(pwin, '*');
 		} else
@@ -628,14 +638,14 @@ int		 old_curs;
 
 		if (genc && (c == genc)) {
 		char	*pw = gen();
+
 			strlcpy(input, pw, sizeof(input));
 			pos = strlen(input);
 			free(pw);
 			touchwin(pwin);
-		curs_set(1);
+			curs_set(1);
 			continue;
 		}
-
 		switch (c) {
 		case '\n':
 		case '\r':
@@ -649,6 +659,7 @@ int		 old_curs;
 					input[--pos] = 0;
 				else {
 				int	i = strlen(input);
+
 					pos--;
 					memmove(input + pos, input + pos + 1, strlen(input) - pos);
 					input[i] = 0;
@@ -659,6 +670,7 @@ int		 old_curs;
 		case KEY_DC:
 			if (pos < strlen(input)) {
 			int	i = strlen(input);
+
 				memmove(input + pos, input + pos + 1, strlen(input) - pos);
 				input[i] = 0;
 			}
@@ -689,7 +701,7 @@ int		 old_curs;
 			delwin(pwin);
 			return NULL;
 
-		case CNTL('U'):	/* ^U */
+		case CNTL('U'):/* ^U */
 			input[0] = 0;
 			pos = 0;
 			break;
@@ -722,6 +734,7 @@ end:	;
 	ui_statusline_msg("");
 	return strdup(input);
 }
+
 void
 statusline_readonly()
 {

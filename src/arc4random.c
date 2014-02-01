@@ -45,28 +45,27 @@
 #include	"pwman.h"
 
 #ifndef	HAVE_ARC4RANDOM
-
 struct arc4_stream {
-	uint8_t i;
-	uint8_t j;
-	uint8_t s[256];
+	uint8_t		i;
+	uint8_t		j;
+	uint8_t		s      [256];
 };
 
 #define	RANDOMDEV	"/dev/random"
 #define KEYSIZE		128
 
 static struct arc4_stream rs;
-static int rs_initialized;
-static int rs_stired;
-static int arc4_count;
+static int	rs_initialized;
+static int	rs_stired;
+static int	arc4_count;
 
 static inline uint8_t arc4_getbyte(void);
-static void arc4_stir(void);
+static void	arc4_stir(void);
 
 static inline void
 arc4_init(void)
 {
-	int     n;
+int		n;
 
 	for (n = 0; n < 256; n++)
 		rs.s[n] = n;
@@ -75,10 +74,10 @@ arc4_init(void)
 }
 
 static inline void
-arc4_addrandom(u_char *dat, int datlen)
+arc4_addrandom(u_char * dat, int datlen)
 {
-	int     n;
-	uint8_t si;
+int		n;
+uint8_t		si;
 
 	rs.i--;
 	for (n = 0; n < 256; n++) {
@@ -94,12 +93,12 @@ arc4_addrandom(u_char *dat, int datlen)
 static void
 arc4_stir(void)
 {
-	int done, fd, n;
-	struct {
-		struct timeval	tv;
-		pid_t 		pid;
-		uint8_t 	rnd[KEYSIZE];
-	} rdat;
+int		done, fd, n;
+struct {
+	struct timeval	tv;
+	pid_t		pid;
+	uint8_t		rnd    [KEYSIZE];
+} rdat;
 
 	fd = open(RANDOMDEV, O_RDONLY, 0);
 	done = 0;
@@ -107,31 +106,29 @@ arc4_stir(void)
 		if (read(fd, &rdat, KEYSIZE) == KEYSIZE)
 			done = 1;
 		(void)close(fd);
-	} 
+	}
 	if (!done) {
 		(void)gettimeofday(&rdat.tv, NULL);
 		rdat.pid = getpid();
 		/* We'll just take whatever was on the stack too... */
 	}
-
-	arc4_addrandom((u_char *)&rdat, KEYSIZE);
+	arc4_addrandom((u_char *) & rdat, KEYSIZE);
 
 	/*
-	 * Throw away the first N bytes of output, as suggested in the
-	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
-	 * by Fluher, Mantin, and Shamir.  N=1024 is based on
-	 * suggestions in the paper "(Not So) Random Shuffles of RC4"
-	 * by Ilya Mironov.
+	 * Throw away the first N bytes of output, as suggested in the paper
+	 * "Weaknesses in the Key Scheduling Algorithm of RC4" by Fluher,
+	 * Mantin, and Shamir.  N=1024 is based on suggestions in the paper
+	 * "(Not So) Random Shuffles of RC4" by Ilya Mironov.
 	 */
 	for (n = 0; n < 1024; n++)
-		(void) arc4_getbyte();
+		(void)arc4_getbyte();
 	arc4_count = 1600000;
 }
 
 static inline uint8_t
 arc4_getbyte(void)
 {
-	uint8_t si, sj;
+uint8_t		si    , sj;
 
 	rs.i = (rs.i + 1);
 	si = rs.s[rs.i];
@@ -146,7 +143,7 @@ arc4_getbyte(void)
 static inline uint32_t
 arc4_getword(void)
 {
-	uint32_t val;
+uint32_t	val;
 
 	val = arc4_getbyte() << 24;
 	val |= arc4_getbyte() << 16;
@@ -183,7 +180,7 @@ arc4random_stir(void)
 }
 
 void
-arc4random_addrandom(u_char *dat, int datlen)
+arc4random_addrandom(u_char * dat, int datlen)
 {
 	arc4_check_init();
 	arc4_check_stir();
@@ -193,7 +190,7 @@ arc4random_addrandom(u_char *dat, int datlen)
 uint32_t
 arc4random(void)
 {
-	uint32_t rnd;
+uint32_t	rnd;
 
 	arc4_check_init();
 	arc4_check_stir();
@@ -206,7 +203,7 @@ arc4random(void)
 void
 arc4random_buf(void *_buf, size_t n)
 {
-	u_char *buf = (u_char *)_buf;
+u_char         *buf = (u_char *) _buf;
 
 	arc4_check_init();
 	while (n--) {
@@ -215,7 +212,8 @@ arc4random_buf(void *_buf, size_t n)
 		arc4_count--;
 	}
 }
-#endif	/* HAVE_ARC4RANDOM */
+
+#endif			/* HAVE_ARC4RANDOM */
 
 #ifndef	HAVE_ARC4RANDOM_UNIFORM
 /*
@@ -231,7 +229,7 @@ arc4random_buf(void *_buf, size_t n)
 uint32_t
 arc4random_uniform(uint32_t upper_bound)
 {
-	uint32_t r, min;
+uint32_t	r, min;
 
 	if (upper_bound < 2)
 		return (0);
@@ -241,7 +239,7 @@ arc4random_uniform(uint32_t upper_bound)
 #else
 	/* Calculate (2**32 % upper_bound) avoiding 64-bit math */
 	if (upper_bound > 0x80000000)
-		min = 1 + ~upper_bound;		/* 2**32 - upper_bound */
+		min = 1 + ~upper_bound;	/* 2**32 - upper_bound */
 	else {
 		/* (2**32 - (x * 2)) % x == 2**32 % x when x <= 2**31 */
 		min = ((0xffffffff - (upper_bound * 2)) + 1) % upper_bound;
@@ -249,10 +247,9 @@ arc4random_uniform(uint32_t upper_bound)
 #endif
 
 	/*
-	 * This could theoretically loop forever but each retry has
-	 * p > 0.5 (worst case, usually far better) of selecting a
-	 * number inside the range we need, so it should rarely need
-	 * to re-roll.
+	 * This could theoretically loop forever but each retry has p > 0.5
+	 * (worst case, usually far better) of selecting a number inside the
+	 * range we need, so it should rarely need to re-roll.
 	 */
 	for (;;) {
 		r = arc4random();
@@ -262,4 +259,5 @@ arc4random_uniform(uint32_t upper_bound)
 
 	return (r % upper_bound);
 }
-#endif	/* HAVE_ARC4RANDOM_UNIFORM */
+
+#endif			/* HAVE_ARC4RANDOM_UNIFORM */

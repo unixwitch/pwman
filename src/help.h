@@ -18,10 +18,10 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef HELP_H 
+#ifndef HELP_H
 #define HELP_H
 
-static char *help[] = {
+static char    *help[] = {
 	"	?		help\n",
 	"	q/Q		quit\n",
 	"	^L		refresh windows\n",
@@ -65,5 +65,3 @@ static char *help[] = {
 };
 
 #endif
-
-

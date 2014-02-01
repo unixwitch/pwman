@@ -41,24 +41,25 @@
 #include	"gnupg.h"
 #include	"ui.h"
 
-static void pwman_parse_command_line(int argc, char **argv);
-static void pwman_show_usage();
-static void pwman_show_version();
-static void pwman_quit();
+static void	pwman_parse_command_line(int argc, char **argv);
+static void	pwman_show_usage();
+static void	pwman_show_version();
+static void	pwman_quit();
 
-Options *options;
-int write_options;
-pwlist_t *pwlist;
-pwlist_t *current_pw_sublist;
+Options        *options;
+int		write_options;
+pwlist_t       *pwlist;
+pwlist_t       *current_pw_sublist;
 search_result_t *search_results;
-time_t time_base;
+time_t		time_base;
 
 static int
 pwman_check_lock_file()
 {
-char	fn[PATH_MAX];
-	
+char		fn[PATH_MAX];
+
 	snprintf(fn, sizeof(fn), "%s.lock", options->password_file);
+
 	if (access(fn, F_OK) == 0)
 		return 1;
 	else
@@ -68,26 +69,27 @@ char	fn[PATH_MAX];
 static void
 pwman_create_lock_file()
 {
-	char fn[STRING_LONG];
-		
-	snprintf(fn, STRING_LONG, "%s.lock", options->password_file);
+char		fn[PATH_MAX];
+
+	snprintf(fn, sizeof(fn), "%s.lock", options->password_file);
 	creat(fn, S_IRWXU);
 }
 
 static void
 pwman_delete_lock_file()
 {
-	char fn[STRING_LONG];
-	
-	snprintf(fn, STRING_LONG, "%s.lock", options->password_file);
+char		fn[PATH_MAX];
+
+	snprintf(fn, sizeof(fn), "%s.lock", options->password_file);
 	unlink(fn);
 }
 
 static void
-pwman_init(int argc, char *argv[])
+pwman_init(argc, argv)
+	char	**argv;
 {
-	char c;
-	int load_worked, gpg_id_valid;
+char		c;
+int		load_worked, gpg_id_valid;
 
 	signal(SIGKILL, pwman_quit);
 	signal(SIGTERM, pwman_quit);
@@ -96,62 +98,66 @@ pwman_init(int argc, char *argv[])
 
 	/* get options from .pwmanrc */
 	options = options_new();
-	if(options_read() == -1){
+	if (options_read() == -1)
 		options_get();
-	}
 
 	/* parse command line options */
 	pwman_parse_command_line(argc, argv);
 
 	/* check to see if another instance of pwman is open */
-	if(!options->readonly && pwman_check_lock_file()){
+	if (!options->readonly && pwman_check_lock_file()) {
 		fprintf(stderr, "It seems %s is already opened by an instance of pwman\n",
-				options->password_file);
+			options->password_file);
 		fprintf(stderr, "Two instances of pwman should not be open the same file at the same time\n");
 		fprintf(stderr, "If you are sure pwman is not already open you can delete the file.\n");
-		fprintf(stderr,"Alternatively, you can open the file readonly by answering 'r'\n");
-		fprintf(stderr,"Delete file %s.lock? [y/n/r]\n",
-				options->password_file);
+		fprintf(stderr, "Alternatively, you can open the file readonly by answering 'r'\n");
+		fprintf(stderr, "Delete file %s.lock? [y/n/r]\n",
+			options->password_file);
 		c = getchar();
-		fprintf(stderr,"\n");
+		fprintf(stderr, "\n");
+
 		switch (tolower(c)) {
-			case 'y':
-				pwman_delete_lock_file();
-				break;
-			case 'r':
-				options->readonly = TRUE;
-				break;
-			default:
-				exit(-1);
+		case 'y':
+			pwman_delete_lock_file();
+			break;
+
+		case 'r':
+			options->readonly = TRUE;
+			break;
+
+		default:
+			exit(-1);
 		}
 	}
 
 	/* Check that the gpg id is valid, if given */
-	if(strlen(options->gpg_id)) {
+	if (strlen(options->gpg_id)) {
 		gpg_id_valid = gnupg_check_id(options->gpg_id);
-		if(gpg_id_valid == -1) {
+
+		if (gpg_id_valid == -1) {
 			fprintf(stderr, "Your GPG key with id of '%s' could not be found\n", options->gpg_id);
 			fprintf(stderr, "You will be prompted for the correct key when saving\n");
 			fprintf(stderr, "\n(press any key to continue)\n");
 			c = getchar();
 		}
-		if(gpg_id_valid == -2) {
+
+		if (gpg_id_valid == -2) {
 			fprintf(stderr, "Your GPG key with id of '%s' has expired!\n", options->gpg_id);
 			fprintf(stderr, "Please change the expiry date of your key, or switch to a new one\n");
 			exit(-1);
 		}
 	}
-	
+
 	/* Start up our UI */
-	if( ui_init() ){
+	if (ui_init())
 		exit(1);
-	}
 
 	ui_refresh_windows();
 
 	/* get pw database */
 	pwlist_init();
 	load_worked = pwlist_read_file();
+
 	if (load_worked != 0) {
 		debug("Failed to load the database, error was %d", load_worked);
 
@@ -179,16 +185,18 @@ pwman_quit()
 	pwlist_write_file();
 	pwlist_free_all();
 	pwman_delete_lock_file();
-	
+
 	ui_end();
 	options_write();
-	
+
 	exit(0);
 }
 
 int
-main(int argc, char *argv[])
+main(argc, argv)
+	char	**argv;
 {
+
 #ifdef	USE_MLOCKALL
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 #endif
@@ -207,30 +215,31 @@ main(int argc, char *argv[])
 }
 
 static void
-pwman_parse_command_line(int argc, char **argv)
+pwman_parse_command_line(argc, argv)
+	char	**argv;
 {
-	int i;
+int		i;
 
-	for(i = 1; i < argc; i++){
+	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
 			pwman_show_usage(argv[0]);
 			exit(1);
-		} else if(!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
+		} else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")) {
 			pwman_show_version();
 			exit(1);
-		} else if(!strcmp(argv[i], "--gpg-path")) {
+		} else if (!strcmp(argv[i], "--gpg-path")) {
 			write_options = FALSE;
 			options->gpg_path = xstrdup(argv[i + 1]);
 			i++;
-		}else if(!strcmp(argv[i], "--gpg-id")) 	{
+		} else if (!strcmp(argv[i], "--gpg-id")) {
 			write_options = FALSE;
 			options->gpg_id = xstrdup(argv[i + 1]);
 			i++;
-		} else if(!strcmp(argv[i], "--file") || !strcmp(argv[i], "-f")) {
+		} else if (!strcmp(argv[i], "--file") || !strcmp(argv[i], "-f")) {
 			write_options = FALSE;
 			options->password_file = xstrdup(argv[i + 1]);
 			i++;
-		} else if(!strcmp(argv[i], "--passphrase-timeout") || !strcmp(argv[i], "-t")) {
+		} else if (!strcmp(argv[i], "--passphrase-timeout") || !strcmp(argv[i], "-t")) {
 			write_options = FALSE;
 			options->passphrase_timeout = atoi(argv[i + 1]);
 			i++;
@@ -267,9 +276,10 @@ pwman_show_version()
 }
 
 static void
-pwman_show_usage(char *argv_0)
+pwman_show_usage(progname)
+	char const	*progname;
 {
-	printf("Usage: %s [OPTIONS]...\n", argv_0);
+	printf("Usage: %s [OPTIONS]...\n", progname);
 	puts("Store you passwords securely using public key encryption\n");
 	puts("  --help                 show usage");
 	puts("  --version              display version information");
@@ -278,5 +288,5 @@ pwman_show_usage(char *argv_0)
 	puts("  --file <file>          file to read passwords from");
 	puts("  --passphrase-timeout <mins>    time before app forgets passphrase(in minutes)");
 	puts("  --readonly             open the database readonly\n\n");
-	puts("Report bugs to <ivan@ivankelly.net>");
+	puts("Report bugs to <felicity@loreley.flyingparchment.org.uk>");
 }

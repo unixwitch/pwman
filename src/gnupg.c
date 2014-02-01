@@ -58,10 +58,10 @@
 #define STDIN 1
 #define STDERR 2
 
-static int	 gnupg_hit_sigpipe = 0;
-static char	*passphrase = NULL;
+static int	gnupg_hit_sigpipe = 0;
+static char    *passphrase = NULL;
 
-static char	*gnupg_expand_filename(char const *);
+static char    *gnupg_expand_filename(char const *);
 
 static void
 gnupg_sigpipe_handler()
@@ -69,12 +69,12 @@ gnupg_sigpipe_handler()
 	gnupg_hit_sigpipe = 1;
 }
 
-static char *
+static char    *
 gnupg_add_to_buf(buf, new)
-	char		*buf;
-	char const	*new;
+	char           *buf;
+	char const     *new;
 {
-size_t	size;
+size_t		size;
 
 	if (new == NULL)
 		return buf;
@@ -84,27 +84,26 @@ size_t	size;
 		strcpy(buf, new);
 		return buf;
 	}
-	
 	size = strlen(buf) + strlen(new) + 1;
 	buf = realloc(buf, size);
 	strcat(buf, new);
-	
+
 	return buf;
 }
 
 static int
 gnupg_str_in_buf(buf, check)
-	char const	*buf, *check;
+	char const     *buf, *check;
 {
-regex_t	reg;
+regex_t		reg;
 
 	debug("str_in_buf: start checking");
-	
+
 	if ((buf == NULL) || (check == NULL))
 		return 0;
 
-	regcomp(&reg, check ,0);
-	if (regexec(&reg, buf, 0, NULL , 0) == 0) {
+	regcomp(&reg, check, 0);
+	if (regexec(&reg, buf, 0, NULL, 0) == 0) {
 		regfree(&reg);
 		return 1;
 	} else {
@@ -113,18 +112,19 @@ regex_t	reg;
 	}
 }
 
-static char *
+static char    *
 gnupg_expand_filename(filename)
-	char const	*filename;
+	char const     *filename;
 {
-char const	*home;
-char		*ret;
+char const     *home;
+char           *ret;
 
 	if (*filename != '~')
 		return strdup(filename);
 
 	if ((home = getenv("HOME")) == NULL) {
-	struct passwd	*pw;
+	struct passwd  *pw;
+
 		if ((pw = getpwuid(getuid())) == NULL)
 			return strdup(filename);
 		home = pw->pw_dir;
@@ -135,19 +135,22 @@ char		*ret;
 	return ret;
 }
 
-static int 
-gnupg_exec(char *path, char *args[], FILE *stream[3])
+static int
+gnupg_exec(path, args, stream)
+	char const	*path;
+	char		**args;
+	FILE		*stream[3];
 {
-	int stdin_fd[2];
-	int stdout_fd[2];
-	int stderr_fd[2];
-	int pid, ret;
+int		stdin_fd[2];
+int		stdout_fd[2];
+int		stderr_fd[2];
+int		pid, ret;
 
 	pipe(stdin_fd);
 	pipe(stdout_fd);
 	pipe(stderr_fd);
 
-	if ((path == NULL) || (args == NULL)) 
+	if ((path == NULL) || (args == NULL))
 		return -1;
 
 	pid = fork();
@@ -163,9 +166,9 @@ gnupg_exec(char *path, char *args[], FILE *stream[3])
 		dup2(stderr_fd[1], STDERR_FILENO);
 
 		ret = execv(path, args);
-		if(ret)
+		if (ret)
 			pw_abort("Failed to run %s, aborted with error code %d", path, errno);
-		abort(); /*NOTREACHED*/
+		abort();	/* NOTREACHED */
 	} else {
 		close(stdout_fd[1]);
 		close(stdin_fd[0]);
@@ -176,7 +179,6 @@ gnupg_exec(char *path, char *args[], FILE *stream[3])
 			stream[STDIN] = fdopen(stdin_fd[1], "w");
 			stream[STDERR] = fdopen(stderr_fd[0], "r");
 		}
-		
 		/* Mark us as not having had a sigpipe yet */
 		gnupg_hit_sigpipe = 0;
 		signal(SIGPIPE, gnupg_sigpipe_handler);
@@ -186,21 +188,26 @@ gnupg_exec(char *path, char *args[], FILE *stream[3])
 }
 
 static void
-gnupg_exec_end(int pid, FILE *stream[3])
+gnupg_exec_end(pid, stream)
+	FILE	*stream[3];
 {
-char	buf[STRING_LONG];
+char		buf[STRING_LONG];
 
 	/* If we hit a problem, report that */
 	if (gnupg_hit_sigpipe) {
 		fputs("GPG hit an error and died...\n", stderr);
+
 		while (fgets(buf, STRING_LONG - 1, stream[STDOUT]) != NULL)
 			fputs(buf, stderr);
 
 		while (fgets(buf, STRING_LONG - 1, stream[STDERR]) != NULL)
 			fputs(buf, stderr);
 
-		/* TODO - figure out why we don't get the real error message from */
-		/*  GPG displayed here like one might expect */
+		/*
+		 * TODO - figure out why we don't get the real error message
+		 * from
+		 */
+		/* GPG displayed here like one might expect */
 	}
 	signal(SIGPIPE, NULL);
 
@@ -223,25 +230,26 @@ char	buf[STRING_LONG];
 		exit(1);
 }
 
-static char *
+static char    *
 gnupg_find_recp(str)
-	char const	*str;
+	char const     *str;
 {
-char	*user, *start, *end;
-int	 size;
+char           *user, *start, *end;
+int		size;
+
 	debug(str);
 
 	/* Is it "<id>" ? */
-	start = strstr(str,"\"");
-	if(start != NULL) {
+	start = strstr(str, "\"");
+	if (start != NULL) {
 		start += 1;
-		end = strstr(start,"\"");
+		end = strstr(start, "\"");
 	} else {
 		/* Is it ID <id>\n? */
-		start = strstr(str,"ID");
-		if(start != NULL) {
+		start = strstr(str, "ID");
+		if (start != NULL) {
 			start += 3;
-			end = strstr(start,"\n");
+			end = strstr(start, "\n");
 		} else {
 			/* No idea */
 			user = "(not sure)";
@@ -250,7 +258,7 @@ int	 size;
 	}
 
 	size = end - start;
-	user = malloc(size+1);
+	user = malloc(size + 1);
 	strcpy(user, start);
 	debug("Recipient is %s", user);
 	return user;
@@ -259,37 +267,30 @@ int	 size;
 /* Returns 0 if found, -1 if not found, and -2 if found but expired */
 int
 gnupg_check_id(id)
-	char const	*id;
-{	
-regex_t	 reg, expired_reg;
-int	 pid;
-char	 text[STRING_LONG], idstr[STRING_LONG], keyid[STRING_LONG];
-char	 exp[STRING_LONG], *args[4];
-FILE	*streams[3];
-int	 id_is_key_id = 0, key_found = 0, key_is_expired = -1;
-	
+	char const     *id;
+{
+regex_t		reg, expired_reg;
+int		pid;
+char		text[STRING_LONG], idstr[STRING_LONG];
+char		*args[4];
+FILE           *streams[3];
+int		id_is_key_id = 0, key_found = 0, key_is_expired = -1;
+
 	debug("check_gnupg_id: check gnupg id\n");
 
-	/* Check we're given nice input */
-	if (strchr(id, '%')) 
-		/* hmm, could be format string bug so tell get lost */
-		return -1;
-
 	/* Build our expired key matching regexp */
-	snprintf(exp, STRING_LONG, "^(pub|sub):e:");
-	regcomp(&expired_reg, exp, REG_EXTENDED);
+	regcomp(&expired_reg, "^(pub|sub):e:", REG_EXTENDED);
 
 	/* Is the supplied ID really a key ID? */
 	/* (If it is, it's 8 chars long, and 0-9A-F) */
-	snprintf(keyid, STRING_LONG, "^[0-9A-Z]{8}$");
-	regcomp(&reg, keyid,REG_EXTENDED);
-	if (regexec(&reg, id, 0, NULL , 0) == 0) {
+	regcomp(&reg, "^[0-9A-Z]{8}$", REG_EXTENDED);
+
+	if (regexec(&reg, id, 0, NULL, 0) == 0) {
 		/* The supplied ID is a key ID */
 		id_is_key_id = 1;
 		debug("check_gnupg_id: supplied ID was a gnupg key id\n");
-	} else {
+	} else
 		debug("check_gnupg_id: supplied ID taken to be an email address\n");
-	}
 
 	if (id_is_key_id == 1) {
 		/* Match on "pub:.:SIZE:type:FULLID:DATE" */
@@ -308,36 +309,37 @@ int	 id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
-	while (fgets(text, STRING_LONG, streams[STDOUT])) {
-		regcomp(&reg, idstr, REG_EXTENDED);
-		if (regexec(&reg, text, 0, NULL , 0) == 0) {
-			/* Found the key! */
-			key_found = 1;
+	regcomp(&reg, idstr, REG_EXTENDED);
 
-			/* Check it isn't also expired */
-			if (regexec(&expired_reg, text, 0, NULL , 0) == 0) {
-				/*
-				 * Only mark as expired if we haven't found another
-				 * version that isn't expired.
-				 */
-				if (key_is_expired == -1)
-					key_is_expired = 1;
-			} else {
-				key_is_expired = 0;
-			}
-		}
+	while (fgets(text, STRING_LONG, streams[STDOUT])) {
+		if (regexec(&reg, text, 0, NULL, 0) != 0)
+			continue;
+
+		/* Found the key! */
+		key_found = 1;
+
+		/* Check it isn't also expired */
+		if (regexec(&expired_reg, text, 0, NULL, 0) == 0) {
+
+			/*
+			 * Only mark as expired if we haven't found
+			 * another version that isn't expired.
+			 */
+			if (key_is_expired == -1)
+				key_is_expired = 1;
+		} else
+			key_is_expired = 0;
 	}
-	
+
 	/* Tidy up */
 	gnupg_exec_end(pid, streams);
 
 	/* If we found it, return found / found+expired */
 	if (key_found) {
 		if (key_is_expired)
-			return -2; 
-		return 0; 
+			return -2;
+		return 0;
 	}
-
 	/* Didn't find it */
 	return -1;
 }
@@ -345,13 +347,14 @@ int	 id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 /**
  * Get a single GnuPG Recipient ID
  */
-char *
+char           *
 gnupg_get_id()
 {
 	for (;;) {
 	char	*id;
+
 		id = ui_ask_str("GnuPG Recipient ID: ", NULL);
-		if (id[0] == 0)
+		if (!id || (id[0] == 0))
 			return id;
 
 		if (gnupg_check_id(id) == 0)
@@ -369,50 +372,52 @@ gnupg_get_id()
  */
 void
 gnupg_get_ids(ids, max_id_num)
-	char	**ids;
-	size_t	  max_id_num;
+	char          **ids;
+	size_t		max_id_num;
 {
-InputField	*fields;
+InputField     *fields;
 size_t		i;
 
 	fields = xcalloc(max_id_num, sizeof(*fields));
 
 	for (i = 0; i < max_id_num; i++) {
-		fields[i].value = &ids[i]; /* String to write into comes from caller */
+	char	*s;
+		fields[i].value = &ids[i];	/* String to write into comes
+						 * from caller */
 		fields[i].type = STRING;
 
-		fields[i].name = xmalloc(STRING_LONG + 1); /* Needs a local string to write into */
-		snprintf(fields[i].name, STRING_LONG + 1,
-			 "Recipient %d: ", (int) (i + 1));
+		s = xmalloc(STRING_LONG + 1);	/* Needs a local string to write into */
+		snprintf(s, STRING_LONG + 1,
+			 "Recipient %d: ", (int)(i + 1));
+		fields[i].name = s;
 	}
 
 	/* Prompt to edit the recipients. This will verify the IDs for us. */
 	action_input_gpgid_dialog(fields, max_id_num, "Edit Recipients");
 
 	for (i = 0; i < max_id_num; i++)
-		free(fields[i].name);
+		free((char *) fields[i].name);
 	free(fields);
 }
 
-char *
+char           *
 gnupg_get_filename(rw)
 {
-char	*ret;
+char           *ret;
 
 	assert(rw == 'r' || rw == 'w');
 
-	ret = malloc(PATH_MAX + 1);
 	ret = ui_ask_str(rw == 'r' ? "File to read from:" : "File to write to:", NULL);
 	return ret;
 }
 
-const char *
+const char     *
 gnupg_get_passphrase()
 {
-	if ((time_base >= (time(NULL) - (options->passphrase_timeout*60))) && passphrase)
+	if ((time_base >= (time(NULL) - (options->passphrase_timeout * 60))) && passphrase)
 		return passphrase;
 
-	passphrase = ui_ask_passwd("Enter GnuPG passphrase:", NULL); /* 0x07 == ^G */
+	passphrase = ui_ask_passwd("Enter GnuPG passphrase:", NULL);
 
 	return passphrase;
 }
@@ -428,68 +433,72 @@ gnupg_forget_passphrase()
 	ui_statusline_msg("Passphrase forgotten");
 }
 
-static int 
+static int
 gnupg_check_executable()
 {
-	FILE *streams[3];
-	char *args[3];
-	int pid, count, version[3];
-	
+FILE           *streams[3];
+char           *args[3];
+int		pid, count, version[3];
+
 	debug("check_gnupg: start");
-	if(options->gpg_path == NULL){
+	if (options->gpg_path == NULL)
 		return -1;
-	}
 
 	args[0] = "gpg";
 	args[1] = "--version";
 	args[2] = NULL;
-	
+
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
 	/* this might do version checking someday if needed */
-	count = fscanf(streams[STDOUT], "gpg (GnuPG) %d.%d.%d", 
-			&version[0], &version[1], &version[2]);
+	count = fscanf(streams[STDOUT], "gpg (GnuPG) %d.%d.%d",
+		       &version[0], &version[1], &version[2]);
 	gnupg_exec_end(pid, streams);
 
 	debug("exec ended");
-	if(count != 3){
-		ui_statusline_msg("WARNING! GnuPG Executable not found"); getch();
+	if (count != 3) {
+		ui_statusline_msg("WARNING! GnuPG Executable not found");
+		getch();
 		return -1;
 	} else {
-		debug("check_gnupg: Version %d.%d.%d", version[0], version[1], version[2]);	
+		debug("check_gnupg: Version %d.%d.%d", version[0], version[1], version[2]);
 		return 0;
 	}
 }
 
 int
-gnupg_write_many(xmlDocPtr doc, char **ids, int num_ids, char const *filename)
+gnupg_write_many(doc, ids, num_ids, filename)
+	xmlDocPtr	doc;
+	char		**ids;
+	char const	*filename;
 {
-FILE	*streams[3];
-char	 buf[STRING_LONG];
-char	*args[7 + 1 + (2 * 10)]; /* 7 initial args, 1 null, 10 recipients */
-char	*err;
-int	 pid, i, pos, num_valid_ids;
-char	*expfile;
+FILE           *streams[3];
+char		buf[STRING_LONG];
+char           *args[7 + 1 + (2 * 10)];	/* 7 initial args, 1 null, 10
+					 * recipients */
+char           *err;
+int		pid, i, pos, num_valid_ids;
+char           *expfile;
 
-	debug("gnupg_write: do some checks");	
-	if ((gnupg_check_executable() != 0) || !filename || (filename[0] == 0)){
+	debug("gnupg_write: do some checks");
+	if ((gnupg_check_executable() != 0) || !filename || (filename[0] == 0)) {
 		debug("gnupg_write: no gnupg or filename not set");
 		return -1;
 	}
 
 	/* Ensure all IDs are valid, and we have enough */
 	num_valid_ids = 0;
-	for (i=0; i < num_ids; i++) {
-		if (ids[i]) {
-			if (gnupg_check_id(ids[i]) != 0) {
-				ids[i] = gnupg_get_id();
-				
-				if(ids[i][0] == 0)
-					return -1;
-			}
+	for (i = 0; i < num_ids; i++) {
+		if (!ids[i])
+			continue;
 
-			num_valid_ids++;
+		if (gnupg_check_id(ids[i]) != 0) {
+			ids[i] = gnupg_get_id();
+
+			if (ids[i][0] == 0)
+				return -1;
 		}
+		num_valid_ids++;
 	}
 	debug("gnupg_write: writing to %d recipients", num_valid_ids);
 
@@ -501,33 +510,31 @@ char	*expfile;
 	expfile = gnupg_expand_filename(filename);
 
 	err = NULL;
-	args[0] = "gpg";
-	args[1] = "-e";
-	args[2] = "-a";
-	args[3] = "--always-trust"; /* gets rid of error when moving 
-				       keys from other machines */
-	args[4] = "--yes";
-	args[5] = "-o";
-	args[6] = expfile;
+
+	pos = 0;
+	args[pos++] = "gpg";
+	args[pos++] = "-e";
+	args[pos++] = "-a";
+	args[pos++] = "--always-trust";	/* gets rid of error when moving keys
+					 * from other machines */
+	args[pos++] = "--yes";
+	args[pos++] = "-o";
+	args[pos++] = expfile;
 
 	/* Add in all the recipients */
-	pos = 7;
-	for (i=0; i<num_ids; i++) {
-		if (ids[i][0] != 0) {
-			args[pos] = "-r";
-			pos++;
-			args[pos] = ids[i];
-			pos++;
-		}
+	for (i = 0; i < num_ids; i++) {
+		if (!ids[i] || (ids[i][0] == '\0'))
+			continue;
+
+		args[pos++] = "-r";
+		args[pos++] = ids[i];
 	}
 	args[pos] = NULL;
 
 	for (;;) {
 		/* clear err buffer */
-		if (err) {
-			free(err);
-			err = NULL;
-		}
+		xfree(err);
+		err = NULL;
 
 		pid = gnupg_exec(options->gpg_path, args, streams);
 
@@ -536,13 +543,15 @@ char	*expfile;
 #else
 		xmlDocDump(streams[STDIN], doc);
 #endif
+
 		close(fileno(streams[STDIN]));
-		
+
 		while (fgets(buf, STRING_LONG - 1, streams[STDERR]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
 		gnupg_exec_end(pid, streams);
-		
+
 		debug("gnupg_write: start error checking");
+
 		/*
 		 * check for errors(no key, bad pass, no file etc etc)
 		 */
@@ -565,64 +574,55 @@ char	*expfile;
 
 	ui_statusline_msg("List saved");
 	debug("gnupg_write: file write sucessful");
-	
+
 	free(expfile);
 	return 0;
 }
 
 int
-gnupg_write(xmlDocPtr doc, char* id, char* filename)
+gnupg_write(doc, id, filename)
+	xmlDocPtr	doc;
+	char		*id;
+	char const	*filename;
 {
 	return gnupg_write_many(doc, &id, 1, filename);
 }
 
 int
 gnupg_read(filename, doc)
-	char const	*filename;
-	xmlDocPtr	*doc;
+	char const     *filename;
+	xmlDocPtr      *doc;
 {
-char		*args[9], *data, *err, buf[STRING_LONG], *user, *expfile;
-char const	*pass;
-FILE		*streams[3];
-int		 pid;
-int		 ret = 0;
-	
-	if (gnupg_check_executable() != 0){
-		*doc = xmlNewDoc((xmlChar const *) "1.0");
+char           *args[9], *data = NULL, *err = NULL, *user = NULL;
+char		buf[STRING_LONG], *expfile;
+char const     *pass;
+FILE           *streams[3];
+int		pid, ret = 0, pos;
+
+	if (gnupg_check_executable() != 0) {
+		*doc = xmlNewDoc((xmlChar const *)"1.0");
 		return -1;
 	}
-/*
-	if(check_gnupg_passphrase(filename) == -1){
-		return -1;
-	}*/
 
 	expfile = gnupg_expand_filename(filename);
 
-	data = NULL;
-	err = NULL;
-	user = NULL;
-	args[0] = "gpg";
-	args[1] = "--passphrase-fd";
-	args[2] = "0";
-	args[3] = "--no-verbose";
-	args[4] = "--batch";
-	args[5] = "--output";
-	args[6] = "-";
-	args[7] = expfile;
-	args[8] = NULL;
-	
+	pos = 0;
+	args[pos++] = "gpg";
+	args[pos++] = "--passphrase-fd";
+	args[pos++] = "0";
+	args[pos++] = "--no-verbose";
+	args[pos++] = "--batch";
+	args[pos++] = "--output";
+	args[pos++] = "-";
+	args[pos++] = expfile;
+	args[pos++] = NULL;
+
 	for (;;) {
 		/* clear buffers */
-		if (err != NULL) {
-			free(err); 
-			err = NULL; 
-		}
+		xfree(err);
+		xfree(data);
+		err = data = NULL;
 
-		if (data != NULL) {
-			free(data);
-			data = NULL;
-		}
-		
 		pass = gnupg_get_passphrase();
 
 		if (pass == NULL) {
@@ -631,11 +631,10 @@ int		 ret = 0;
 			ret = 255;
 			break;
 		}
-
 		pid = gnupg_exec(options->gpg_path, args, streams);
 
 		fputs(pass, streams[STDIN]);
-		fputc('\n' , streams[STDIN]);
+		fputc('\n', streams[STDIN]);
 		fclose(streams[STDIN]);
 		streams[STDIN] = NULL;
 
@@ -645,7 +644,7 @@ int		 ret = 0;
 
 		while (fgets(buf, STRING_LONG - 1, streams[STDERR]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
-	
+
 		gnupg_exec_end(pid, streams);
 
 		debug("gnupg_read: start error checking");
@@ -695,14 +694,11 @@ int		 ret = 0;
 		free(data);
 	} else {
 		debug("gnupg_read: data is null");
-		*doc = xmlNewDoc((xmlChar const *) "1.0");
+		*doc = xmlNewDoc((xmlChar const *)"1.0");
 	}
 
-	if (err != NULL)
-		free(err);
-
-	if (user != NULL)
-		free(user);
+	xfree(err);
+	xfree(user);
 
 	debug("gnupg_read: finished all");
 

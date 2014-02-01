@@ -24,28 +24,31 @@
 
 #include	"ui.h"
 
-int action_yes_no_dialog(InputField *fields, int num_fields, char *title, char *question);
+int		action_yes_no_dialog(InputField *fields, int num_fields,
+				     char const *title, char const *question);
 
-void action_input_dialog_draw_items(WINDOW* dialog_win, InputField *fields, int num_fields, char *title, char *msg);
-void action_input_dialog(InputField *fields, int num_fields, char *title);
-void action_input_gpgid_dialog(InputField *fields, int num_fields, char *title);
+void		action_input_dialog_draw_items(WINDOW *dialog_win, InputField *fields,
+					       int num_fields, char const *title, char const *msg,
+					       int width);
+void		action_input_dialog(InputField *fields, int num_fields, char const *title);
+void		action_input_gpgid_dialog(InputField *fields, int num_fields, char const *title);
 
-void action_list_launch(void);
-void action_list_up_one_level(void);
-void action_list_read_file(void);
-void action_list_move_item_up(void);
-void action_list_move_item_down(void);
-void action_list_export(void);
-void action_list_select_item(void);
-void action_list_delete_item(void);
-void action_list_move_item(void);
-void action_list_rename(void);
-void action_list_add_pw(void);
-void action_list_add_sublist(void);
-void action_list_move_item_up_level(void);
-int action_list_at_top_level(void);
+void		action_list_launch(void);
+void		action_list_up_one_level(void);
+void		action_list_read_file(void);
+void		action_list_move_item_up(void);
+void		action_list_move_item_down(void);
+void		action_list_export(void);
+void		action_list_select_item(void);
+void		action_list_delete_item(void);
+void		action_list_move_item(void);
+void		action_list_rename(void);
+void		action_list_add_pw(void);
+void		action_list_add_sublist(void);
+void		action_list_move_item_up_level(void);
+int		action_list_at_top_level(void);
 
-void action_edit_options(void);
-void action_list_locate(void);
+void		action_edit_options(void);
+void		action_list_locate(void);
 
-#endif	/* !PWMAN_ACTIONS_H */
+#endif			/* !PWMAN_ACTIONS_H */
