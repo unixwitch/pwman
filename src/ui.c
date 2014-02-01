@@ -701,7 +701,7 @@ ui_statusline_yes_no(char const *msg, int def)
 	len = strlen(msg) + 10;
 	msg2 = malloc(len);
 
-	snprintf(msg2, len,  "%s%s", msg, def ? " (Y/n)?" : " (y/N)?", NULL);
+	snprintf(msg2, len, "%s%s", msg, def ? " (Y/n)?" : " (y/N)?");
 
 	while(ret == -1){
 		ui_statusline_msg(msg2);

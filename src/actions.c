@@ -299,13 +299,15 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 					/* Good, valid id */
 				} else {
 					/* Invalid id. Warn and blank */
-					if(valid_id == -2) {
-					   snprintf(msg2, 80, "Key expired for '%s'", (char*)fields[i].value);
-					} else {
-					   snprintf(msg2, 80, "Invalid recipient '%s'", (char*)fields[i].value);
-					}
+					if(valid_id == -2)
+						snprintf(msg2, sizeof(msg2), "Key expired for \"%s\"",
+							 *(char**)fields[i].value);
+					else
+						snprintf(msg2, sizeof(msg2), "Invalid recipient \"%s\"",
+							 *(char**)fields[i].value);
+
 					ui_statusline_msg(msg2);
-					snprintf(fields[i].value, STRING_LONG, "");
+					*(char **) fields[i].value = NULL;
 				}
 
 				/* Redraw display */
