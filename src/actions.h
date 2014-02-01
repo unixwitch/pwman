@@ -46,6 +46,8 @@ void		action_list_rename(void);
 void		action_list_add_pw(void);
 void		action_list_add_sublist(void);
 void		action_list_move_item_up_level(void);
+void		action_list_copy_pw(void);
+void		action_list_copy_username(void);
 int		action_list_at_top_level(void);
 
 void		action_edit_options(void);

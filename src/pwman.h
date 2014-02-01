@@ -108,14 +108,15 @@ typedef struct search {
 } search_t;
 
 typedef struct {
-	char           *gpg_id;
-	char           *gpg_path;
-	char           *password_file;
-	int		passphrase_timeout;
-	filter_t       *filter;
-	search_t       *search;
-	int		readonly;
-	int		safemode;
+	char		*gpg_id;
+	char		*gpg_path;
+	char		*password_file;
+	int		 passphrase_timeout;
+	filter_t	*filter;
+	search_t	*search;
+	int		 readonly;
+	int		 safemode;
+	char		*copy_command;
 } Options;
 
 extern Options *options;
@@ -201,5 +202,7 @@ struct pw_option {
 
 int pw_getopt(int nargc, char * const *, const char *,
 	const struct pw_option *, int *);
+
+int copy_string(char const *);
 
 #endif

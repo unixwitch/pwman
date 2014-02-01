@@ -116,6 +116,9 @@ xmlNodePtr	node, root;
 		else if (strcmp((char *)node->name, "gpg_path") == 0)
 			options->gpg_path = xstrdup(text);
 
+		else if (strcmp((char *)node->name, "copy_command") == 0)
+			options->copy_command = xstrdup(text);
+
 		else if (strcmp((char *)node->name, "password_file") == 0)
 			options->password_file = xstrdup(text);
 
@@ -163,6 +166,7 @@ xmlNodePtr	node, root;
 	xmlNewChild(root, NULL, (xmlChar const *) "gpg_id", (xmlChar *) options->gpg_id);
 	xmlNewChild(root, NULL, (xmlChar const *) "gpg_path", (xmlChar *) options->gpg_path);
 	xmlNewChild(root, NULL, (xmlChar const *) "password_file", (xmlChar *) options->password_file);
+	xmlNewChild(root, NULL, (xmlChar const *) "copy_command", (xmlChar *) options->copy_command);
 
 	snprintf(text, sizeof(text), "%d", options->passphrase_timeout);
 	xmlNewChild(root, NULL, (xmlChar const *) "passphrase_timeout", (xmlChar *) text);
@@ -249,6 +253,12 @@ char		*default_gpg;
 		options->passphrase_timeout = 180;
 	else
 		options->passphrase_timeout = atoi(line);
+
+	printf("Clipboard copy command [pbcopy]: ");
+	if (!fgets(line, sizeof(line), stdin))
+		exit(1);
+	line[strlen(line) - 1] = 0;
+	options->copy_command = *line ? xstrdup(line) : xstrdup("pbcopy");
 
 	write_options = TRUE;
 	options_write();

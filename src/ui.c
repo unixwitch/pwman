@@ -218,6 +218,8 @@ static char    *help[] = {
 	"	f		enable / disable filtering",
 	"	/		enable / disable searching",
 	"",
+	"       B               copy username",
+	"       C               copy password",
 	"	l		launch item",
 	"	Format:		%u = user, %h = host, %p = password",
 	"	e.g.	mysql -Dmydb -u%u -p%p -h%h",
@@ -371,6 +373,14 @@ int		debug_i = 0;
 		case ' ':
 		case 13:	/* return/enter key */
 			action_list_select_item();
+			break;
+
+		case 'B':
+			action_list_copy_username();
+			break;
+
+		case 'C':
+			action_list_copy_pw();
 			break;
 
 		case 'd':

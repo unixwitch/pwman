@@ -143,10 +143,11 @@ void
 action_edit_options()
 {
 InputField	fields[] = {
-	{"GnuPG path: ",			&options->gpg_path,		STRING},
-	{"GnuPG key ID: ",			&options->gpg_id,		STRING},
-	{"Password file: ",			&options->password_file,	STRING},
-	{"Passphrase timeout (in minutes): ",	&options->passphrase_timeout,	INT}
+	{ "GnuPG path: ",			&options->gpg_path,		STRING},
+	{ "GnuPG key ID: ",			&options->gpg_id,		STRING},
+	{ "Password file: ",			&options->password_file,	STRING},
+	{ "Passphrase timeout (in minutes): ",	&options->passphrase_timeout,	INT},
+	{ "Copy command: ",			&options->copy_command,		STRING},
 };
 
 	if (options->safemode) {
@@ -185,7 +186,8 @@ int		i, h = 0;
 		switch (fields[i].type) {
 		case STRING:
 			mvwprintw(dialog_win, h, 3,
-				  "%d. %s %s", (i + 1), fields[i].name, *(char **)fields[i].value);
+				  "%d. %s %s", (i + 1), fields[i].name,
+				  *(char **)fields[i].value ? *(char **)fields[i].value : "");
 			break;
 
 		case INT:
@@ -240,9 +242,10 @@ int		 longest = 0, width;
 		 * Find the longest length of any item.
 		 */
 		this = strlen(fields[i].name) + 3;
-		if (fields[i].type == STRING)
-			this += strlen(*(char **)fields[i].value);
-		else
+		if (fields[i].type == STRING) {
+			if (*(char **)fields[i].value)
+				this += strlen(*(char **)fields[i].value);
+		} else
 			this += 10;
 
 		if (this > longest)
@@ -866,9 +869,9 @@ pwlist_t       *curpwl;
 int		worked = 0;
 
 	/* Do nothing if searching */
-	if (search_results != NULL) {
+	if (search_results != NULL)
 		return;
-	}
+
 	switch (uilist_get_highlighted_type()) {
 	case PW_ITEM:
 		curpw = uilist_get_highlighted_item();
@@ -889,6 +892,82 @@ int		worked = 0;
 	if (worked) {
 		uilist_up();
 	}
+}
+
+void
+action_list_copy_username()
+{
+password_t	*curpw;
+search_result_t	*cursearch;
+int		 stat;
+
+	/* Are they searching, or in normal mode? */
+	if (search_results != NULL) {
+		cursearch = uilist_get_highlighted_searchresult();
+		curpw = cursearch->entry;
+
+		if (!curpw)
+			return;
+		stat = copy_string(curpw->user);
+	} else {
+		switch (uilist_get_highlighted_type()) {
+		case PW_ITEM:
+			curpw = uilist_get_highlighted_item();
+			if (!curpw)
+				return;
+			stat = copy_string(curpw->user);
+			break;
+
+		case PW_NULL:
+		case PW_SUBLIST:
+		case PW_UPLEVEL:
+			/* do nothing */
+			return;
+		}
+	}
+
+	if (stat == 0)
+		ui_statusline_msg("Username copied");
+	else
+		ui_statusline_msg("Failed to copy username");
+}
+
+void
+action_list_copy_pw()
+{
+password_t	*curpw;
+search_result_t	*cursearch;
+int		 stat;
+
+	/* Are they searching, or in normal mode? */
+	if (search_results != NULL) {
+		cursearch = uilist_get_highlighted_searchresult();
+		curpw = cursearch->entry;
+
+		if (!curpw)
+			return;
+		stat = copy_string(curpw->passwd);
+	} else {
+		switch (uilist_get_highlighted_type()) {
+		case PW_ITEM:
+			curpw = uilist_get_highlighted_item();
+			if (!curpw)
+				return;
+			stat = copy_string(curpw->passwd);
+			break;
+
+		case PW_NULL:
+		case PW_SUBLIST:
+		case PW_UPLEVEL:
+			/* do nothing */
+			return;
+		}
+	}
+
+	if (stat == 0)
+		ui_statusline_msg("Password copied");
+	else
+		ui_statusline_msg("Failed to copy password");
 }
 
 void

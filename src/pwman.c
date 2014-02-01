@@ -29,6 +29,7 @@
 #include	<stdarg.h>
 #include	<ctype.h>
 #include	<limits.h>
+#include	<errno.h>
 
 #include	"config.h"
 
@@ -219,6 +220,7 @@ static struct pw_option longopts[] = {
 	{ "version",		pw_no_argument, NULL,		'v' },
 	{ "gpg-path",		pw_required_argument, NULL,	'G' },
 	{ "gpg-id",		pw_required_argument, NULL,	'i' },
+	{ "copy-command",	pw_required_argument, NULL,	'C' },
 	{ "file",		pw_required_argument, NULL,	'f' },
 	{ "passphrase-timeout",	pw_required_argument, NULL,	't' },
 	{ "readonly",		pw_no_argument, NULL,		'r' },
@@ -271,6 +273,11 @@ int		i;
 			options->safemode = TRUE;
 			break;
 
+		case 'C':
+			write_options = FALSE;
+			options->copy_command = xstrdup(optarg);
+			break;
+
 		default:
 			exit(1);
 		}
@@ -313,4 +320,32 @@ pwman_show_usage(progname)
 	puts("  -r, --readonly                             open the database readonly");
 	puts("  -s, --safe-mode                            disable 'l'aunch command\n\n");
 	puts("Report bugs to <felicity@loreley.flyingparchment.org.uk>");
+}
+
+int
+copy_string(str)
+	char const	*str;
+{
+pid_t	pid;
+int	fds[2], stat;
+
+	pipe(fds);
+
+	if ((pid = fork()) == -1)
+		return -1;
+
+	if (pid == 0) {
+		close(fds[1]);
+		dup2(fds[0], 0);
+
+		execlp("/bin/sh", "sh", "-c", options->copy_command, (char *) 0);
+		_exit(1);
+	}
+
+	close(fds[0]);
+	write(fds[1], str, strlen(str));
+	close(fds[1]);
+
+	waitpid(pid, &stat, 0);
+	return stat;
 }
