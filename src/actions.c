@@ -78,31 +78,14 @@ static void
 action_edit_pw(Pw *pw)
 {
 	InputField fields[] = {
-		{"Name:\t", NULL, STRING},
-		{"Host:\t", NULL, STRING},
-		{"User:\t", NULL, STRING},
-		{"Password:\t", NULL, STRING, pwgen_ask},
-		{"Launch Command:\t", NULL, STRING}
+		{"Name:\t",		&pw->name,	STRING},
+		{"Host:\t",		&pw->host,	STRING},
+		{"User:\t",		&pw->user,	STRING},
+		{"Password:\t",		&pw->passwd,	STRING, pwgen_ask},
+		{"Launch command:\t",	&pw->launch,	STRING}
 	};
 
-	if(pw == NULL)
-		return;
-
-	/*
-	 * Get specified password
-	 */
-
-	fields[0].value = &pw->name;
-	fields[1].value = &pw->host;
-	fields[2].value = &pw->user;
-	fields[3].value = &pw->passwd;
-	fields[4].value = &pw->launch;
-
-	/*
-	 * initialize the info window
-	 */
-
-	action_input_dialog(fields, (sizeof(fields)/sizeof(InputField)), "Edit Password");
+	action_input_dialog(fields, (sizeof(fields)/sizeof(InputField)), "Edit password");
 }
 
 void 
@@ -148,9 +131,9 @@ void
 action_edit_options()
 {
 	InputField fields[] = {
-		{"GnuPG Path:\t",	&options->gpg_path, STRING},
-		{"GnuPG ID:\t",		&options->gpg_id, STRING},
-		{"Password File:\t",	&options->password_file, STRING},
+		{"GnuPG path:\t",	&options->gpg_path, STRING},
+		{"GnuPG key ID:\t",	&options->gpg_id, STRING},
+		{"Password file:\t",	&options->password_file, STRING},
 		{"Passphrase timeout (in minutes):\t", &options->passphrase_timeout, INT}
 	};
 
