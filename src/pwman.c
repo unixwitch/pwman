@@ -329,6 +329,9 @@ copy_string(str)
 pid_t	pid;
 int	fds[2], stat;
 
+	if (options->safemode)
+		return -1;
+
 	pipe(fds);
 
 	if ((pid = fork()) == -1)

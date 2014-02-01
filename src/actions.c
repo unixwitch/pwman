@@ -901,6 +901,11 @@ password_t	*curpw;
 search_result_t	*cursearch;
 int		 stat;
 
+	if (options->safemode) {
+		ui_statusline_msg("Clipboard cannot be used in safe mode");
+		return;
+	}
+
 	/* Are they searching, or in normal mode? */
 	if (search_results != NULL) {
 		cursearch = uilist_get_highlighted_searchresult();
@@ -938,6 +943,11 @@ action_list_copy_pw()
 password_t	*curpw;
 search_result_t	*cursearch;
 int		 stat;
+
+	if (options->safemode) {
+		ui_statusline_msg("Clipboard cannot be used in safe mode");
+		return;
+	}
 
 	/* Are they searching, or in normal mode? */
 	if (search_results != NULL) {
