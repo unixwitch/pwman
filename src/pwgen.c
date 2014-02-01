@@ -212,6 +212,6 @@ char           *p, text[128];
 
 	p = pwgen_ask();
 
-	snprintf(text, STRING_LONG, "Generated password: %s", p);
+	snprintf(text, sizeof(text), "Generated password: %s", p);
 	ui_statusline_msg(text);
 }
