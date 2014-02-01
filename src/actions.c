@@ -46,20 +46,20 @@ Pw	*pw;
 	int i;
 
 	pw = pwlist_new_pw(); 
-	if ((pw->name = ui_ask_str(fields[0].name)) == NULL)
+	if ((pw->name = ui_ask_str(fields[0].name, NULL)) == NULL)
 		goto end;
 
-	if ((pw->host = ui_ask_str(fields[1].name)) == NULL)
+	if ((pw->host = ui_ask_str(fields[1].name, NULL)) == NULL)
 		goto end;
 
-	if ((pw->user = ui_ask_str(fields[2].name)) == NULL)
+	if ((pw->user = ui_ask_str(fields[2].name, NULL)) == NULL)
 		goto end;
 
-	if ((pw->passwd = ui_ask_str_with_autogen(fields[3].name,
+	if ((pw->passwd = ui_ask_str_with_autogen(fields[3].name, NULL,
 			fields[3].autogen, CNTL('G'))) == NULL)
 		goto end;
 	
-	if ((pw->launch = ui_ask_str(fields[4].name)) == NULL)
+	if ((pw->launch = ui_ask_str(fields[4].name, NULL)) == NULL)
 		goto end;
 	
 	fields[0].value = &pw->name;
@@ -112,7 +112,7 @@ action_list_rename()
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
 			if (curpw) {
-				new_name = ui_ask_str("New name");
+				new_name = ui_ask_str("New name", curpw->name);
 				if (strlen(new_name) > 0)
 					pwlist_rename_item(curpw, new_name);
 				free(new_name);
@@ -122,7 +122,7 @@ action_list_rename()
 		case PW_SUBLIST:
 			curpwl = uilist_get_highlighted_sublist();
 			if(curpwl){
-				new_name = ui_ask_str("New sublist name");
+				new_name = ui_ask_str("New sublist name", curpwl->name);
 				if (strlen(new_name) > 0)
 					pwlist_rename_sublist(curpwl, new_name);
 				free(new_name);
@@ -235,10 +235,12 @@ action_input_dialog(InputField *fields, int num_fields, char *title)
 			i = CHAR_TO_NUM(ch);
 			if (fields[i].autogen != NULL) {
 				*(char **)fields[i].value = ui_ask_str_with_autogen(
-							fields[i].name, 
+							fields[i].name,
+							*(char **)fields[i].value,
 							fields[i].autogen, CNTL('G')); 
 			} else if (fields[i].type == STRING){
-				*(char **)fields[i].value = ui_ask_str(fields[i].name);
+				*(char **)fields[i].value = ui_ask_str(fields[i].name,
+							*(char **)fields[i].value);
 			} else if (fields[i].type == INT) {
 				*(int *)fields[i].value = ui_ask_num(fields[i].name);
 			} else if(fields[i].type == INFORMATION) {
@@ -284,7 +286,8 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 
 		if( (ch >= '1') && (ch <= NUM_TO_CHAR(num_fields)) ){
 			i = CHAR_TO_NUM(ch);
-			*(char **)fields[i].value = ui_ask_str(fields[i].name);
+			*(char **)fields[i].value = ui_ask_str(fields[i].name,
+						*(char **)fields[i].value);
 			
 			/* Now verify it's a valid recipient */
 			if (strlen(fields[i].value)) {
@@ -353,7 +356,7 @@ action_list_add_sublist()
 char	*name;
 PWList	*sublist, *iter;
 
-	name = ui_ask_str("Sublist name:");
+	name = ui_ask_str("Sublist name:", NULL);
 	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
 		if (strcmp(iter->name, name) == 0) {
 			free(name);
@@ -517,7 +520,7 @@ char	*answer;
 			if(curpw){
 				for (;;) {
 					snprintf(str, sizeof(str), "Move \"%s\" to where?", curpw->name);
-					answer = ui_ask_str(str);
+					answer = ui_ask_str(str, NULL);
 					
 					/* if user just enters nothing do nothing */
 					if (answer[0] == 0) {
@@ -548,7 +551,7 @@ char	*answer;
 			if (curpwl) {
 				for (;;) {
 					snprintf(str, sizeof(str), "Move sublist \"%s\" to where?", curpwl->name);
-					answer = ui_ask_str(str);
+					answer = ui_ask_str(str, NULL);
 					
 					/* if user just enters nothing, do nothing */
 					if (answer[0] == 0) {

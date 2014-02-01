@@ -241,7 +241,7 @@ search_get()
 	}
 
 	xfree(options->search->search_term);
-	options->search->search_term = ui_ask_str("String to search for: ");
+	options->search->search_term = ui_ask_str("String to search for:", NULL);
 
 	search_apply();
 

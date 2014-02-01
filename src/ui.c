@@ -517,24 +517,27 @@ ui_ask_char(char const *msg, char* valid)
 }
 
 char *
-ui_ask_str(char const *msg)
+ui_ask_str(msg, def)
+	char const	*msg, *def;
 {
-	return ui_statusline_prompt(msg, NULL, 0, NULL, 0);
+	return ui_statusline_prompt(msg, def, 0, NULL, 0);
 }
 
 char *
-ui_ask_str_with_autogen(char const *msg, char *(*autogen)(void), int ch)
+ui_ask_str_with_autogen(msg, def, autogen, ch)
+	char const	*msg, *def;
+	char		*(*autogen) (void);
 {
 char	prompt[128];
 	snprintf(prompt, sizeof(prompt), "Password (^%c for autogen): ", 0x40 + ch);
-	return ui_statusline_prompt(prompt, NULL, 0, autogen, ch);
+	return ui_statusline_prompt(prompt, def, 0, autogen, ch);
 }
 
 char *
-ui_ask_passwd(msg, cancel)
-	char const	*msg;
+ui_ask_passwd(msg, def)
+	char const	*msg, *def;
 {
-	return ui_statusline_prompt(msg, NULL, 1, NULL, 0);
+	return ui_statusline_prompt(msg, def, 1, NULL, 0);
 }
 
 int 

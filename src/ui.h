@@ -90,9 +90,9 @@ int	 ui_statusline_msg(char const *msg);
 int	 ui_ask_yes_no(char const *, int);
 int	 ui_ask_num(char const *);
 int	 ui_ask_char(char const *, char *);
-char	*ui_ask_str(char const *);
-char	*ui_ask_passwd(char const *, int);
-char	*ui_ask_str_with_autogen(char const *msg, char *(*autogen)(void), int ch);
+char	*ui_ask_str(char const *, char const *);
+char	*ui_ask_passwd(char const *, char const *);
+char	*ui_ask_str_with_autogen(char const *msg, char const *, char *(*autogen)(void), int ch);
 
 void	uilist_up(void);
 void	uilist_down(void);

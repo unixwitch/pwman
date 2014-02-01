@@ -350,7 +350,7 @@ gnupg_get_id()
 {
 	for (;;) {
 	char	*id;
-		id = ui_ask_str("GnuPG Recipient ID:");
+		id = ui_ask_str("GnuPG Recipient ID: ", NULL);
 		if (id[0] == 0)
 			return id;
 
@@ -402,7 +402,7 @@ char	*ret;
 	assert(rw == 'r' || rw == 'w');
 
 	ret = malloc(PATH_MAX + 1);
-	ret = ui_ask_str(rw == 'r' ? "File to read from:" : "File to write to:");
+	ret = ui_ask_str(rw == 'r' ? "File to read from:" : "File to write to:", NULL);
 	return ret;
 }
 
@@ -412,7 +412,7 @@ gnupg_get_passphrase()
 	if ((time_base >= (time(NULL) - (options->passphrase_timeout*60))) && passphrase)
 		return passphrase;
 
-	passphrase = ui_ask_passwd("Enter GnuPG passphrase (^G to cancel):", 0x07); /* 0x07 == ^G */
+	passphrase = ui_ask_passwd("Enter GnuPG passphrase:", NULL); /* 0x07 == ^G */
 
 	return passphrase;
 }

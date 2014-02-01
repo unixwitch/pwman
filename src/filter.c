@@ -135,7 +135,7 @@ filter_get()
 			uilist_refresh();
 			return;
 	}
-	options->filter->filter = ui_ask_str("String to search for: ");
+	options->filter->filter = ui_ask_str("String to search for: ", NULL);
 
 	current_pw_sublist->current_item = -1;
 	uilist_refresh();
