@@ -44,6 +44,7 @@
 #include	<errno.h>
 #include	<assert.h>
 #include	<pwd.h>
+#include	<limits.h>
 
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>

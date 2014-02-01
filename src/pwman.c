@@ -28,6 +28,7 @@
 #include	<fcntl.h>
 #include	<stdarg.h>
 #include	<ctype.h>
+#include	<limits.h>
 
 #include	"pwman.h"
 #include	"gnupg.h"

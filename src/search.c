@@ -55,17 +55,16 @@ search_new()
 static char*
 search_strcasestr(char *haystack, char *needle){
 	/* Never matches if null/empty string given */
-	if(haystack == NULL) {
+	if (haystack == NULL)
 		return 0;
-	}
-	if(strlen(haystack) == 0) {
+
+	if (strlen(haystack) == 0)
 		return 0;
-	}
 
 #ifdef HAVE_STRCASESTR
-	return (char*)strcasestr(haystack, needle);
+	return strcasestr(haystack, needle);
 #else
-	return (char*)strstr(haystack, needle);
+	return strstr(haystack, needle);
 #endif
 }
 

@@ -17,7 +17,8 @@ INSTALL		= @INSTALL@
 CC		= @CC@
 MAKEDEPEND	= @CC@ -MM
 CFLAGS		= @CFLAGS@ ${XML_CFLAGS}
-CPPFLAGS	= @CPPFLAGS@ -I${top_srcdir} -I${top_builddir}
+CPPFLAGS	= @CPPFLAGS@ -I${top_srcdir} -I${top_builddir}		\
+		  -D_GNU_SOURCE -D__EXTENSIONS__
 LIBS		= @LIBS@ ${XML_LIBS}
 
 SRCS		= actions.c filter.c gnupg.c launch.c misc.c options.c	\
