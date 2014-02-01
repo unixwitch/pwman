@@ -28,7 +28,6 @@
 
 #include	"pwman.h"
 #include	"ui.h"
-#include	"help.h"
 #include	"actions.h"
 #include	"gnupg.h"
 
@@ -197,23 +196,69 @@ ui_init()
 	return 0;
 }
 
+static char    *help[] = {
+	"	?		help",
+	"	q/Q		quit",
+	"	^L		refresh windows",
+	"",
+	"	arrows / j,k	scroll list",
+	"	enter/space/e	view/edit item",
+	"	U		move up a level",
+	"",
+	"	a		add item",
+	"	A		add sublist",
+	"	m		move item/sublist",
+	"	M		move item/sublist up one level",
+	"	[		move item up the list",
+	"	]		move item down the list",
+	"	r		rename item/sublist",
+	"	d/del		delete item/sublist",
+	"	L		locate item/sublist (prints path)",
+	"",
+	"	f		enable / disable filtering",
+	"	/		enable / disable searching",
+	"",
+	"	l		launch item",
+	"	Format:		%u = user, %h = host, %p = password",
+	"	e.g.	mysql -Dmydb -u%u -p%p -h%h",
+	"",
+	"	Editor Help",
+	"	[#]		edit field denoted by #",
+	"	i.e.	press 3 to edit field 3",
+	"",
+	"	Misc Help",
+	"	o		edit options",
+	"	^W		write database to file (save)",
+	"	^R		read database from file (reload)",
+	"	I		import password from file",
+	"	E		export password to file",
+	"	^G		Generate password",
+	"	^F		Forget passphrase",
+	NULL
+};
+
 static void
 ui_display_help()
 {
-int		i;
+int		i, l = 0;
 WINDOW         *helpwin;
+int		width = 65;
 
-	helpwin = newwin(LINES - 5, COLS - 6, 3, 3);
+	helpwin = newwin(LINES - 5, width, 3, (COLS - width) / 2);
+	box(helpwin, 0, 0);
 	uilist_clear();
 
 	for (i = 0; help[i] != NULL; i++) {
-		waddstr(helpwin, help[i]);
-		if (!((i + 1) % (LINES - 9)) || (help[i + 1] == NULL)) {
-			/* refresh(); */
+		mvwaddstr(helpwin, l + 1, 1, help[i]);
+		l++;
+
+		if (!((i + 1) % (LINES - 8)) || (help[i + 1] == NULL)) {
 			wrefresh(helpwin);
 			ui_statusline_msg("Press any key to continue...");
 			getch();
 			wclear(helpwin);
+			box(helpwin, 0, 0);
+			l = 0;
 		}
 	}
 	uilist_refresh();
