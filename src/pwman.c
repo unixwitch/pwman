@@ -287,22 +287,33 @@ int		i;
 static void
 pwman_show_version()
 {
-	puts(PACKAGE " v " VERSION);
-	puts("Written by Ivan Kelly <ivan@ivankelly.net>\n");
-	puts("Copyright (C) 2002 Ivan Kelly");
-	puts("This program is free software; you can redistribute it and/or modify");
-	puts("it under the terms of the GNU General Public License as published by");
-	puts("the Free Software Foundation; either version 2 of the License, or");
-	puts("(at your option) any later version.\n");
+	fprintf(stderr,
 
-	puts("This program is distributed in the hope that it will be useful,");
-	puts("but WITHOUT ANY WARRANTY; without even the implied warranty of");
-	puts("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the");
-	puts("GNU General Public License for more details.\n");
+PACKAGE " " VERSION "\n"
+"\n"
+"Written by Ivan Kelly <ivan@ivankelly.net>\n"
+"Copyright (C) 2002 Ivan Kelly\n"
+"\n"
+"Contributors to this version:\n"
+"\n"
+"    Nick Burch <gagravarr@users.sourceforge.net>\n"
+"    Jon Stuart <lemon-732@users.sourceforge.net>\n"
+"    Felicity Tarnell <felicity@loreley.flyingparchment.org.uk>\n"
+"\n"
+"This program is free software; you can redistribute it and/or modify\n"
+"it under the terms of the GNU General Public License as published by\n"
+"the Free Software Foundation; either version 2 of the License, or\n"
+"(at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU General Public License for more details.\n"
 
-	puts("You should have received a copy of the GNU General Public License");
-	puts("along with this program; if not, write to the Free Software");
-	puts("Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.\n");
+"You should have received a copy of the GNU General Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.\n"
+);
 }
 
 static void
