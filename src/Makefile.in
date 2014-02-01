@@ -22,7 +22,7 @@ LIBS		= @LIBS@ ${XML_LIBS}
 
 SRCS		= actions.c filter.c gnupg.c launch.c misc.c options.c	\
 		  pwgen.c pwlist.c pwman.c search.c ui.c uilist.c	\
-		  strlcpy.c
+		  strlcpy.c arc4random.c
 OBJS		= ${SRCS:.c=.o}
 
 all: pwman

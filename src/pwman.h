@@ -22,12 +22,14 @@
 #ifndef PW_MINDER_H
 #define PW_MINDER_H
 
-#include <curses.h>
-#include <stdio.h>
-#include <string.h>
-#include <config.h>
-#include <time.h>
-#include <stdarg.h>
+#include	<curses.h>
+#include	<stdio.h>
+#include	<string.h>
+#include	<config.h>
+#include	<time.h>
+#include	<stdarg.h>
+
+#include	"config.h"
 
 #define CONF_FILE 	".pwmanrc" 
 #define	DB_FILE		".pwman.db"
@@ -155,5 +157,13 @@ char *pwgen_ask(char *pw);
 void pwgen_indep(void);
 
 int launch(Pw *pw);
+
+#ifndef HAVE_ARC4RANDOM
+uint32_t arc4random(void);
+#endif
+
+#ifndef HAVE_ARC4RANDOM_UNIFORM
+uint32_t arc4random(uint32_t);
+#endif
 
 #endif

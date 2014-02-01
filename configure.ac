@@ -9,7 +9,7 @@ AC_ISC_POSIX
 
 AC_CHECK_HEADERS(unistd.h locale.h termios.h linux/termios.h sys/ioctl.h string.h)
 
-AC_CHECK_FUNCS([drand48 strlcpy strlcat])
+AC_CHECK_FUNCS([strlcpy strlcat arc4random arc4random_uniform])
 AC_CHECK_LIB(c, strcasestr, CFLAGS="$CFLAGS -DHAVE_STRCASESTR" )
 
 # Checks for libraries.
