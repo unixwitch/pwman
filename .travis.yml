@@ -4,4 +4,4 @@ compiler:
   - clang
 env:
   - CPPFLAGS="-Wall -Wno-unused-parameter -Wno-parentheses -Wno-implicit-int -Wno-missing-field-initializers"
-script: sudo apt-get -y install libncurses-dev && mkdir build && cd build && ../configure && make && sudo make install
+script: mkdir build && cd build && ../configure && make && sudo make install
