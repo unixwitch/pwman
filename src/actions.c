@@ -37,11 +37,11 @@ action_list_add_pw()
 Pw	*pw;
 
 	InputField fields[] = {
-		{"Name:\t",		NULL, STRING},
-		{"Host:\t",		NULL, STRING},
-		{"User:\t",		NULL, STRING},
-		{"Password:\t",		NULL, STRING, pwgen_ask},
-		{"Launch command:\t",	NULL, STRING}
+		{"Name: ",		NULL, STRING},
+		{"Host: ",		NULL, STRING},
+		{"User: ",		NULL, STRING},
+		{"Password: ",		NULL, STRING, pwgen_ask},
+		{"Launch command: ",	NULL, STRING}
 	};
 	int i;
 
@@ -56,7 +56,7 @@ Pw	*pw;
 		goto end;
 
 	if ((pw->passwd = ui_ask_str_with_autogen(fields[3].name,
-			fields[3].autogen, 0x07)) == NULL)
+			fields[3].autogen, CNTL('G'))) == NULL)
 		goto end;
 	
 	if ((pw->launch = ui_ask_str(fields[4].name)) == NULL)
@@ -89,11 +89,11 @@ static void
 action_edit_pw(Pw *pw)
 {
 	InputField fields[] = {
-		{"Name:\t",		&pw->name,	STRING},
-		{"Host:\t",		&pw->host,	STRING},
-		{"User:\t",		&pw->user,	STRING},
-		{"Password:\t",		&pw->passwd,	STRING, pwgen_ask},
-		{"Launch command:\t",	&pw->launch,	STRING}
+		{"Name: ",		&pw->name,	STRING},
+		{"Host: ",		&pw->host,	STRING},
+		{"User: ",		&pw->user,	STRING},
+		{"Password: ",		&pw->passwd,	STRING, pwgen_ask},
+		{"Launch command: ",	&pw->launch,	STRING}
 	};
 
 	action_input_dialog(fields, (sizeof(fields)/sizeof(InputField)), "Edit password");
@@ -236,7 +236,7 @@ action_input_dialog(InputField *fields, int num_fields, char *title)
 			if (fields[i].autogen != NULL) {
 				*(char **)fields[i].value = ui_ask_str_with_autogen(
 							fields[i].name, 
-							fields[i].autogen, 0x07); 
+							fields[i].autogen, CNTL('G')); 
 			} else if (fields[i].type == STRING){
 				*(char **)fields[i].value = ui_ask_str(fields[i].name);
 			} else if (fields[i].type == INT) {

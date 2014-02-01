@@ -39,7 +39,8 @@ static void	ui_free_windows(void);
 static void	ui_display_help(void);
 static void	ui_resize_windows(void);
 
-static char *	ui_statusline_prompt(char const *, char const *, int);
+static char *	ui_statusline_prompt(char const *, char const *, int,
+				     char *(*) (void), int);
 
 static int should_resize = FALSE;
 static int can_resize = FALSE;
@@ -477,7 +478,7 @@ ui_ask_num(char const *msg)
 char	*line;
 int	 ret;
 
-	line = ui_statusline_prompt(msg, NULL, 0);
+	line = ui_statusline_prompt(msg, NULL, 0, NULL, 0);
 	if (!line)
 		return 0;
 
@@ -518,75 +519,22 @@ ui_ask_char(char const *msg, char* valid)
 char *
 ui_ask_str(char const *msg)
 {
-	return ui_statusline_prompt(msg, NULL, 0);
+	return ui_statusline_prompt(msg, NULL, 0, NULL, 0);
 }
 
 char *
-ui_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch)
+ui_ask_str_with_autogen(char const *msg, char *(*autogen)(void), int ch)
 {
-	int i = 0;
-	int c;
-	char *text[2], *s;
-	int x;
-	char *input;
-	int len = STRING_LONG;
-
-	input = xmalloc(len + 1);
-
-	text[0] = malloc(STRING_MEDIUM);
-	text[1] = malloc(STRING_SHORT);
-	
-	strlcpy(text[1], msg, STRING_SHORT);
-	if ((s = strrchr(text[1], ':')) != NULL)
-		*s = 0;
-
-	snprintf(text[0], STRING_MEDIUM, "%s (^%c for autogen):\t", text[1], 0x40 + ch);
-	x = strlen(text[0]) + 5;
-
-	ui_statusline_clear();
-	ui_statusline_msg(text[0]);
-
-	show_cursor();
-	noecho();
-
-	wmove(bottom, 1, x);
-
-	while(i < len){
-		c = wgetch(bottom);
-		if(c == 0x7f){
-			if(i){
-				i--;
-				mvwaddch(bottom, 1, x+i, ' ');
-				wmove(bottom, 1, x+i);
-			}
-		} else if(c == 0xd){
-			input[i] = 0;
-			break;
-		} else if(c == ch){
-			input = autogen(input);
-			break;
-		} else {
-			input[i] = c;
-			mvwaddch(bottom, 1, x + i, c);
-			i++;
-		}
-	}
-	
-	hide_cursor();
-	
-	ui_statusline_clear();
-
-	free(text[0]);
-	free(text[1]);
-
-	return input;
+char	prompt[128];
+	snprintf(prompt, sizeof(prompt), "Password (^%c for autogen): ", 0x40 + ch);
+	return ui_statusline_prompt(prompt, NULL, 0, autogen, ch);
 }
 
 char *
 ui_ask_passwd(msg, cancel)
 	char const	*msg;
 {
-	return ui_statusline_prompt(msg, NULL, 1);
+	return ui_statusline_prompt(msg, NULL, 1, NULL, 0);
 }
 
 int 
@@ -632,12 +580,14 @@ ui_ask_yes_no(char const *msg, int def)
 }
 
 static char *
-ui_statusline_prompt(msg, def, secret)
+ui_statusline_prompt(msg, def, secret, gen, genc)
 	char const	*msg, *def;
+	char		*(*gen) (void);
 {
 WINDOW		*pwin;
 char		 input[256];
 size_t		 pos = 0;
+int		 old_curs;
 
 	bzero(input, sizeof(input));
 	if (def) {
@@ -648,15 +598,12 @@ size_t		 pos = 0;
 	pwin = newwin(1, COLS, LINES - 2, 0);
 	keypad(pwin, TRUE);
 
-	/*wattr_on(pwin, style_fg(sy_status), NULL);*/
-	/*wbkgd(pwin, style_bg(sy_status));*/
-
 	wattron(pwin, A_BOLD);
 	wmove(pwin, 0, 0);
 	waddstr(pwin, msg);
 	wattroff(pwin, A_BOLD);
 
-	curs_set(1);
+	old_curs = curs_set(1);
 
 	for (;;) {
 	int	c;
@@ -675,6 +622,16 @@ size_t		 pos = 0;
 
 		if ((c = wgetch(pwin)) == ERR)
 			continue;
+
+		if (genc && (c == genc)) {
+		char	*pw = gen();
+			strlcpy(input, pw, sizeof(input));
+			pos = strlen(input);
+			free(pw);
+			touchwin(pwin);
+		curs_set(1);
+			continue;
+		}
 
 		switch (c) {
 		case '\n':
@@ -715,12 +672,12 @@ size_t		 pos = 0;
 			break;
 
 		case KEY_HOME:
-		case 0x01:	/* ^A */
+		case CNTL('A'):
 			pos = 0;
 			break;
 
 		case KEY_END:
-		case 0x05:	/* ^E */
+		case CNTL('E'):
 			pos = strlen(input);
 			break;
 
@@ -729,7 +686,7 @@ size_t		 pos = 0;
 			delwin(pwin);
 			return NULL;
 
-		case 0x15:	/* ^U */
+		case CNTL('U'):	/* ^U */
 			input[0] = 0;
 			pos = 0;
 			break;
@@ -738,6 +695,9 @@ size_t		 pos = 0;
 		case KEY_RESIZE:
 			break;
 #endif
+
+		case 0:
+			break;
 
 		default:
 			if (pos != strlen(input)) {
@@ -753,9 +713,10 @@ size_t		 pos = 0;
 	}
 end:	;
 
-	curs_set(0);
+	curs_set(old_curs);
 	delwin(pwin);
-	wtouchln(bottom, 1, 1, 1);
+	touchwin(bottom);
+	ui_statusline_msg("");
 	return strdup(input);
 }
 void

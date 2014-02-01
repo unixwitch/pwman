@@ -163,7 +163,7 @@ int pwlist_export_list(PWList *pwlist);
 int pwlist_write_file(void);
 int pwlist_import_passwd(void);
 
-char *pwgen_ask(char *pw);
+char *pwgen_ask(void);
 void pwgen_indep(void);
 
 int launch(Pw *pw);

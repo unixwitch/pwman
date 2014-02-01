@@ -183,27 +183,31 @@ pwgen(char *buf, int size)
 }
 
 char *
-pwgen_ask(char *pw)
+pwgen_ask()
 {
 int	i;
+char	*ret;
+
 	i = ui_ask_num("Length of password (default 16):\t");
 
 	if (i == 0)
 		i = 16;
 	else if (i > STRING_SHORT)
 		i = STRING_SHORT;
-	pw = pwgen(pw, i);
 
-	return pw;
+	ret = xcalloc(1, i + 1);
+	pwgen(ret, i);
+
+	return ret;
 }
 
 void 
 pwgen_indep()
 {
-	char pass[STRING_SHORT], text[STRING_LONG];
+char	*p, text[128];
 
-	pwgen_ask(pass);
+	p = pwgen_ask();
 
-	snprintf(text, STRING_LONG, "Generated Password: %s", pass);
+	snprintf(text, STRING_LONG, "Generated password: %s", p);
 	ui_statusline_msg(text);
 }

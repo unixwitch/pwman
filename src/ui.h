@@ -54,6 +54,8 @@
 #define NUM_TO_CHAR(n) (n + 48)
 #define CHAR_TO_NUM(n) (n - 49)
 
+#define CNTL(x)	((x) - 0x40)
+
 typedef enum {
 	STRING,     /* A regular string */
 	INT,        /* An integer */
@@ -71,7 +73,7 @@ typedef struct {
 	char *name;
 	void *value; /* int* or char* */
 	TYPE type;
-	char *(*autogen)(char*);
+	char *(*autogen)(void);
 } InputField;
 
 void uilist_init(void);
@@ -90,7 +92,7 @@ int	 ui_ask_num(char const *);
 int	 ui_ask_char(char const *, char *);
 char	*ui_ask_str(char const *);
 char	*ui_ask_passwd(char const *, int);
-char	*ui_ask_str_with_autogen(char const *msg, char *(*autogen)(char *), int ch);
+char	*ui_ask_str_with_autogen(char const *msg, char *(*autogen)(void), int ch);
 
 void	uilist_up(void);
 void	uilist_down(void);
