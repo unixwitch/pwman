@@ -1,0 +1,114 @@
+?????  Nick Burch <gagravarr@users.sourceforge.net>
+	* ui.c: Avoid warnings by correcting return types, and for those 
+	    defined as int always returning 0 on success
+
+0.4.4  Nick Burch <gagravarr@users.sourceforge.net>
+	* actions.c/search.c/uilist.c: tweaked how search works internall, so 
+	    that you have the parent of entry results - needed by "Locate"
+	    to be able to tell you where your search results really live
+	* actions.c/ui.c: added "Locate" support, which prints out the path
+	    in the tree to the current item
+
+0.4.3  Nick Burch <gagravarr@users.sourceforge.net>
+	* ui.c: correctly handle backspace if ncurses doesn't (eg inside screen)
+	* pwlist.c: fixes to compiler warnings 
+	* gnupg.h: added to reduce compiler warnings
+	* ui.h: add missing definition
+	* actions.c: correct return types, which fixes an OS/X issue
+
+0.4.2  Nick Burch <gagravarr@users.sourceforge.net>
+	* pwlist.c: rather than having pwlist_export and pwlist_export_passwd
+	    duplicate functionality, move to a common exporter
+	* pwlist.c: fix password list/entry export on newer libc's
+	* actions.c: when exporting, give a different error if key has expired
+	* help.h: tweak information on what ^W and ^R do
+	* gnupg.c: correct key search logic when more than one key for a given
+	    email address exists, where some are expired and one isn't
+	* gnupg.c: fix issue with compiling expired key regular expressions on
+	    more modern libc's
+	* gnupg.c: avoid some compiler warnings 
+
+0.4.1  Nick Burch <gagravarr@users.sourceforge.net>
+	* *.c: avoid compiler warnings about implicit declaration of free 
+	* ui.c: Turn tabs into spaces (neither xml nor ncurses like tabs much)
+	* pwlist.c: Tweak the entry escaping to still work properly when
+		heavy compiler optimisations are enabled
+
+0.4.0  Nick Burch <gagravarr@users.sourceforge.net>
+	* search.c: new support for case insensitive searching across
+	    entries and sublists - use / to search, f for old style filtering
+	* gnupg.c: gpg_check_id now reports on expired keys (uses
+		--with-colons option to get more details from gpg to spot this)
+	* pwman.c: check that the key can be found and hasn't expired during
+		startup, warning about the problem in advance
+	* uilist.c: change the key of filtering from / to f
+	* pwlist.c/uilist.c: support searching for entries via /
+	* gnupg.c: if the gnupg call fails and generates a SIGPIPE, make
+		some attempt to let the user know what went wrong with it
+
+0.3.9   Nick Burch <gagravarr@users.sourceforge.net>
+	* gnupg.c: fix segfault if the secret key isn't present
+
+0.3.8   Nick Burch <gagravarr@users.sourceforge.net>
+	* pwlist.c/actions.c: support moving entries and sublists up and down
+	  within their parent list, using [ and ]. (You could already move them
+	  to parent or child lists)
+
+0.3.7   Nick Burch <gagravarr@users.sourceforge.net>
+	* gnupg.c/pwman.c: improved handling of new files, and when you cancel the
+	  gnupg passphrase input / key not found
+
+0.3.6   Nick Burch <gagravarr@users.sourceforge.net>
+	* uilist.c: fix so we don't have an inifinite loop if no data
+
+0.3.5   Nick Burch <gagravarr@users.sourceforge.net>
+	* gnupg.c: add support for encrypting data to multiple recipients
+	* gnupg.c/actions.c/pwlist.c: make the export of passwords and lists
+	  handle multiple recipients. (Normal use still only works with one)
+	* filter.c: show an on-screen alert when filtering is turned on
+
+0.3.4   Nick Burch <gagravarr@users.sourceforge.net>
+	* *.c: implement read only patch from Jon
+	* pwlist.c: XML escape data, so strings with a & in them don't break
+
+0.3.3   Ivan Kelly  <ivan@ivankelly.net>
+	* *.c: renamed a few functions to make it clearer where they're from
+	* uilist.c: fix for cursor going off the screen
+
+0.3.1	Ivan Kelly	<ivan@ivankelly.net>
+	* pwman.1: updated man page
+	* gnupg.c: large rewrite, switched back from gpgme to using gpg with pipes
+	* pwlist.c/actions.c/uilist.c: added sublist functionallity
+	* pwlist.c: new format due to addition of sublists
+	* convert_pwdb.c: separate executable for converting old database
+	* pwdb2csv.c: separate executable to convert a database to a csv file
+	* misc.c: added file misc.c and move some misc functions to it
+	* *.c: other small changes
+	
+0.2.1	Ivan Kelly 	<ivan@ivankelly.net>
+	* filter.c: Bugfixes on filter
+	* launch.c: Fixed launch command with filters
+	* pwlist.c: Added a file write after each add so that data isn't lost if pwman
+	  isn't shut down right
+
+0.2.0	Ivan Kelly	<ivan@ivankelly.net>
+	* filter.c: Added search/filtering function
+	* gnupg.c: Switched from using gpg to gpgme
+	* pwgen.c: Added password generator
+	* pwlist.c: Rewrote most of password file I/O
+	* import_export.c: Added Import/Export functions
+	* uilist.c: Got rid of incessant blinking/flashing on scroll
+	* ui.c/pwman.c/gnupg.c: Shadowed passphrase and timeout improvements
+
+0.1.2	Ivan Kelly 	<ivan@ivankelly.net>
+	* options.c/pwlist.c: Switched from libxml to libxml2
+	* gnupg.c: Added a passphrase timeout option
+	* configure.in: Changed configure.in so that it now builds on openbsd
+	* pwman.c Added lock files on the password files
+	* *: Now Building on MacOSX10.1, FreeBSD 4.5 & Solaris 8 also
+
+0.1.1	Ivan Kelly	<ivan@ivankelly.net>
+	* *.c: Few bug fixes and error handling. Code clean up.
+
+0.1.0 	Ivan Kelly	<ivan@ivankelly.net>
+	* pwman: Initial release

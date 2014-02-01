@@ -1,0 +1,105 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT([src/ui.c])
+AM_INIT_AUTOMAKE(pwman, 0.4.4)
+AM_CONFIG_HEADER(config.h)
+AC_CONFIG_FILES([pwman.spec])
+
+# Checks for programs.
+AC_PROG_CC
+AC_ISC_POSIX
+
+AC_CHECK_HEADERS(unistd.h locale.h termios.h linux/termios.h sys/ioctl.h string.h)
+
+AC_CHECK_FUNCS(drand48)
+AC_CHECK_LIB(c, strcasestr, CFLAGS="$CFLAGS -DHAVE_STRCASESTR" )
+# Checks for libraries.
+dnl -------------------
+dnl ncurses detection
+dnl -------------------
+
+curses_loc=/usr
+AC_ARG_WITH(curses, [  --with-ncurses=PATH	Where ncurses is installed ],
+        [if test $withval != yes; then
+                curses_loc=$withval
+        fi
+        if test x$curses_loc != x/usr; then
+                LDFLAGS="-L${curses_loc}/lib $LDFLAGS"
+                CPPFLAGS="$CPPFLAGS -I${curses_loc}/include"
+        fi])
+
+AC_CHECK_LIB(curses, initscr,
+        [LIBS="$LIBS -lcurses"
+        if test x$curses_loc = x/usr -a -d /usr/include/ncurses; then
+                CPPFLAGS="$CPPFLAGS -I/usr/include/ncurses"
+        fi
+        AC_CHECK_HEADERS(ncurses.h)],
+	[ echo "*************************************************************"
+	  echo "  ncurses not found. "
+	  echo "  Set path to ncurses install with --with-ncurses"
+	  echo "*************************************************************"
+	  exit])
+
+dnl 
+dnl Checks for libxml2
+dnl
+AC_ARG_WITH(libxml2,
+            [  --with-libxml2=PFX   Prefix where libxml is installed ],
+            libxml2_loc="$withval", libxml2_loc="")
+	    
+if test x$libxml2_loc != x ; then
+     if test x${XML2_CONFIG+set} != xset ; then
+        XML2_CONFIG=$libxml2_loc/bin/xml2-config
+     fi
+fi
+
+AC_PATH_PROG(XML2_CONFIG, xml2-config, no)
+
+if test "$XML2_CONFIG" = "no" ; then
+	echo "*************************************************************"
+	echo "  libxml2 not found. "
+	echo "  It may not be installed or may be in a installed in a "
+	echo "  location other than /usr"
+	echo "  Set path to libxml2 install with --with-libxml2"
+	echo "*************************************************************"
+	exit
+else
+	XML_CFLAGS=`$XML2_CONFIG $libxml2_args --cflags`
+	XML_LIBS=`$XML2_CONFIG $libxml2_args --libs`
+fi
+	
+
+LIBS="$LIBS $XML_LIBS";
+CFLAGS="$CFLAGS $XML_CFLAGS";
+
+dnl 
+dnl Debugging
+dnl
+AC_ARG_WITH(debug,
+            [  --with-debug   Turn on Debugging ],
+	    [ LIBS="$LIBS -ggdb"
+	      CFLAGS="$CFLAGS -DDEBUG" 
+	      echo "* Debugging is On *" ],
+	      echo "* Debugging is Off *")
+	    
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+
+dnl --------------------------
+dnl end of xml detection
+dnl --------------------------
+
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([string.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+
+AC_OUTPUT([Makefile src/Makefile doc/Makefile]) 
