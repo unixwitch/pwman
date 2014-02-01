@@ -1,0 +1,47 @@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+
+top_srcdir	= @top_srcdir@
+top_builddir	= @top_builddir@
+
+VPATH		= @srcdir@
+
+XML_CFLAGS	= @XML_CFLAGS@
+XML_LIBS	= @XML_LIBS@
+
+INSTALL		= @INSTALL@
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@ ${XML_CFLAGS}
+CPPFLAGS	= @CPPFLAGS@ -I$(top_srcdir) -I${top_builddir}
+LIBS		= @LIBS@ ${XML_LIBS}
+
+PWMAN_OBJS	= actions.o filter.o gnupg.o launch.o misc.o options.o	\
+		  pwgen.o pwlist.o pwman.o search.o ui.o uilist.o
+
+CONVERT_PWDB_OBJS	= convert_pwdb.o
+PWDB2CSV_OBJS		= pwdb2csv.o
+
+all: pwman convert_pwdb pwdb2csv
+
+pwman: $(PWMAN_OBJS)
+	$(CC) $(CFLAGS) $(PWMAN_OBJS) -o pwman ${LIBS}
+
+convert_pwdb: $(CONVERT_PWDB_OBJS)
+	$(CC) $(CFLAGS) $(CONVERT_PWDB_OBJS) -o convert_pwdb ${LIBS}
+
+pwdb2csv: $(PWDB2CSV_OBJS)
+	$(CC) $(CFLAGS) $(PWDB2CSV_OBJS) -o pwdb2csv ${LIBS}
+
+install: all
+	${INSTALL} -d ${DESTDIR}${bindir}
+	${INSTALL} -m 0755 pwman ${DESTDIR}${bindir}
+	${INSTALL} -m 0755 convert_pwdb ${DESTDIR}${bindir}
+	${INSTALL} -m 0755 pwdb2csv ${DESTDIR}${bindir}
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
+
+clean:
+	rm -f *.o pwman convert_pwdb pwdb2csv

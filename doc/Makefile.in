@@ -1,0 +1,19 @@
+srcdir		= @srcdir@
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+datadir		= @datadir@
+mandir		= @mandir@
+
+INSTALL	= @INSTALL@
+
+all:
+
+clean:
+
+install:
+	${INSTALL} -d ${DESTDIR}/${mandir}/man1
+	$(INSTALL) -m 0644 $(srcdir)/pwman.1 $(DESTDIR)$(mandir)/man1
+
+uninstall:
+	-rm -f $(DESTDIR)$(mandir)/man1/pwman.1

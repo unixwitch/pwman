@@ -11,6 +11,7 @@ AC_CHECK_HEADERS(unistd.h locale.h termios.h linux/termios.h sys/ioctl.h string.
 
 AC_CHECK_FUNCS(drand48)
 AC_CHECK_LIB(c, strcasestr, CFLAGS="$CFLAGS -DHAVE_STRCASESTR" )
+
 # Checks for libraries.
 dnl -------------------
 dnl ncurses detection
@@ -64,12 +65,10 @@ if test "$XML2_CONFIG" = "no" ; then
 else
 	XML_CFLAGS=`$XML2_CONFIG $libxml2_args --cflags`
 	XML_LIBS=`$XML2_CONFIG $libxml2_args --libs`
+	AC_SUBST(XML_CFLAGS)
+	AC_SUBST(XML_LIBS)
 fi
 	
-
-LIBS="$LIBS $XML_LIBS";
-CFLAGS="$CFLAGS $XML_CFLAGS";
-
 dnl 
 dnl Debugging
 dnl

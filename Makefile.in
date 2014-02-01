@@ -1,0 +1,10 @@
+SUBDIRS		= doc src
+
+all clean install:
+	@for d in ${SUBDIRS}; do 		\
+		echo "$@ ==> $$d";		\
+		${MAKE} -C $$d $@ || exit 1;	\
+		echo "$@ <== $$d";		\
+	done
+
+.PHONY: all clean install
