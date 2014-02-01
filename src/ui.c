@@ -39,6 +39,8 @@ static void	ui_free_windows(void);
 static void	ui_display_help(void);
 static void	ui_resize_windows(void);
 
+static char *	ui_statusline_prompt(char const *, char const *, int);
+
 static int should_resize = FALSE;
 static int can_resize = FALSE;
 
@@ -472,24 +474,16 @@ ui_statusline_clear()
 int
 ui_statusline_ask_num(char const *msg)
 {
-	int x = strlen(msg) + 5;
-	int i;
-	char input[STRING_SHORT];
+char	*line;
+int	 ret;
 
-	ui_statusline_clear();
-	ui_statusline_msg(msg);
+	line = ui_statusline_prompt(msg, NULL, 0);
+	if (!line)
+		return 0;
 
-	echo();
-	show_cursor();
-
-	mvwgetnstr(bottom, 1, x, input, STRING_SHORT);
-	i = atoi(input);
-	
-	noecho();
-	hide_cursor();
-
-	ui_statusline_clear();
-	return i;
+	ret = atoi(line);
+	free(line);
+	return ret;
 }
 
 int
@@ -524,65 +518,7 @@ ui_statusline_ask_char(char const *msg, char* valid)
 char *
 ui_statusline_ask_str(char const *msg)
 {
-	char *tmp;
-	char *tmp2;
-	char *tmp3;
-	int len = STRING_LONG;
-	int x = strlen(msg) + 5;
-	char *input;
-
-	input = xmalloc(len + 1);
-
-	ui_statusline_clear();
-	ui_statusline_msg(msg);
-
-	echo();
-	show_cursor();
-	mvwgetnstr(bottom, 1, x, input, len);
-	noecho();
-	hide_cursor();
-
-	ui_statusline_clear();
-
-	/* Tabs don't play nicely with ncurses or xml */
-	/* So, swap any for (a single) space */
-	tmp = input;
-	while(*tmp != 0) {
-		if(*tmp == 9) *tmp = ' ';
-		tmp++;
-	}
-
-	/* In some cases (eg when inside screen), the backspace */
-	/* comes through to us. Handle it here if needed */
-	tmp = input;
-	while(*tmp != 0) {
-		if(*tmp == 8) {
-			/* tmp2 is where to copy to, tmp3 is where to copy from */
-			tmp3 = tmp + 1;
-			if(tmp == input) {
-				tmp2 = tmp;
-			} else {
-				tmp2 = tmp - 1;
-			}
-
-			/* When we're done, start from the character */
-			/*  we copied in to */
-			tmp = tmp2;
-
-			/* Process forward */
-			while(*tmp3 != 0) {
-				*tmp2 = *tmp3;
-				tmp2++;
-				tmp3++;
-			}
-			*tmp2 = 0;
-		} else {
-			tmp++;
-		}
-	}
-	
-	/* All done */
-	return input;
+	return ui_statusline_prompt(msg, NULL, 0);
 }
 
 char *
@@ -650,47 +586,7 @@ char *
 ui_statusline_ask_passwd(msg, cancel)
 	char const	*msg;
 {
-int	c;
-int	i = 0;
-int	x = (int)strlen(msg) + 5;
-int	len = STRING_LONG;
-char	*ret;
-
-	assert(len > 0);
-	ret = malloc((size_t)len + 1);
-
-	ui_statusline_clear();
-	ui_statusline_msg(msg);
-
-	show_cursor();
-	noecho();
-
-	wmove(bottom, 1, x);
-
-	while (i < (int)len){
-		c = wgetch(bottom);
-		if (c == 0x7f) { /* 0x7f = delete */
-			if (i) {
-				i--;
-				mvwaddch(bottom, 1, x + i, ' ');
-				wmove(bottom, 1, x + i);
-			}
-		} else if (c == 0xd) { /* 0xd == enter/return */
-			ret[i] = 0;
-			break;
-		} else if (c == cancel){
-			free(ret);
-			return NULL;
-		} else {
-			ret[i] = (char) c;
-			mvwaddch(bottom, 1, x + i, '*');
-			i++;
-		}
-	}
-	
-	hide_cursor();
-	ui_statusline_clear();
-	return ret;
+	return ui_statusline_prompt(msg, NULL, 1);
 }
 
 int 
@@ -735,6 +631,134 @@ ui_statusline_yes_no(char const *msg, int def)
 	return ret;
 }
 
+static char *
+ui_statusline_prompt(msg, def, secret)
+	char const	*msg, *def;
+{
+WINDOW		*pwin;
+char		 input[256];
+size_t		 pos = 0;
+
+	bzero(input, sizeof(input));
+	if (def) {
+		strlcpy(input, def, sizeof(input));
+		pos = strlen(input);
+	}
+
+	pwin = newwin(1, COLS, LINES - 2, 0);
+	keypad(pwin, TRUE);
+
+	/*wattr_on(pwin, style_fg(sy_status), NULL);*/
+	/*wbkgd(pwin, style_bg(sy_status));*/
+
+	wattron(pwin, A_BOLD);
+	wmove(pwin, 0, 0);
+	waddstr(pwin, msg);
+	wattroff(pwin, A_BOLD);
+
+	curs_set(1);
+
+	for (;;) {
+	int	c;
+		wmove(pwin, 0, strlen(msg) + 1);
+
+		if (secret) {
+		size_t	i = 0, len = strlen(input);
+			for (; i < len; i++)
+				waddch(pwin, '*');
+		} else
+			waddstr(pwin, input);
+
+		wclrtoeol(pwin);
+		wmove(pwin, 0, strlen(msg) + 1 + pos);
+		wrefresh(pwin);
+
+		if ((c = wgetch(pwin)) == ERR)
+			continue;
+
+		switch (c) {
+		case '\n':
+		case '\r':
+			goto end;
+
+		case KEY_BACKSPACE:
+		case 0x7F:
+		case 0x08:
+			if (pos) {
+				if (pos == strlen(input))
+					input[--pos] = 0;
+				else {
+				int	i = strlen(input);
+					pos--;
+					memmove(input + pos, input + pos + 1, strlen(input) - pos);
+					input[i] = 0;
+				}
+			}
+			break;
+
+		case KEY_DC:
+			if (pos < strlen(input)) {
+			int	i = strlen(input);
+				memmove(input + pos, input + pos + 1, strlen(input) - pos);
+				input[i] = 0;
+			}
+			break;
+
+		case KEY_LEFT:
+			if (pos)
+				pos--;
+			break;
+
+		case KEY_RIGHT:
+			if (pos < strlen(input))
+				pos++;
+			break;
+
+		case KEY_HOME:
+		case 0x01:	/* ^A */
+			pos = 0;
+			break;
+
+		case KEY_END:
+		case 0x05:	/* ^E */
+			pos = strlen(input);
+			break;
+
+		case 0x07:	/* ^G */
+		case 0x1B:	/* ESC */
+			curs_set(0);
+			delwin(pwin);
+			return NULL;
+
+		case 0x15:	/* ^U */
+			input[0] = 0;
+			pos = 0;
+			break;
+
+#ifdef KEY_RESIZE
+		case KEY_RESIZE:
+			break;
+#endif
+
+		default:
+			if (pos != strlen(input)) {
+				memmove(input + pos + 1, input + pos, strlen(input) - pos);
+				input[pos++] = c;
+			} else {
+				input[pos++] = c;
+				input[pos] = 0;
+			}
+
+			break;
+		}
+	}
+end:	;
+
+	curs_set(0);
+	delwin(pwin);
+	wtouchln(bottom, 1, 1, 1);
+	return strdup(input);
+}
 void
 statusline_readonly()
 {
