@@ -36,6 +36,9 @@ install: all
 	${INSTALL} -d ${DESTDIR}${bindir}
 	${INSTALL} ${INSTALL_MODE} pwman ${DESTDIR}${bindir}
 
+uninstall:
+	-rm -f ${DESTDIR}${bindir}/pwman
+
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
 

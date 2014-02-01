@@ -32,6 +32,9 @@ install: all
 	${INSTALL} -d ${DESTDIR}${bindir}
 	${INSTALL} -m 0755 convert_pwdb ${DESTDIR}${bindir}
 
+uninstall:
+	-rm -f ${DESTDIR}${bindir}/convert_pwdb
+
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
 

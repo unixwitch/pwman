@@ -32,6 +32,9 @@ install: all
 	${INSTALL} -d ${DESTDIR}${bindir}
 	${INSTALL} -m 0755 pwdb2csv ${DESTDIR}${bindir}
 
+uninstall:
+	-rm -f ${DESTDIR}${bindir}/pwdb2csv
+
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
 

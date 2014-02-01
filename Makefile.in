@@ -1,6 +1,6 @@
 SUBDIRS		= doc src convert_pwdb pwdb2csv
 
-all clean install depend:
+all clean install depend uninstall:
 	@for d in ${SUBDIRS}; do 		\
 		echo "$@ ==> $$d";		\
 		${MAKE} -C $$d $@ || exit 1;	\
