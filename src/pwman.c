@@ -30,6 +30,13 @@
 #include	<ctype.h>
 #include	<limits.h>
 
+#include	"config.h"
+
+#if	defined(HAVE_SYS_MMAN_H) && defined(HAVE_MLOCKALL)
+# define USE_MLOCKALL
+# include <sys/mman.h>
+#endif
+
 #include	"pwman.h"
 #include	"gnupg.h"
 #include	"ui.h"
@@ -182,6 +189,15 @@ pwman_quit()
 int
 main(int argc, char *argv[])
 {
+#ifdef	USE_MLOCKALL
+	mlockall(MCL_CURRENT | MCL_FUTURE);
+#endif
+
+	if (getuid() != geteuid()) {
+		if (setuid(getuid()) == -1)
+			return 1;
+	}
+
 	pwman_init(argc, argv);
 
 	ui_run();

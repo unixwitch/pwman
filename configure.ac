@@ -7,10 +7,9 @@ AM_CONFIG_HEADER(config.h)
 AC_PROG_CC
 AC_ISC_POSIX
 
-AC_CHECK_HEADERS(unistd.h locale.h termios.h linux/termios.h sys/ioctl.h string.h)
+AC_CHECK_HEADERS([termios.h linux/termios.h sys/mman.h stdint.h inttypes.h])
 
-AC_CHECK_FUNCS([strlcpy strlcat arc4random arc4random_uniform])
-AC_CHECK_LIB(c, strcasestr, CFLAGS="$CFLAGS -DHAVE_STRCASESTR" )
+AC_CHECK_FUNCS([strlcpy strlcat arc4random arc4random_uniform mlockall strcasestr])
 
 # Checks for libraries.
 dnl -------------------
@@ -78,7 +77,15 @@ AC_ARG_WITH(debug,
 	      CFLAGS="$CFLAGS -DDEBUG" 
 	      echo "* Debugging is On *" ],
 	      echo "* Debugging is Off *")
-	    
+  
+INSTALL_MODE="-o root -m 04755"
+AC_ARG_ENABLE([setuid],
+	      [AS_HELP_STRING([--disable-setuid], [don't install setuid (insecure)])],
+	      [if ! test "$enableval" = yes; then
+			INSTALL_MODE="-m 0755"
+	       fi], [])
+
+AC_SUBST(INSTALL_MODE)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
@@ -92,6 +99,5 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([inttypes.h stdint.h])
 
 AC_OUTPUT([Makefile src/Makefile doc/Makefile convert_pwdb/Makefile pwdb2csv/Makefile]) 

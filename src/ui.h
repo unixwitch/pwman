@@ -33,9 +33,6 @@
 #               include <linux/termios.h>
 #       endif
 #endif
-#ifdef HAVE_SYS_IOCTL_H
-#       include <sys/ioctl.h>
-#endif
 
 #include	"pwman.h"
 

@@ -13,6 +13,7 @@ XML_CFLAGS	= @XML_CFLAGS@
 XML_LIBS	= @XML_LIBS@
 
 INSTALL		= @INSTALL@
+INSTALL_MODE	= @INSTALL_MODE@
 
 CC		= @CC@
 MAKEDEPEND	= @CC@ -MM
@@ -33,7 +34,7 @@ pwman: ${OBJS}
 
 install: all
 	${INSTALL} -d ${DESTDIR}${bindir}
-	${INSTALL} -m 0755 pwman ${DESTDIR}${bindir}
+	${INSTALL} ${INSTALL_MODE} pwman ${DESTDIR}${bindir}
 
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<

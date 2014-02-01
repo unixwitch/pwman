@@ -19,6 +19,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include	<sys/types.h>
+#include	<sys/ioctl.h>
+
 #include	<time.h>
 #include	<stdlib.h>
 #include	<assert.h>
@@ -121,7 +124,7 @@ static void
 ui_resize()
 {
 	struct winsize winsz;
-	ioctl (0, TIOCGWINSZ, &winsz);
+	ioctl(0, TIOCGWINSZ, &winsz);
 
 	resizeterm(winsz.ws_row, winsz.ws_col);
 	if((winsz.ws_col < MIN_COLS) || (winsz.ws_row < MIN_LINES)) {
