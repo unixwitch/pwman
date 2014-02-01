@@ -560,9 +560,9 @@ ui_statusline_ask_str_with_autogen(char *msg, char *input, int len, char *(*auto
 	text[1] = malloc(STRING_SHORT);
 	
 	strncpy(text[1], msg, STRING_SHORT);
-	if(s = strrchr(text[1], ':')){
+	if ((s = strrchr(text[1], ':')) != NULL)
 		*s = 0;
-	}
+
 	snprintf(text[0], STRING_MEDIUM, "%s(%c for autogen):\t", text[1],ch);
 	x = strlen(text[0]) + 5;
 
