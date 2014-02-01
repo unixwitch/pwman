@@ -1,4 +1,4 @@
-# PWMan Password Manager
+# pwman
 
 **Note**: This is a fork of the [original pwman](http://pwman.sf.net/),
 maintained mostly for Torchbox internal use.  It may be useful to other people,
@@ -10,93 +10,58 @@ manage, store, search and retrieve your passwords.
 
 The look and feel is based on Jaakko Heinonen's abook.
 
-## Installation requirements
+## Installation
 
-PWMan is distributed as source files, and hence needs to be compiled and 
-installed manually. Installation configuration should check and bring in
-all dependencies for you, but ensure you have the following development 
-libraries on your machine before commencing (as configuration will need 
-to be restarted from the beginning each time a dependency fails):
+Building pwman requires:
 
-* gcc or some other C compiler
-* libc6 standard C development libraries
-* ncurses development libraries
-* libxml2 GNOME XML library
+- A C compiler (tested with Clang and GCC)
+- ncurses (http://www.gnu.org/software/ncurses/)
+- libxml2 (http://www.xmlsoft.org/)
+- GnuPG 1.x (http://www.gnupg.org/)
 
-You can install all of these on e.g. Ubuntu with the following command:
+For example, on Debian:
 
-	% sudo apt-get install libc6-dev libncurses5-dev libxml2 gcc 
+    # apt-get install libncurses-dev libxml2-dev gcc make gnupg
 
-Or on Fedora with:
+To build:
 
-	% sudo yum install glibc-devel ncurses-devel libxml2-devel gcc
+    % ./configure
+    % make
 
-## Compilation and installation
+To install, as root:
 
-All tasks related to compilation, deployment etc. are managed by the C
-utility make. First, configure the process: from within the top-level
-directory of the distribution run
+    # make install
 
-	% ./configure
+You can also uninstall later:
 
-If you already have all the necessary dependencies installed then this
-will run its course with no errors; otherwise try to fix any failed
-dependencies (on Ubuntu, this will always be possible using standard
-packages).
-
-Then run the following sequence of commands to compile, check and then
-install the compiled binary:
-
-	% make
-	% make check
-	% sudo make install
-
-More detailed information, including other make options, can be found
-in the INSTALL file included in this distribution.
-
-## Rollback
-
-Because pwman is installed separately from standard package management, you
-will need to take note of the files mentioned during "sudo make install"
-above in order to roll the installation back. As of v0.4.0, these are:
-
-* /usr/local/bin/pwman
-* /usr/local/bin/convert_pwdb
-* /usr/local/bin/pwdb2csv
-* /usr/local/man/man1/pwman.1
+    # make uninstall
 
 ## Before using pwman
 
-While compilation does not directly require it, usage relies on Gnu Privacy 
-Guard (gpg) being installed. You will need to specify a GnuPG ID the
-first time a user runs pwman, so this must be set up beforehand.
+Before you can run pwman, you will need to generate a GPG key if you don't 
+already have one:
 
-There is more information on the gpg manpage, but you can probably just run
+    % gpg --gen-key
 
-	% gpg --gen-key
-
-and follow the on-screen instructions.
+For more information, see the gpg manual page, or the GPG
+[mini-howto](http://www.dewinter.com/gnupg_howto/english/GPGMiniHowto.html).
 
 ## Setup
 
 When you first run pwman, it will prompt you for several things:
 
-* GnuPG ID
-   This is the ID of the GnuPG identity that will be used to encrypt the
-    password database. You can specify this as your email address, or as
-    the 8 (hex) digit key ID
-   See http://www.dewinter.com/gnupg_howto/english/GPGMiniHowto.html if you
-    are new to GnuPG, and need help importing or creating keys.
-* Path to GnuPG
-   PWMan needs to call GnuPG, to get it to decrypt and encrypt the password
-    database. So, you need to tell PWMan where to find your copy of pgp
-* Password Database File
-   This is the filename to use for storing your password database in.
-* Passphrase Timeout
-   PWMan only remembers your GnuPG password for a limted amount of time. After
-    this period has elapsed, you will need to re-enter it. This timeout is
-    there as a security measure, in case you wander off from your computer
-    without logging out.
+* GPG key ID: the id of the gpg key you want to use to encrypt the
+  database.  Run 'gpg -K' to see a list of available keys; the key
+  id is an 8-digit hex number, e.g. 2B9CE6F2.
+
+* Path to gpg: this will most likely be /usr/bin/gpg (Debian),
+  /usr/local/bin/gpg (BSD) or /opt/local/bin/gpg (MacPorts).
+
+* Password database file: where to store the encrypted database.
+  Most people can accept the default here.
+
+* Passphrase timeout: how long to wait until requiring the user to
+  re-enter the gpg passphrase.  This is a security feature.
 
 These configuration settings will be written to your home directory. You can
 change them at any time by running pwman, and pressing 'o' at any time.
