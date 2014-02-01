@@ -50,8 +50,10 @@ static WINDOW  *top = NULL, *bottom = NULL;
 static void
 ui_draw_top()
 {
+	wbkgd(top, WA_REVERSE);
 	werase(top);
-	mvwhline(top, 1, 0, ACS_HLINE, COLS);
+	wclrtoeol(top);
+
 	if (!options->readonly) {
 		mvwprintw(top, 0, 0, "%s | %s", PACKAGE " " VERSION,
 			  MAIN_HELPLINE);
@@ -67,9 +69,6 @@ static void
 ui_draw_bottom()
 {
 	werase(bottom);
-	mvwhline(bottom, 0, 0, ACS_HLINE, COLS);
-	mvwhline(bottom, 2, 0, ACS_HLINE, COLS);
-
 	wrefresh(bottom);
 }
 
@@ -95,8 +94,8 @@ ui_resize_windows()
 static void
 ui_init_windows()
 {
-	top = newwin(2, COLS, 0, 0);
-	bottom = newwin(3, COLS, LINES - 3, 0);
+	top = newwin(1, COLS, 0, 0);
+	bottom = newwin(1, COLS, LINES - 1, 0);
 
 	uilist_init();
 }
@@ -464,7 +463,7 @@ int
 ui_statusline_msg(char const *msg)
 {
 	ui_statusline_clear();
-	mvwaddstr(bottom, 1, 0, msg);
+	mvwaddstr(bottom, 0, 0, msg);
 	refresh();
 	wrefresh(bottom);
 	return 0;
@@ -473,7 +472,7 @@ ui_statusline_msg(char const *msg)
 int
 ui_statusline_clear()
 {
-	wmove(bottom, 1, 0);
+	wmove(bottom, 0, 0);
 	wclrtoeol(bottom);
 	wrefresh(bottom);
 	refresh();
@@ -513,7 +512,7 @@ char		c = 0;
 		echo();
 		show_cursor();
 
-		c = mvwgetch(bottom, 1, x);
+		c = mvwgetch(bottom, 0, x);
 
 		noecho();
 		hide_cursor();
@@ -606,7 +605,7 @@ int		old_curs;
 		strlcpy(input, def, sizeof(input));
 		pos = strlen(input);
 	}
-	pwin = newwin(1, COLS, LINES - 2, 0);
+	pwin = newwin(1, COLS, LINES - 1, 0);
 	keypad(pwin, TRUE);
 
 	wattron(pwin, A_BOLD);

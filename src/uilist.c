@@ -215,7 +215,7 @@ int		num_shown = 0;
 	if (current_pw_sublist == NULL)
 		return;
 
-	uilist_clear();;
+	uilist_clear();
 	first_list_item = 0;
 	lines = 0;
 
@@ -311,7 +311,7 @@ int		i;
 
 	werase(list);
 	for (i = 0; i < COLS; i++)
-		mvaddch(2, i, ' ');
+		mvaddch(LIST_TOP - 1, i, ' ');
 }
 
 void
@@ -320,9 +320,9 @@ uilist_headerline()
 	show_cursor();
 	attrset(A_BOLD);
 
-	mvaddnstr(2, NAMEPOS, "Name", NAMELEN);
-	mvaddnstr(2, HOSTPOS, "Host", HOSTLEN);
-	mvaddnstr(2, USERPOS, "Username", USERLEN);
+	mvaddnstr(LIST_TOP - 1, NAMEPOS, "Name", NAMELEN);
+	mvaddnstr(LIST_TOP - 1, HOSTPOS, "Host", HOSTLEN);
+	mvaddnstr(LIST_TOP - 1, USERPOS, "Username", USERLEN);
 
 	attrset(A_NORMAL);
 	hide_cursor();

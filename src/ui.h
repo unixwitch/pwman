@@ -35,8 +35,8 @@
 #define MIN_LINES 22
 #define MIN_COLS 60
 
-#define LIST_TOP 3
-#define LIST_BOTTOM (LINES -3)
+#define LIST_TOP 2
+#define LIST_BOTTOM (LINES - 1)
 #define LIST_LINES (LIST_BOTTOM-LIST_TOP)
 
 #define LAST_LIST_ITEM (first_list_item + LIST_LINES - 1)
