@@ -130,6 +130,7 @@ PwFilter * filter_new(void);
 PwSearch * search_new(void);
 Options * options_new(void);
 int options_read(void);
+int options_write(void);
 void options_get(void);
 
 void search_get(void);
