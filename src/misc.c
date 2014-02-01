@@ -25,9 +25,9 @@
 #include	"ui.h"
 
 void
-pw_abort(char *fmt, ... )
+pw_abort(char const *fmt, ... )
 {
-	va_list ap;
+va_list	ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	fputs("\n", stderr);
@@ -35,7 +35,7 @@ pw_abort(char *fmt, ... )
 }
 
 void
-debug(char *fmt, ... )
+debug(char const *fmt, ... )
 {
 #ifdef DEBUG
 	va_list ap;

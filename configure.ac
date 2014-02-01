@@ -100,4 +100,4 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 
-AC_OUTPUT([Makefile src/Makefile doc/Makefile]) 
+AC_OUTPUT([Makefile src/Makefile doc/Makefile convert_pwdb/Makefile pwdb2csv/Makefile]) 

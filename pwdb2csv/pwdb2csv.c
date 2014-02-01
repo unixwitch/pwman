@@ -1,5 +1,5 @@
 /*
- *  Convert_PWDB - Convert old pwman files into the new format
+ *  PWDB2CSV - Convert pwman database files into Comma Separated Values
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
  *  Copyright (c) 2014	Felicity Tarnell.
@@ -27,31 +27,43 @@
 #include	"pwman.h"
 
 #define STR_LEN 255
-#define CONVERT_DB_PACKAGE "Convert_PWDB"
-#define CONVERT_DB_VERSION "0.1.0"
+#define PWDB2CSV_PACKAGE "PWDB2CSV"
+#define PWDB2CSV_VERSION "0.1.0"
 
 static void show_version(void);
 static void show_usage(char*);
 
-void free_pw(Pw *old);
+static Pw*		 new_pw(void);
+static PWList		*new_pwlist(char *name);
+static void		 free_pw(Pw *old);
+static void		 free_pwlist(PWList *old);
 
-struct ConvertDB_Options {
-	char *gpg_id;
-	char *infile;
-	char *outfile;
-} convertdb_options;
+static PWList		*parse_doc(xmlDocPtr doc);
+static char		*add_to_buf(char *buf, char const *new);
+static xmlDocPtr	 get_data(void);
+static int		 read_pwlist(xmlNodePtr parent, PWList *parent_list);
+static void		 read_password_node(xmlNodePtr parent, PWList *list);
+static void		 write_password_node(FILE *fp, Pw *pw);
+static int		 write_pwlist(FILE *fp, PWList *pwlist);
+static int		 add_pw_sublist(PWList *parent, PWList *new);
+static int		 add_pw_ptr(PWList *list, Pw *new);
+static char		*escape_string(char const *str);
+static void		 put_data(PWList *list);
+static char		*ask(char const *msg);
+static void		 get_options(int argc, char *argv[]);
 
-int export = 0;
+static char *infile;
+static char *outfile;
 
 void
-debug(char *fmt, ... )
+debug(char const *fmt, ... )
 {
 #ifdef DEBUG
 	va_list ap;
 	int d, c;
 	char *s;
 
-	fputs("Convert_PWDB Debug% ", stderr);
+	fputs("PWDB2CSV Debug% ", stderr);
 	
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -60,10 +72,11 @@ debug(char *fmt, ... )
 #endif
 }
 
-PWList *
+static PWList *
 new_pwlist(char *name)
 {
 	PWList *new;
+
 	new = malloc( sizeof(PWList) );
 	new->name = malloc(STRING_MEDIUM);
 	strncpy(new->name, name, STRING_MEDIUM);
@@ -75,33 +88,32 @@ new_pwlist(char *name)
 	return new;
 }
 
-int 
+static void
 free_pwlist(PWList *old)
 {
-	Pw *current, *next;
-	PWList *curlist, *nlist;
+Pw	*current, *next;
+PWList	*curlist, *nlist;
 
-	if(old == NULL){
-		return 0;
-	}
-	for(current = old->list; current != NULL; current = next){
+	debug("free_pwlist: free a password list");
+	if (old == NULL)
+		return;
+
+	for (current = old->list; current != NULL; current = next){
 		next = current->next;
-
 		free_pw(current);
 	}
-	for(curlist = old->sublists; curlist != NULL; curlist = nlist){
-		nlist = curlist->next;
 
+	for (curlist = old->sublists; curlist != NULL; curlist = nlist){
+		nlist = curlist->next;
 		free_pwlist(curlist);
 	}
 	
 	free(old->name);
 	free(old);
-	old = NULL;
-	return 0;
+	return;
 }
 
-Pw*
+static Pw*
 new_pw()
 {
 	Pw *new;
@@ -122,9 +134,13 @@ new_pw()
 	return new;
 }
 
-void
+static void
 free_pw(Pw *old)
 {
+	debug("free_pw: free a password");
+	if (!old)
+		return;
+
 	free(old->name);
 	free(old->user);
 	free(old->host);
@@ -133,7 +149,7 @@ free_pw(Pw *old)
 	free(old);
 }
 
-int
+static int
 add_pw_ptr(PWList *list, Pw *new)
 {
 	Pw *current;
@@ -163,64 +179,82 @@ add_pw_ptr(PWList *list, Pw *new)
 	return 0;
 }
 
-void 
-write_password_node(xmlNodePtr root, Pw *pw)
+static int
+add_pw_sublist(PWList *parent, PWList *new)
 {
-	xmlNodePtr node;
+	PWList *current;
 
-	node = xmlNewChild(root, NULL, (xmlChar const*)"PwItem", NULL);
-	xmlNewChild(node, NULL, (xmlChar const*)"name", (xmlChar*)pw->name);
-	xmlNewChild(node, NULL, (xmlChar const*)"host", (xmlChar*)pw->host);
-	xmlNewChild(node, NULL, (xmlChar const*)"user", (xmlChar*)pw->user);
-	xmlNewChild(node, NULL, (xmlChar const*)"passwd", (xmlChar*)pw->passwd);
-	xmlNewChild(node, NULL, (xmlChar const*)"launch", (xmlChar*)pw->launch);
+	current = parent->sublists;
+	new->parent = parent;
+	if(current == NULL){
+		parent->sublists = new;
+		new->next = NULL;
+		return 0;
+	} 
+	while(current->next != NULL){
+		current = current->next;
+	}
+	current->next = new;
+	new->next = NULL;
+
+	return 0;
 }
 
-void
-write_pwlist(xmlNodePtr parent, PWList *pwlist)
+static char *
+escape_string(str)
+	char const	*str;
 {
-	xmlNodePtr node;
-	Pw* iter;
+char		*ret, *q;
+char const	*p;
 
-	node = xmlNewChild(parent, NULL, (xmlChar const*)"PwList", NULL);
-	xmlSetProp(node, (xmlChar const*)"name", (xmlChar*)pwlist->name);
-
-	for(iter = pwlist->list; iter != NULL; iter = iter->next){
-		write_password_node(node, iter);
+	ret = malloc(strlen(str) * 2 + 1);
+	for (p = str, q = ret; *p; p++) {
+		if (*p == '"')
+			*q++ = '"';
+		*q++ = *p;
 	}
+
+	return ret;
 }
 
-xmlDocPtr
-write_new_doc(PWList *pwlist)
+static void
+write_password_node(FILE *fp, Pw *pw)
 {
-	char vers[5];
-	xmlDocPtr doc;
-	xmlNodePtr root;
+char	*ename, *ehost, *euser, *epasswd, *elaunch;
 
-	if(pwlist == NULL){
-		puts("write_new_doc: bad password data");
-		exit(-1);
-	}
-	snprintf(vers, 5, "%d", FF_VERSION);
-	doc = xmlNewDoc((xmlChar const*)"1.0");
+	ename = escape_string(pw->name);
+	ehost = escape_string(pw->host);
+	euser = escape_string(pw->user);
+	epasswd = escape_string(pw->passwd);
+	elaunch = escape_string(pw->launch);
 
-	if(!export){
-		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_PasswordList", NULL);
-		xmlSetProp(root, (xmlChar const *)"version", (xmlChar *) vers);
-		write_pwlist(root, pwlist);
-	} else {
-		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_Export", NULL);
-		xmlSetProp(root, (xmlChar const *) "version", (xmlChar *) vers);
-		write_password_node(root, pwlist->list);	
-	}
+	fprintf(fp, "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", ename, ehost, euser,
+		epasswd, elaunch);
 
-	xmlDocSetRootElement(doc, root);
-
-	return doc;
+	free(ename);
+	free(ehost);
+	free(euser);
+	free(epasswd);
+	free(elaunch);
 }
 
-Pw *
-read_pw_node(xmlNodePtr parent)
+static int
+write_pwlist(FILE *fp, PWList *list)
+{
+Pw*	 iter;
+PWList	*pwliter;
+	
+	for (pwliter = list->sublists; pwliter != NULL; pwliter = pwliter->next)
+		write_pwlist(fp, pwliter);
+
+	for (iter = list->list; iter != NULL; iter = iter->next)
+		write_password_node(fp, iter);
+
+	return 0;
+}
+
+static void
+read_password_node(xmlNodePtr parent, PWList *list)
 {
 	Pw *new;
 	xmlNodePtr node;
@@ -250,80 +284,110 @@ read_pw_node(xmlNodePtr parent)
 			debug("read_pw_node: unrecognised node \"%s\"", node->name);
 		}
 	}
-	return new;
+	add_pw_ptr(list, new);
 }
 
-PWList*
-parse_old_doc(xmlDocPtr doc)
+static int
+read_pwlist(xmlNodePtr parent, PWList *parent_list)
 {
-	PWList *pwlist;
-	Pw *pw;
-	xmlNodePtr root, node;
+xmlNodePtr	 node;
+PWList		*new;
+char		 name[STRING_MEDIUM];
 
-	pwlist = new_pwlist("Main");
+	if (!parent || !parent->name)
+		return -1;
 
-	if(!doc){
-		debug("parse_old_doc: Bad xmlDocPtr");
-		return NULL;
+	debug("Parent name is %s\n", parent->name);
+
+	if (strcmp((char const *)parent->name, "PwList") != 0)
+		return 0;
+
+	strncpy(name, (char const *) xmlGetProp(parent, (xmlChar const*)"name"), STRING_MEDIUM);
+	new = new_pwlist(name);
+
+	for (node = parent->children; node != NULL; node = node->next) {
+		debug("Child name is %s\n", node->name);	
+		if (!node)
+			fprintf(stderr, "read_pwlist: messed up node - null\n");
+		else if(strcmp((char const *)node->name, "PwList") == 0)
+			read_pwlist(node, new);
+		else if(strcmp((char const *)node->name, "PwItem") == 0)
+			read_password_node(node, new);
 	}
+
+	if (parent_list)
+		add_pw_sublist(parent_list, new);
+
+	return 0;
+}
+
+static PWList *
+parse_doc(xmlDocPtr doc)
+{
+PWList		*list = NULL;
+xmlNodePtr	 root, node;
+char		*buf;
+int		 i;
+	
+	if(!doc)
+		return NULL;
 
 	root = xmlDocGetRootElement(doc);
-	
-	if (!root || !root->name) {
-		debug("parse_old_doc: Badly formed data");
+	if (!root)
+		return NULL;
+
+	if (!root->name || (strcmp((char const *)root->name, "PWMan_PasswordList") != 0)) {
+		xmlFreeDoc(doc);
 		return NULL;
 	}
 
-	if (strcmp((char const *)root->name, "PWMan_Export") == 0)
-		export = 1;
-	else if (strcmp((char const *)root->name, "PWMan_List") == 0)
-		export = 0;
-	else {
-		debug("parse_old_doc: Not a pwman file");
+	if ((buf = (char *) xmlGetProp(root, (xmlChar const *)"version")) != NULL)
+		i = atoi(buf);
+	else
+		i = 0;
+
+	if (i < FF_VERSION) {
+		xmlFreeDoc(doc);
 		return NULL;
 	}
 
-	for(node = root->children; node != NULL; node = node->next){
-		if(!node || !node->name){
-			debug("parse_old_doc: Bad xml Node");
-		} else if( strcmp((char*)node->name, "PW_Item") == 0){
-			pw = read_pw_node(node);
-			add_pw_ptr(pwlist, pw);
-		} else {
-			debug("parse_old_doc: Unrecognised xml Node - \"%s\"", node->name);
+	list = new_pwlist("Main");
+	for (node = root->children; node != NULL; node = node->next) {
+		if (strcmp((char const *) node->name, "PwList") == 0) {
+			read_pwlist(node, list);
+			break;
 		}
 	}
 
-	if(pwlist->list){
-		return pwlist;
-	} else {
-		fputs("Unrecognised file format\n", stderr);
-		exit(-1);
-	}
+	xmlFreeDoc(doc);
+
+	return list;
 }
 
-char *
-add_to_buf(char *buf, char *new)
+static char *
+add_to_buf(buf, new)
+	char		*buf;
+	char const	*new;
 {
-	size_t size;
+size_t	size;
 
-	if(new == NULL){
+	if (new == NULL)
 		return buf;
-	} 
-	if(buf == NULL){
+
+	if (buf == NULL) {
 		buf = malloc(strlen(new)+1);
-		strncpy(buf, new, strlen(new)+1);
+		strcpy(buf, new);
 		return buf;
 	}
 
 	size = strlen(buf) + strlen(new) + 1;
-	buf = (char*)realloc(buf, size);
-	strncat(buf, new, size);
+	buf = realloc(buf, size);
+	strcat(buf, new);
 
 	return buf;
 }
 
-xmlDocPtr
+static xmlDocPtr
 get_data()
 {
 	FILE *fp;
@@ -334,7 +398,7 @@ get_data()
 
 	data = NULL;
 	cmd = malloc(STR_LEN);
-	snprintf(cmd, STR_LEN, "gpg -d %s", convertdb_options.infile);
+	snprintf(cmd, STR_LEN, "gpg -d %s", infile);
 	debug(cmd);
 	fp = popen(cmd, "r");
 
@@ -347,56 +411,45 @@ get_data()
 		exit(-1);
 	}
 
-	doc = xmlParseMemory(data, strlen(data));
+	doc = xmlParseMemory(data, (int) strlen(data));
 
 	return doc;
 }
 
-void
-put_data(xmlDocPtr doc)
+static void
+put_data(PWList *list)
 {
-	FILE *fp;
-	char *cmd;
+FILE	*fp;
 
-	cmd = malloc(STR_LEN);
-	snprintf(cmd, STR_LEN, "gpg -e -r %s -o %s", convertdb_options.gpg_id, convertdb_options.outfile);
-	debug(cmd);
-	fp = popen(cmd, "w");
+	fp = fopen(outfile, "w");
 
-#if XML_VERSION >= 20423
-	xmlDocFormatDump(fp, doc, TRUE);
-#else
-	xmlDocDump(fp, doc);
-#endif
-	
-	pclose(fp);
+	if (!fp) {
+		fprintf(stderr, "write_pwlist: couldn't open file \"%s\"\n", outfile);
+		return;
+	}
+
+	write_pwlist(fp, list);
+
+	fclose(fp);
 }
 
-void
-free_convertdb_options()
+static char *
+ask(msg)
+	char const	*msg;
 {
-	free(convertdb_options.infile);
-	free(convertdb_options.outfile);
-	free(convertdb_options.gpg_id);
-}
-
-char *
-ask(char *msg)
-{
-	char * input;
-
+char	*input;
 	input = malloc(STR_LEN);
 
 	fputs(msg, stdout);
 	fputc('\t', stdout);
 	fgets(input, STR_LEN, stdin);
 
-	input[ strlen(input) - 1] = 0;
+	input[strlen(input) - 1] = 0;
 
 	return input;
 }
 
-void
+static void
 get_options(int argc, char *argv[])
 {
 	int i;
@@ -412,49 +465,39 @@ get_options(int argc, char *argv[])
 	}
 	
 	if(argc > 1){
-		convertdb_options.gpg_id = malloc(STR_LEN);
-		strncpy(convertdb_options.gpg_id, argv[1], STR_LEN);
+		infile = malloc(STR_LEN);
+		strncpy(infile, argv[1], STR_LEN);
 	} else {
-		convertdb_options.gpg_id = ask("ID to encrypt new file to:");
+		infile = ask("Password database:");
 	}
 	if(argc > 2){
-		convertdb_options.infile = malloc(STR_LEN);
-		strncpy(convertdb_options.infile, argv[2], STR_LEN);
+		outfile = malloc(STR_LEN);
+		strncpy(outfile, argv[2], STR_LEN);
 	} else {
-		convertdb_options.infile = ask("File in old format:");
-	}
-	if(argc > 3){
-		convertdb_options.outfile = malloc(STR_LEN);
-		strncpy(convertdb_options.outfile, argv[3], STR_LEN);
-	} else {
-		convertdb_options.outfile = ask("File to write new format to:");
+		outfile = ask("CSV file:");
 	}
 }
 
 int
 main(int argc, char *argv[])
 {
-	xmlDocPtr doc;
-	PWList *pwlist;
+xmlDocPtr	 doc;
+PWList		*list;
 	
 	get_options(argc, argv);
 
 	doc = get_data();
-	pwlist = parse_old_doc(doc);
-	xmlFreeDoc(doc);
-	
-	doc = write_new_doc(pwlist);
-	put_data(doc);
-	xmlFreeDoc(doc);
+	list = parse_doc(doc);
+	put_data(list);
+	free_pwlist(list);
 
-	free_convertdb_options();
 	return 0;
 }
 
 static void
 show_version()
 {
-	puts(CONVERT_DB_PACKAGE " v " CONVERT_DB_VERSION);
+	puts(PWDB2CSV_PACKAGE " v " PWDB2CSV_VERSION);
 	puts("Written by Ivan Kelly <ivan@ivankelly.net>\n");
 	puts("Copyright (C) 2002 Ivan Kelly");
 	puts("This program is free software; you can redistribute it and/or modify");
@@ -475,12 +518,11 @@ show_version()
 static void
 show_usage(char *argv_0)
 {
-	printf("Usage: %s [<gnupg_id> [<oldfile> [<newfile>]]]\n", argv_0);
-	puts("Convert Password Database from PWMan versions >= 0.2.1 to new format 0.3.0+\n");
+	printf("Usage: %s [<pwdatabase> [<csvfile>]]\n", argv_0);
+	puts("Convert Password Database from PWMan Encrypted Format to Comma Separated Values\n");
 	puts("  --help                 show usage");
 	puts("  --version              display version information");
-	puts("  <gnupg_id>             GnuPG ID to encrypt new password database to");
-	puts("  <oldfile>              password database file in old format");
-	puts("  <newfile>              password database file to write in new format\n\n");
+	puts("  <pwdatabase>           password database file in encrypted");
+	puts("  <csvfile>              file to write to with comma separated values\n\n");
 	puts("Report bugs to <ivan@ivankelly.net>");
 }

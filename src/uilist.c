@@ -24,10 +24,9 @@
 #include	"ui.h"
 #include	"pwman.h"
 
-WINDOW *list = NULL;
-int lines = 0;
-int first_list_item = 0;
-//int curitem = 0;
+static WINDOW *list;
+static int lines = 0;
+static int first_list_item = 0;
 
 void
 uilist_init()
@@ -161,7 +160,7 @@ uilist_get_highlighted_type()
 	return PW_NULL;
 }
 
-// Draw a sublist on the screen
+/* Draw a sublist on the screen */
 int
 _uilist_render_sublist(PWList *sublist, int i, int num_shown)
 {
@@ -178,7 +177,8 @@ _uilist_render_sublist(PWList *sublist, int i, int num_shown)
 	}
 	return num_shown;
 }
-// Draw an entry summary on the screen
+
+/* Draw an entry summary on the screen */
 int
 _uilist_render_entry(Pw *entry, int i, int num_shown)
 {
@@ -218,7 +218,7 @@ uilist_refresh()
 
 	uilist_headerline();
 
-	// Ensure we don't end up off the screen
+	/* Ensure we don't end up off the screen */
 	if(current_pw_sublist->current_item < 0){
 		current_pw_sublist->current_item = 0;
 	}
@@ -229,7 +229,7 @@ uilist_refresh()
 	}
 
 	if(search_results == NULL) {
-		// If we aren't at the top level, off the "Up One Level" item
+		/* If we aren't at the top level, off the "Up One Level" item */
 		if(current_pw_sublist->parent && search_results == NULL){
 			if((i >= first_list_item) && (i <= LAST_LIST_ITEM)){
 				if(lines == current_pw_sublist->current_item){
@@ -245,13 +245,13 @@ uilist_refresh()
 			i++; 
 			lines++;
 		}
-		// Draw our sublists
+		/* Draw our sublists */
 		for(listiter = current_pw_sublist->sublists; listiter != NULL; listiter = listiter->next){
 			num_shown = _uilist_render_sublist(listiter, i, num_shown);
 			lines++;
 			i++; 
 		}
-		// Draw our entries, if the filter says it's ok
+		/* Draw our entries, if the filter says it's ok */
 		for(iter = current_pw_sublist->list; (iter != NULL); iter = iter->next){
 			/*
 			 * if line satifies filter criteria increment i and lines
@@ -277,22 +277,24 @@ uilist_refresh()
 	wrefresh(list);
 	hide_cursor();
 
-	// Is the cursor off the screen, after moving up or down the tree?
-	// (Don't trigger this if we have no entries yet)
+	/*
+	 * Is the cursor off the screen, after moving up or down the tree?
+	 * (Don't trigger this if we have no entries yet)
+	 */
 	if(current_pw_sublist->current_item) {
 		if((lines-1) < current_pw_sublist->current_item) {
-			// Just adjust, then redraw
+			/* Just adjust, then redraw */
 			current_pw_sublist->current_item = lines-1;
 			uilist_refresh();
 		}
 	}
 
-	// If we have filtering turned on, then warn the user of that
+	/* If we have filtering turned on, then warn the user of that */
 	if(options->filter) {
 		filter_alert(options->filter);
 	}
 
-	// If we have searching active, then warn the user of that
+	/* If we have searching active, then warn the user of that */
 	if(options->search) {
 		search_alert(options->search);
 	}

@@ -50,7 +50,7 @@ filter_new()
  */
 static char*
 filter_strcasestr(char *haystack, char *needle){
-	// Never matches if null/empty string given
+	/* Never matches if null/empty string given */
 	if(haystack == NULL) {
 		return 0;
 	}

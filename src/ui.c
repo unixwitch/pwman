@@ -532,20 +532,20 @@ ui_statusline_ask_str(char *msg, char *input, int len)
 
 	ui_statusline_clear();
 
-	// Tabs don't play nicely with ncurses or xml
-	// So, swap any for (a single) space
+	/* Tabs don't play nicely with ncurses or xml */
+	/* So, swap any for (a single) space */
 	tmp = input;
 	while(*tmp != 0) {
 		if(*tmp == 9) *tmp = ' ';
 		tmp++;
 	}
 
-	// In some cases (eg when inside screen), the backspace
-	// comes through to us. Handle it here if needed
+	/* In some cases (eg when inside screen), the backspace */
+	/* comes through to us. Handle it here if needed */
 	tmp = input;
 	while(*tmp != 0) {
 		if(*tmp == 8) {
-         // tmp2 is where to copy to, tmp3 is where to copy from
+         /* tmp2 is where to copy to, tmp3 is where to copy from */
          tmp3 = tmp + 1;
          if(tmp == input) {
             tmp2 = tmp;
@@ -553,11 +553,11 @@ ui_statusline_ask_str(char *msg, char *input, int len)
             tmp2 = tmp - 1;
          }
 
-         // When we're done, start from the character
-         //  we copied in to
+         /* When we're done, start from the character */
+         /*  we copied in to */
          tmp = tmp2;
 
-         // Process forward
+         /* Process forward */
          while(*tmp3 != 0) {
             *tmp2 = *tmp3;
             tmp2++;
@@ -569,7 +569,7 @@ ui_statusline_ask_str(char *msg, char *input, int len)
       }
 	}
 	
-	// All done
+	/* All done */
 	return input;
 }
 

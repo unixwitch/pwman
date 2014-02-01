@@ -11,8 +11,10 @@ all:
 
 clean:
 
+depend:
+
 install:
-	${INSTALL} -d ${DESTDIR}/${mandir}/man1
+	${INSTALL} -d ${DESTDIR}${mandir}/man1
 	$(INSTALL) -m 0644 $(srcdir)/pwman.1 $(DESTDIR)$(mandir)/man1
 
 uninstall:

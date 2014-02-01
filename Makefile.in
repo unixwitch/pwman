@@ -1,10 +1,10 @@
-SUBDIRS		= doc src
+SUBDIRS		= doc src convert_pwdb pwdb2csv
 
-all clean install:
+all clean install depend:
 	@for d in ${SUBDIRS}; do 		\
 		echo "$@ ==> $$d";		\
 		${MAKE} -C $$d $@ || exit 1;	\
 		echo "$@ <== $$d";		\
 	done
 
-.PHONY: all clean install
+.PHONY: all clean install depend

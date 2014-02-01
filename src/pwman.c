@@ -120,7 +120,7 @@ pwman_init(int argc, char *argv[])
 		}
 	}
 
-	// Check that the gpg id is valid, if given
+	/* Check that the gpg id is valid, if given */
 	if(strlen(options->gpg_id)) {
 		gpg_id_valid = gnupg_check_id(options->gpg_id);
 		if(gpg_id_valid == -1) {
@@ -136,7 +136,7 @@ pwman_init(int argc, char *argv[])
 		}
 	}
 	
-	// Start up our UI
+	/* Start up our UI */
 	if( ui_init() ){
 		exit(1);
 	}
@@ -148,12 +148,12 @@ pwman_init(int argc, char *argv[])
 	load_worked = pwlist_read_file();
 	if(load_worked != 0) {
 		debug("Failed to load the database, error was %d", load_worked);
-		// Did they cancel out, or is it a new file?
+		/* Did they cancel out, or is it a new file? */
 		if(load_worked < 0) {
 			pwlist = pwlist_new("Main");
 			current_pw_sublist = pwlist;
 		} else {
-			// Quit, hard!
+			/* Quit, hard! */
 			ui_end();
 			fprintf(stderr, "\n\nGPG read cancelled, exiting\n");
 			exit(1);

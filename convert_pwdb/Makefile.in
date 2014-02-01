@@ -17,21 +17,20 @@ INSTALL		= @INSTALL@
 CC		= @CC@
 MAKEDEPEND	= @CC@ -MM
 CFLAGS		= @CFLAGS@ ${XML_CFLAGS}
-CPPFLAGS	= @CPPFLAGS@ -I${top_srcdir} -I${top_builddir}
+CPPFLAGS	= @CPPFLAGS@ -I${top_srcdir} -I${top_builddir} -I${top_srcdir}/src
 LIBS		= @LIBS@ ${XML_LIBS}
 
-SRCS		= actions.c filter.c gnupg.c launch.c misc.c options.c	\
-		  pwgen.c pwlist.c pwman.c search.c ui.c uilist.c
+SRCS		= convert_pwdb.c
 OBJS		= ${SRCS:.c=.o}
 
-all: pwman
+all: convert_pwdb
 
-pwman: ${OBJS}
-	${CC} ${CFLAGS} ${OBJS} -o pwman ${LIBS}
+convert_pwdb: ${OBJS}
+	${CC} ${CFLAGS} ${OBJS} -o convert_pwdb ${LIBS}
 
 install: all
 	${INSTALL} -d ${DESTDIR}${bindir}
-	${INSTALL} -m 0755 pwman ${DESTDIR}${bindir}
+	${INSTALL} -m 0755 convert_pwdb ${DESTDIR}${bindir}
 
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
@@ -40,7 +39,7 @@ install: all
 	${MAKEDEPEND} ${CPPFLAGS} ${CFLAGS} $< -o $@
 
 clean:
-	rm -f *.o pwman
+	rm -f *.o convert_pwdb
 
 depend: ${SRCS:.c=.d}
 	sed '/^# Do not remove this line -- make depend needs it/,$$ d' \

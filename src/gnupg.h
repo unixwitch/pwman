@@ -25,17 +25,17 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-void gnupg_forget_passphrase(void);
+void		 gnupg_forget_passphrase(void);
 
-int gnupg_check_id(char*);
-void gnupg_get_id(char*);
-void gnupg_get_ids(char **, int);
+int		 gnupg_check_id(char const *);
+void		 gnupg_get_id(char*);
+void		 gnupg_get_ids(char **, size_t);
 
-char* gnupg_get_filename(char*, char);
-const char* gnupg_get_passphrase();
+char		*gnupg_get_filename(int mode);
+const char	*gnupg_get_passphrase(void);
 
-int gnupg_read(char*, xmlDocPtr*);
-int gnupg_write(xmlDocPtr, char*, char*);
-int gnupg_write_many(xmlDocPtr, char**, int, char*);
+int		 gnupg_read(char const*, xmlDocPtr*);
+int		 gnupg_write(xmlDocPtr, char*, char*);
+int		 gnupg_write_many(xmlDocPtr, char**, int, char const*);
 
 #endif

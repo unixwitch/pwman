@@ -4681,7 +4681,7 @@ fi
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile convert_pwdb/Makefile pwdb2csv/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5412,6 +5412,8 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+    "convert_pwdb/Makefile") CONFIG_FILES="$CONFIG_FILES convert_pwdb/Makefile" ;;
+    "pwdb2csv/Makefile") CONFIG_FILES="$CONFIG_FILES pwdb2csv/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

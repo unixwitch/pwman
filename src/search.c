@@ -52,7 +52,7 @@ search_new()
  */
 static char*
 search_strcasestr(char *haystack, char *needle){
-	// Never matches if null/empty string given
+	/* Never matches if null/empty string given */
 	if(haystack == NULL) {
 		return 0;
 	}
@@ -72,7 +72,7 @@ PWSearchResult*
 _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 	PWSearchResult* next = NULL;
 
-	// Did we get an entry of a list?
+	/* Did we get an entry of a list? */
 	if(entry != NULL) {
 		if(search_strcasestr(entry->name, options->search->search_term)
 			 || search_strcasestr(entry->host, options->search->search_term)
@@ -94,20 +94,20 @@ _search_add_if_matches(PWSearchResult* current, Pw* entry, PWList* list) {
 		}
 	}
 
-	// If we matched, append
+	/* If we matched, append */
 	if(next == NULL) {
 		return current;
 	} else {
 		if(current == NULL) {
-			// First hit
+			/* First hit */
 			search_results = next;
 		} else {
-			// Additional hit, append
+			/* Additional hit, append */
 			current->next = next;
 		}
-		// For now, nothing follows us
+		/* For now, nothing follows us */
 		next->next = NULL;
-		// We are the new current entry
+		/* We are the new current entry */
 		return next;
 	}
 }
@@ -124,64 +124,64 @@ search_apply()
 
 	PWSearchResult *cur = NULL;
 
-	// Tidy up any existing search results
+	/* Tidy up any existing search results */
 	if(search_results != NULL) {
 		_search_free();
 	}
-	// If no search term, then nothing to do!
+	/* If no search term, then nothing to do! */
 	if( search_active(options->search) == 0 ) {
 		return 1;
 	}
 
-	// Make sure we have a clean search stack so we won't get confused
+	/* Make sure we have a clean search stack so we won't get confused */
 	for(depth=0; depth<MAX_SEARCH_DEPTH; depth++) {
 		stack[depth] = NULL;
 	}
 
-	// Setup for start
+	/* Setup for start */
 	depth = 0;
 	tmpList = pwlist;
 	stepping_back = 0;
 
-	// Find anything we like the look of
+	/* Find anything we like the look of */
 	while(depth >= 0) {
-		// Any sublists?
+		/* Any sublists? */
 		if(!stepping_back && 
 				tmpList->sublists != NULL && depth < MAX_SEARCH_DEPTH) {
-			// Prepare to descend
+			/* Prepare to descend */
 			stack[depth] = tmpList;
 			depth++;
 			tmpList = tmpList->sublists;
 
-			// Test first child
+			/* Test first child */
 			cur = _search_add_if_matches(cur, NULL, tmpList);
 
-			// Descend into first child
+			/* Descend into first child */
 			continue;
 		}
 		stepping_back = 0;
 
-		// Any entries?
+		/* Any entries? */
 		if(tmpList->list) {
 			tmp = tmpList->list;
 			while(tmp != NULL) {
-				// Test this entry
+				/* Test this entry */
 				cur = _search_add_if_matches(cur, tmp, tmpList);
-				// Next entry
+				/* Next entry */
 				tmp = tmp->next;
 			}
 		}
 
-		// Next sibling if there is one
+		/* Next sibling if there is one */
 		if(tmpList->next != NULL) {
 			tmpList = tmpList->next;
-			// Test sibling
+			/* Test sibling */
 			cur = _search_add_if_matches(cur, NULL, tmpList);
-			// Process sibling
+			/* Process sibling */
 			continue;
 		}
 
-		// Otherwise step up
+		/* Otherwise step up */
 		depth--;
 		stepping_back = 1;
 		if(depth >= 0) {
@@ -190,24 +190,24 @@ search_apply()
 		}
 	}
 	
-	// All done
+	/* All done */
 	return 1;
 }
 
 void
 search_remove()
 {
-	// Put things back how they should have been
+	/* Put things back how they should have been */
 	current_pw_sublist = pwlist;
 	current_pw_sublist->current_item = -1;
 
-	// Free the memory held by the search results
+	/* Free the memory held by the search results */
 	_search_free();
 
-	// Clear the search term too
+	/* Clear the search term too */
 	options->search->search_term[0] = 0;
 
-	// Back to the old screen
+	/* Back to the old screen */
 	uilist_refresh();
 }
 
@@ -217,7 +217,7 @@ _search_free()
 	PWSearchResult *cur;
 	PWSearchResult *next;
 
-	// Free the memory held by the search results
+	/* Free the memory held by the search results */
 	cur = search_results;
 	while(cur != NULL) {
 		next = cur->next;

@@ -106,7 +106,7 @@ options_read()
 		} else if( strcmp((char*)node->name, "readonly") == 0){
 			options->readonly = TRUE;
 		} else if( strcmp((char*)node->name, "text") == 0){
-			// Safe to ignore. This is whitespace etc
+			/* Safe to ignore. This is whitespace etc */
 		} else {
 			debug("read_config: Unrecognised xml node '%s'", (char*)node->name);
 		}
@@ -148,7 +148,7 @@ options_write()
 	node = xmlNewChild(root, NULL, (xmlChar*)"filter", (xmlChar*)options->filter->filter);
 	xmlSetProp(node, (xmlChar const *) "field", (xmlChar const *) text);
 
-	// Note - search isn't serialised, but filter is
+	/* Note - search isn't serialised, but filter is */
 
 	xmlDocSetRootElement(doc, root);
 

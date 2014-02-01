@@ -120,8 +120,8 @@ extern PWSearchResult *search_results;
 extern time_t time_base;
 
 char *trim_ws(char*);
-void debug(char*, ...);
-void pw_abort(char*, ...);
+void debug(char const *, ...);
+void pw_abort(char const *, ...);
 int ui_init(void);
 int ui_run(void);
 int ui_end(void);

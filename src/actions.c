@@ -271,7 +271,7 @@ action_input_dialog(InputField *fields, int num_fields, char *title)
 				} else if(fields[i].type == INT){
 					ui_statusline_ask_num(fields[i].name, (int*)fields[i].value);
 				} else if(fields[i].type == INFORMATION){
-					// Easy, do nothing!
+					/* Easy, do nothing! */
 				}
 				action_input_dialog_draw_items(dialog_win, fields, num_fields, title, msg);
 			} else if(ch == 'l'){
@@ -312,7 +312,7 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 	 * actions loop - ignore read only as not changing main state
 	 */
 	while(first_time || ((ch = wgetch(dialog_win)) != 'q')){
-		// On first loop, drop straight into recipient 1
+		/* On first loop, drop straight into recipient 1 */
 		first_time = 0;
 
 		if( (ch >= '1') && (ch <= NUM_TO_CHAR(num_fields)) ){
@@ -320,13 +320,13 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 			fields[i].value = (char*)ui_statusline_ask_str(fields[i].name, 
 								(char*)fields[i].value, fields[i].max_length);
 			
-			// Now verify it's a valid recipient
+			/* Now verify it's a valid recipient */
 			if(strlen(fields[i].value)) {
 				valid_id = gnupg_check_id(fields[i].value);
 				if(valid_id == 0) {
-					// Good, valid id
+					/* Good, valid id */
 				} else {
-					// Invalid id. Warn and blank
+					/* Invalid id. Warn and blank */
 					if(valid_id == -2) {
 					   snprintf(msg2, 80, "Key expired for '%s'", (char*)fields[i].value);
 					} else {
@@ -336,7 +336,7 @@ action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 					snprintf(fields[i].value, STRING_LONG, "");
 				}
 
-				// Redraw display
+				/* Redraw display */
 				action_input_dialog_draw_items(dialog_win, fields, num_fields, title, msg);
 			}
 		}
@@ -420,7 +420,7 @@ action_list_select_item()
 	PWList* curpwl;
 	PWSearchResult* cursearch;
 
-	// Are they searching, or in normal mode?
+	/* Are they searching, or in normal mode? */
 	if(search_results != NULL) {
 		cursearch = uilist_get_highlighted_searchresult();
 		curpwl = cursearch->sublist;
@@ -429,10 +429,10 @@ action_list_select_item()
 		if (curpw) {
 			action_edit_pw(curpw);
 		} else if(curpwl){
-			// Quite out of searching
+			/* Quite out of searching */
 			search_remove();
 
-			// Now display the selected sublist
+			/* Now display the selected sublist */
 			current_pw_sublist = curpwl;
 			uilist_refresh();
 		}
@@ -618,12 +618,12 @@ action_list_move_item_up_level()
 	char str[STRING_LONG];
 	char answer[STRING_MEDIUM];
 
-	// Do nothing if searching
+	/* Do nothing if searching */
 	if(search_results != NULL) {
 		return;
 	}
 
-	// Do the right thing based on type
+	/* Do the right thing based on type */
 	switch(uilist_get_highlighted_type()){
 		case PW_ITEM:
 			curpw = uilist_get_highlighted_item();
@@ -741,7 +741,7 @@ action_list_locate()
 		depth = 1;
 	}
 
-	// Figure out how many parents we have
+	/* Figure out how many parents we have */
 	curpwl = parent;
 	while(curpwl){
 		curpwl = curpwl->parent;
@@ -749,7 +749,7 @@ action_list_locate()
 	}
 	count = depth;
 
-	// Now grab their names
+	/* Now grab their names */
 	fields = calloc(sizeof(InputField), depth);
 	if(currentName){
 		depth--;
@@ -762,10 +762,10 @@ action_list_locate()
 		curpwl = curpwl->parent;
 	}
 
-	// Have it rendered
+	/* Have it rendered */
 	action_input_dialog(fields, count, "Location of Item");
 
-	// All done, tidy up
+	/* All done, tidy up */
 	free(fields);
 }
 
@@ -813,7 +813,7 @@ action_list_move_item_up()
 	PWList *curpwl;
 	int worked = 0;
 
-	// Do nothing if searching
+	/* Do nothing if searching */
 	if(search_results != NULL) {
 		return;
 	}
@@ -846,7 +846,7 @@ action_list_move_item_down()
 	PWList *curpwl;
 	int worked = 0;
 
-	// Do nothing if searching
+	/* Do nothing if searching */
 	if(search_results != NULL) {
 		return;
 	}

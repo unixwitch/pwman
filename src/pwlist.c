@@ -2,7 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
- *  Copyright (c) 2014 Felicity Tarnell.
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -130,10 +130,10 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 	Pw *next = NULL;
 	Pw *nnext = NULL;
 
-	// Find us, in our parents list of children
+	/* Find us, in our parents list of children */
 	for(iter = parent->list; iter != NULL; iter = iter->next){
 		if(iter == pw) {
-			// Grab the next one, and the one after
+			/* Grab the next one, and the one after */
 			next = pw->next;
 			if(next != NULL) {
 				nnext = next->next;
@@ -141,12 +141,12 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 				nnext = NULL;
 			}
 
-			// Which way do we need to shuffle?
+			/* Which way do we need to shuffle? */
 			if(moveUp) {
-				// Up the list, if we can
+				/* Up the list, if we can */
 				if(prev == NULL) { break; }
 
-				// Are we going to the top?
+				/* Are we going to the top? */
 				if(prev == parent->list) {
 					parent->list = pw;
 					pw->next = prev;
@@ -158,10 +158,10 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 				}
 				return 1;
 			} else {
-				// Down the list, if we can
+				/* Down the list, if we can */
 				if(next == NULL) { break; }
 
-				// Were we at the top?
+				/* Were we at the top? */
 				if(pw == parent->list) {
 					parent->list = next;
 					next->next = pw;
@@ -174,7 +174,7 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 				return 1;
 			}
 		} else {
-			// Update the running list of prev and pprev
+			/* Update the running list of prev and pprev */
 			pprev = prev;
 			prev = iter;
 		}
@@ -185,22 +185,22 @@ pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp) {
 
 int
 pwlist_change_list_order(PWList *pw, int moveUp) {
-	// Grab the parent, assuming there is one
+	/* Grab the parent, assuming there is one */
 	PWList *parent = pw->parent;
 	if(parent==NULL) { return 0; }
 
 
-	// Find us
+	/* Find us */
 	PWList *iter = NULL;
 	PWList *pprev = NULL;
 	PWList *prev = NULL;
 	PWList *next = NULL;
 	PWList *nnext = NULL;
 
-	// Find us, in our parents list of children
+	/* Find us, in our parents list of children */
 	for(iter = parent->sublists; iter != NULL; iter = iter->next){
 		if(iter == pw) {
-			// Grab the next one, and the one after
+			/* Grab the next one, and the one after */
 			next = pw->next;
 			if(next != NULL) {
 				nnext = next->next;
@@ -208,12 +208,12 @@ pwlist_change_list_order(PWList *pw, int moveUp) {
 				nnext = NULL;
 			}
 
-			// Which way do we need to shuffle?
+			/* Which way do we need to shuffle? */
 			if(moveUp) {
-				// Up the list, if we can
+				/* Up the list, if we can */
 				if(prev == NULL) { break; }
 
-				// Are we going to the top?
+				/* Are we going to the top? */
 				if(prev == parent->sublists) {
 					parent->sublists = pw;
 					pw->next = prev;
@@ -225,10 +225,10 @@ pwlist_change_list_order(PWList *pw, int moveUp) {
 				}
 				return 1;
 			} else {
-				// Down the list, if we can
+				/* Down the list, if we can */
 				if(next == NULL) { break; }
 
-				// Were we at the top?
+				/* Were we at the top? */
 				if(pw == parent->sublists) {
 					parent->sublists = next;
 					next->next = pw;
@@ -241,7 +241,7 @@ pwlist_change_list_order(PWList *pw, int moveUp) {
 				return 1;
 			}
 		} else {
-			// Update the running list of prev and pprev
+			/* Update the running list of prev and pprev */
 			pprev = prev;
 			prev = iter;
 		}
@@ -418,9 +418,9 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 {
 	xmlNodePtr node;
 
-	// We need to escape the strings before storing them
-	// Otherwise, special characters (especially &) will
-	//  end up broken!
+	/* We need to escape the strings before storing them */
+	/* Otherwise, special characters (especially &) will */
+	/*  end up broken! */
 	xmlChar *escapedName = 
 		xmlEncodeSpecialChars(root->doc, (xmlChar*)pw->name);
 	xmlChar *escapedHost =
@@ -432,7 +432,7 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 	xmlChar *escapedLaunch =
 		xmlEncodeSpecialChars(root->doc, (xmlChar*)pw->launch);
 
-	// Build the entry and add in our (escaped) contents
+	/* Build the entry and add in our (escaped) contents */
 	node = xmlNewChild(root, NULL, (xmlChar const *)"PwItem", NULL);
 
 	xmlNewChild(node, NULL, (xmlChar const *)"name", escapedName);
@@ -441,7 +441,7 @@ pwlist_write_node(xmlNodePtr root, Pw* pw)
 	xmlNewChild(node, NULL, (xmlChar const *)"passwd", escapedPasswd);
 	xmlNewChild(node, NULL, (xmlChar const *)"launch", escapedLaunch);
 
-	// Finally, we need to free all our escaped versions now we're done
+	/* Finally, we need to free all our escaped versions now we're done */
 	xmlFree(escapedName);
 	xmlFree(escapedHost);
 	xmlFree(escapedUser);
@@ -578,21 +578,21 @@ pwlist_read_file()
 	xmlNodePtr node, root;
 	xmlDocPtr doc;
 
-	// Have the defined a file yet?
+	/* Have the defined a file yet? */
 	if(!options->password_file){
 		return -1;
 	}
-	// Do we need to create a new file?
+	/* Do we need to create a new file? */
 	snprintf(fn, STRING_LONG, "%s", options->password_file);
 	if(access(fn, F_OK) != 0){
 		ui_statusline_msg("Database not found, created. Press any key to begin  "); getch();
 		return -1;
 	}
 
-	// Try to load the file
+	/* Try to load the file */
 	gnupg_worked = gnupg_read(options->password_file, &doc);	
 
-	// Did it work?
+	/* Did it work? */
 	if(gnupg_worked != 0) {
 		return gnupg_worked;
 	}
@@ -629,44 +629,43 @@ pwlist_read_file()
 int
 pwlist_do_export(PWList *pwlist, Pw *pw)
 {
-	char vers[5];
-	char file[STRING_LONG];
-	int max_id_num = 5, i=0, valid_ids = 0;
-	char *ids[max_id_num];
+#define	MAX_ID_NUM	5
+char	vers[5], *ids[MAX_ID_NUM], *file;
+int	i = 0, valid_ids = 0;
 	
 	xmlDocPtr doc;
 	xmlNodePtr root;
 
-	if(!pwlist && !pw) {
+	if (!pwlist && !pw) {
 		debug("export_passwd: bad password");
 		ui_statusline_msg("Bad password");
 		return -1;
 	}
 
-	// We need the IDs to default to empty strings
-	for(i=0; i<max_id_num; i++) {
+	/* We need the IDs to default to empty strings */
+	for (i=0; i < MAX_ID_NUM; i++) {
 		ids[i] = malloc(STRING_LONG);
 		snprintf(ids[i], STRING_LONG, "");
 	}
 
-	// Fetch the IDs
-	gnupg_get_ids(ids,max_id_num);
+	/* Fetch the IDs */
+	gnupg_get_ids(ids, MAX_ID_NUM);
 
-	// Check we really got one
-	for(i=0; i<max_id_num; i++) {
-		if(ids[i][0] != 0) {
+	/* Check we really got one */
+	for (i=0; i < MAX_ID_NUM; i++) {
+		if (ids[i][0] != 0) {
 			valid_ids++;
 		}
 	}
 
-	if(valid_ids == 0){
+	if (valid_ids == 0){
 		debug("export_passwd: cancel because id is blank");
 		return -1;
 	} else {
 		debug("exporting to %d ids", valid_ids);
 	}
 	
-	gnupg_get_filename(file, 'w');
+	file = gnupg_get_filename('w');
 
 	debug("export_passwd: construct xml doc");
 	snprintf(vers, 5, "%d", FF_VERSION);
@@ -683,15 +682,13 @@ pwlist_do_export(PWList *pwlist, Pw *pw)
 
 	xmlDocSetRootElement(doc, root);
 
-	gnupg_write_many(doc, ids, max_id_num, file);
+	gnupg_write_many(doc, ids, MAX_ID_NUM, file);
+	free(file);
 	
 	xmlFreeDoc(doc);
 
-	// All done.
-	// Free our ID structures
-	for(i=0; i<max_id_num; i++) {
+	for (i=0; i < MAX_ID_NUM; i++)
 		free(ids[i]);
-	}
 	
 	return 0;
 }
@@ -712,23 +709,25 @@ pwlist_export_list(PWList *pwlist)
 int
 pwlist_import_passwd()
 {
-	char file[STRING_LONG];
-	char const *buf;
-	int i = 0;
+char		*file;
+char const	*buf;
+int		 i = 0;
+
 	xmlNodePtr node, root;
 	xmlDocPtr doc;
 
-	gnupg_get_filename(file, 'r');
-
+	file = gnupg_get_filename('r');
 	gnupg_read(file, &doc);	
+	free(file);
 	
-	if(!doc){
+	if (!doc){
 		debug("import_passwd: bad data");
 		return -1;
 	}
+
 	root = xmlDocGetRootElement(doc);
-	if(!root || !root->name	|| (strcmp((char const*) root->name, "PWMan_Export") != 0) ){
-		ui_statusline_msg("Badly Formed password data");
+	if (!root || !root->name || (strcmp((char const*) root->name, "PWMan_Export") != 0) ){
+		ui_statusline_msg("Badly formed password data");
 		return -1;
 	}
 
@@ -736,15 +735,15 @@ pwlist_import_passwd()
 		i = atoi(buf);
 
 	if (i < FF_VERSION){
-		ui_statusline_msg("Password Export File in older format, use convert_pwdb");
+		ui_statusline_msg("Password export file in older format, use convert_pwdb");
 		return -1;
 	}
 	
-	for(node = root->children; node != NULL; node = node->next){
-		if(strcmp((char const *) node->name, "PwList") == 0){
+	for (node = root->children; node != NULL; node = node->next) {
+		if (strcmp((char const *) node->name, "PwList") == 0) {
 			pwlist_read(node, current_pw_sublist);
 			break;
-		} else if(strcmp((char const *) node->name, "PwItem") == 0){
+		} else if (strcmp((char const *) node->name, "PwItem") == 0) {
 			pwlist_read_node(node, current_pw_sublist);
 			break;
 		}
