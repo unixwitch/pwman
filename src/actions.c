@@ -426,7 +426,7 @@ action_list_select_item()
 		curpwl = cursearch->sublist;
 		curpw = cursearch->entry;
 
-		if(curpw){
+		if (curpw) {
 			action_edit_pw(curpw);
 		} else if(curpwl){
 			// Quite out of searching

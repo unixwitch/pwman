@@ -247,41 +247,45 @@ ui_run()
 		switch(ch){
 			case 'Q':
 			case 'q':
-				if(search_results != NULL) {
+				if (search_results != NULL)
 					search_remove();
-				} else {
-					if(action_list_at_top_level()){
-						return 0;
-					}
-				}
+				else if (action_list_at_top_level())
+					return 0;
 				break;
+
 			case '?':
 				ui_display_help();
 				break;
+
 			case KEY_PPAGE:
 				uilist_page_up();
 				break;
+
 			case KEY_NPAGE:
 				uilist_page_down();
 				break;
+
 			case KEY_UP:
 			case 'k':
 				uilist_up();
 				break;
+
 			case KEY_DOWN:
 			case 'j':
 				uilist_down();
 				break;
+
 			case 'A':
-				if (!options->readonly){
+				if (!options->readonly)
 					action_list_add_sublist();
-				} else {
+				else
 					statusline_readonly();
-				}
 				break;
+
 			case 'U':
 				action_list_up_one_level();
 				break;
+
 			case 'r':
 				if (!options->readonly){
 					action_list_rename();
@@ -290,6 +294,7 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'a':
 				if (!options->readonly){
 					action_list_add_pw();
@@ -298,6 +303,7 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'e':
 			case ' ':
 			case 13: /* return/enter key */
@@ -307,6 +313,7 @@ ui_run()
 					edit_pw(current_item);
 				}*/
 				break;
+
 			case 'd':
 			case 0x14A: /* DEL key */
 				if (!options->readonly){
@@ -315,6 +322,7 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'm':
 				if (!options->readonly){
 					action_list_move_item();
@@ -322,6 +330,7 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'M':
 				if (!options->readonly){
 					action_list_move_item_up_level();
@@ -329,15 +338,18 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'h':
 				hide_cursor();
 				break;
 				case 's':
 				show_cursor();
 				break;
+
 			case 'o':
 				action_edit_options();
 				break;
+
 			case 0x17: /* control-w */
 				if (!options->readonly){
 					pwlist_write_file();
@@ -345,28 +357,36 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 0x12: /* control-r */
 				action_list_read_file();
 				break;
+
 			case 0x07: /* control-g */
 				pwgen_indep();
 				break;
+
 			case 0x06: /* control-f */
 				gnupg_forget_passphrase();
 				break;
+
 			case 0x0C: /* control-l */
 				ui_refresh_windows();
 				break;
+
 			case '/':
 			case 'F':
 				search_get();
 				break;
+
 			case 'f':
 				filter_get();
 				break;
+
 			case 'E':
 				action_list_export();
 				break;
+
 			case 'I':
 				if (!options->readonly){
 					pwlist_import_passwd();
@@ -375,16 +395,20 @@ ui_run()
 					statusline_readonly();
 				}
 				break;
+
 			case 'L':
 				action_list_locate();
 				break;
+
 			case 'l':
 				action_list_launch();
 				break;
+
 			case 0x0B: /* control-k (up) */
 			case '[':
 				action_list_move_item_up();
 				break;
+
 			case 0x0A: /* control-j (down) */
 			case ']':
 				action_list_move_item_down();
