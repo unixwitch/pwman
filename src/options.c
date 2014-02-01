@@ -100,7 +100,7 @@ options_read()
 			text = (char*)xmlNodeGetContent(node);
 			if(text){ options->passphrase_timeout = atoi(text); }
 		} else if( strcmp((char*)node->name, "filter") == 0){
-			options->filter->field = atoi( (char*)xmlGetProp(node, "field") );
+			options->filter->field = atoi((char const *) xmlGetProp(node, (xmlChar const *) "field"));
 			text = (char*)xmlNodeGetContent(node);
 			if(text) strncpy(options->filter->filter, text, STRING_LONG);
 		} else if( strcmp((char*)node->name, "readonly") == 0){
@@ -146,7 +146,7 @@ options_write()
 
 	snprintf(text, STRING_SHORT, "%d", options->filter->field);
 	node = xmlNewChild(root, NULL, (xmlChar*)"filter", (xmlChar*)options->filter->filter);
-	xmlSetProp(node, "field", text);
+	xmlSetProp(node, (xmlChar const *) "field", (xmlChar const *) text);
 
 	// Note - search isn't serialised, but filter is
 
