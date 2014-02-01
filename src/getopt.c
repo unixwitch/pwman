@@ -365,19 +365,9 @@ getopt_internal(int nargc, char * const *nargv, const char *optns,
 	if (*optns == '+' || *optns == '-')
 		optns++;
 
-	/*
-	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
-	 * XXX using optreset.  Work around this braindamage.
-	 */
-	if (optind == 0)
-		optind = optreset = 1;
-
 	optarg = NULL;
-	if (optreset)
-		nonopt_start = nonopt_end = -1;
 start:
-	if (optreset || !*place) {		/* update scanning pointer */
-		optreset = 0;
+	if (!*place) {		/* update scanning pointer */
 		if (optind >= nargc) {          /* end of argument vector */
 			place = EMSG;
 			if (nonopt_end != -1) {
