@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,16 +19,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <ui.h>
-#include <pwman.h>
+#include	<stdlib.h>
+
+#include	"ui.h"
+#include	"pwman.h"
 
 WINDOW *list = NULL;
 int lines = 0;
 int first_list_item = 0;
 //int curitem = 0;
 
-int
+void
 uilist_init()
 {
 	char str[80];
@@ -36,33 +38,31 @@ uilist_init()
 	scrollok(list, TRUE);
 }
 /*
-int
+void
 resize_list()
 {
 	wresize(list, LIST_LINES, COLS);
 }
 */
 
-int
+void
 uilist_free()
 {
 	delwin(list);
 	list = NULL;
 }
 
-int 
+void 
 uilist_highlight_line(int line)
 {
+int	i;
 	wstandout(list);
 /*	mvwchgat(list, i, 0, -1, A_STANDOUT, 0, NULL);*/
+
         scrollok(list, FALSE);
-	        {
-                int i;
-                wmove(list, line, 0);
-                for(i = 0; i < COLS; i++)
-                        waddch(list, ' ');
-	        /*wattrset(win, 0);*/
-        }
+	wmove(list, line, 0);
+	for(i = 0; i < COLS; i++)
+		waddch(list, ' ');
         scrollok(list, TRUE);
 }
 
@@ -195,7 +195,7 @@ _uilist_render_entry(Pw *entry, int i, int num_shown)
 	return num_shown;
 }
 
-int
+void
 uilist_refresh()
 {
 	Pw *iter;
@@ -209,7 +209,7 @@ uilist_refresh()
 		uilist_init();
 	}
 	if(current_pw_sublist == NULL){
-		return -1;
+		return;
 	}
 
 	uilist_clear();;
@@ -300,7 +300,7 @@ uilist_refresh()
 	debug("refresh_list: done refreshing list");
 }
 
-int
+void
 uilist_clear()
 {
 	int i;
@@ -311,7 +311,7 @@ uilist_clear()
 	}
 }
 
-int
+void
 uilist_headerline()
 {
 	int i;
@@ -327,7 +327,7 @@ uilist_headerline()
 	hide_cursor();
 }
 
-int 
+void 
 uilist_page_up()
 {
 	current_pw_sublist->current_item -= (LIST_LINES - 1);
@@ -338,7 +338,7 @@ uilist_page_up()
 	uilist_refresh();
 }
 
-int
+void
 uilist_page_down()
 {
 	current_pw_sublist->current_item += (LIST_LINES - 1);
@@ -349,7 +349,7 @@ uilist_page_down()
 	uilist_refresh();
 }
 
-int
+void
 uilist_up()
 {
 	if(current_pw_sublist->current_item < 1){
@@ -361,7 +361,7 @@ uilist_up()
 	uilist_refresh();
 }
 
-int
+void
 uilist_down()
 {
 	if(current_pw_sublist->current_item >= (lines-1)){

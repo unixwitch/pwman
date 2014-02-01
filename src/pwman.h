@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -111,28 +112,54 @@ typedef struct {
 	int readonly;
 } Options;
 
-Options *options;
-int write_options;
-PWList *pwlist;
-PWList *current_pw_sublist;
-PWSearchResult *search_results;
-time_t time_base;
+extern Options *options;
+extern int write_options;
+extern PWList *pwlist;
+extern PWList *current_pw_sublist;
+extern PWSearchResult *search_results;
+extern time_t time_base;
 
 char *trim_ws(char*);
 void debug(char*, ...);
 void pw_abort(char*, ...);
-int ui_init();
-int ui_run();
-int ui_end();
+int ui_init(void);
+int ui_run(void);
+int ui_end(void);
 
-PwFilter * filter_new();
-PwSearch * search_new();
-Options * options_new();
+PwFilter * filter_new(void);
+PwSearch * search_new(void);
+Options * options_new(void);
+int options_read(void);
+void options_get(void);
 
-void search_get();
-int search_remove();
+void search_get(void);
+int search_remove(void);
 
 int pwlist_add_ptr(PWList*, Pw*);
-Pw* pwlist_new_pw();
+Pw* pwlist_new_pw(void);
 PWList *pwlist_new(char*);
+int pwlist_change_item_order(Pw* pw, PWList *parent, int moveUp);
+int pwlist_init(void);
+
+int pwlist_export_passwd(Pw *pw);
+int pwlist_free_all(void);
+int pwlist_read_file(void);
+int pwlist_change_list_order(PWList *pw, int moveUp);
+void pwlist_detach_sublist(PWList *parent, PWList *old);
+void pwlist_detach_pw(PWList *list, Pw *pw);
+void pwlist_delete_sublist(PWList *parent, PWList *old);
+void pwlist_delete_pw(PWList *list, Pw *pw);
+void pwlist_free_pw(Pw *old);
+void pwlist_rename_item(Pw* pwitem, char* new_name);
+void pwlist_rename_sublist(PWList *pwlist, char* new_name);
+int pwlist_add_sublist(PWList *parent, PWList *new);
+int pwlist_export_list(PWList *pwlist);
+int pwlist_write_file(void);
+int pwlist_import_passwd(void);
+
+char *pwgen_ask(char *pw);
+void pwgen_indep(void);
+
+int launch(Pw *pw);
+
 #endif

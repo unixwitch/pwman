@@ -2,6 +2,7 @@
  *  PWMan - Password Management Software
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,50 +19,18 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <pwman.h>
-#include <ui.h>
+#include	<stdlib.h>
 
-void _stderr_print(char *fmt, va_list ap)
-{
-	int d, c;
-	char *s;
-
-	while(*fmt){
-		if(*fmt == '%'){
-			switch(*++fmt){
-				case 's': 	/* string */
-					s = va_arg(ap, char*);
-					fputs(s, stderr);
-					break;
-				case 'd':	/* int */
-					d = va_arg(ap, int);
-					fprintf(stderr, "%d", d);
-					break;
-				case 'c':	/* char */
-					c = va_arg(ap, int);
-					fputc(c, stderr);
-					break;
-				default:
-					fputc('%', stderr);
-					fputc(*fmt, stderr);
-					break;
-			}
-		} else {
-			fputc(*fmt, stderr);
-		}
-		*fmt++;
-	}
-	va_end(ap);
-	fputc('\n', stderr);
-}
+#include	"pwman.h"
+#include	"ui.h"
 
 void
 pw_abort(char *fmt, ... )
 {
 	va_list ap;
 	va_start(ap, fmt);
-	_stderr_print(fmt, ap);
+	vfprintf(stderr, fmt, ap);
+	fputs("\n", stderr);
 	exit(1);
 }
 
@@ -72,7 +41,8 @@ debug(char *fmt, ... )
 	va_list ap;
 	fputs("PWMan Debug% ", stderr);
 	va_start(ap, fmt);
-	_stderr_print(fmt, ap);
+	vfprintf(stderr, fmt, ap);
+	fputs("\n", stderr);
 #endif
 }
 
@@ -89,5 +59,5 @@ trim_ws(char *str)
 		}
 	}
 	ui_statusline_msg(str);
+	return str;
 }
-

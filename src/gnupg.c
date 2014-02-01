@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,29 +32,30 @@
 
 /* end defines */
 
-#include <sys/stat.h>
-#include <pwman.h>
-#include <ui.h>
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <regex.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<sys/wait.h>
+#include	<unistd.h>
+#include	<time.h>
+#include	<regex.h>
+#include	<stdlib.h>
+#include	<fcntl.h>
+#include	<errno.h>
+
+#include	<libxml/tree.h>
+#include	<libxml/parser.h>
+
+#include	"pwman.h"
+#include	"ui.h"
+#include	"actions.h"
 
 #define STDOUT 0
 #define STDIN 1
 #define STDERR 2
 
 int passphrase_good = 0;
-extern int errno;
-extern int write_options;
-
 int gnupg_hit_sigpipe = 0;
+
 static void gnupg_sigpipe_handler()
 {
 	gnupg_hit_sigpipe = 1;
@@ -103,13 +105,12 @@ gnupg_str_in_buf(char *buf, char *check)
 static char *
 gnupg_expand_filename(char *filename)
 {
-	char *buf = malloc(STRING_LONG);
-	
+char	buf[STRING_LONG];
+
 	if((filename[0] == '~') && getenv("HOME")){
-		snprintf(buf, STRING_LONG, "%s%s\0", getenv("HOME"), filename+1);
+		snprintf(buf, sizeof(buf), "%s%s", getenv("HOME"), filename+1);
 		strncpy(filename, buf, STRING_LONG);
 	}
-	free(buf);
 
 	return filename;
 }
@@ -126,11 +127,11 @@ gnupg_exec(char *path, char *args[], FILE *stream[3])
 	pipe(stdout_fd);
 	pipe(stderr_fd);
 
-	pid = fork();
-
 	if( (path == NULL) || (args == NULL) ){
 		return -1;
 	}
+
+	pid = fork();
 
 	// Do the right thing with the fork
 	if(pid == 0){
@@ -143,9 +144,9 @@ gnupg_exec(char *path, char *args[], FILE *stream[3])
 		dup2(stderr_fd[1], fileno(stderr));
 
 		ret = execv(path, args);
-		if(ret) {
+		if(ret)
 			pw_abort("Failed to run %s, aborted with error code %d", path, errno);
-		}
+		abort(); /*NOTREACHED*/
 	} else {
 		close(stdout_fd[1]);
 		close(stdin_fd[0]);
@@ -374,6 +375,7 @@ gnupg_get_filename(char *filename, char rw)
 	} else {
 		pw_abort("File request must be for read or write, got '%s'", rw);
 	}
+	return filename;
 }
 
 static const char *

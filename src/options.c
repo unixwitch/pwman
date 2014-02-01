@@ -2,6 +2,7 @@
  *  PWman - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,10 +19,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pwman.h>
-#include <stdlib.h>
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include	<stdlib.h>
+
+#include	<libxml/tree.h>
+#include	<libxml/parser.h>
+
+#include	"pwman.h"
 
 Options*
 options_new()

@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,12 +19,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <pwman.h>
-#include <ui.h>
+#include	<stdlib.h>
+#include	<string.h>
 
-/*xtern int curitem;*/
+#include	"pwman.h"
+#include	"ui.h"
 
 PwFilter *
 filter_new()
@@ -139,30 +139,30 @@ filter_get()
 }
 
 
-int
+void
 filter_alert(PwFilter* fil)
 {
 	char alert[80];	
 
 	if( (fil == NULL) || (fil->filter == NULL) ){
 		/* no filter object */
-		return 1;
+		return;
 	}
 	if( strlen(fil->filter) == 0 ){
 		/* no filter */
-		return 1;
+		return;
 	}
 	switch(fil->field){
 		case 0:
-			sprintf(alert, " (Filtering on name with '%s')", fil->filter);
+			snprintf(alert, sizeof(alert), " (Filtering on name with '%s')", fil->filter);
 			break;
 		case 1:
-			sprintf(alert, " (Filtering on host with '%s')", fil->filter);
+			snprintf(alert, sizeof(alert), " (Filtering on host with '%s')", fil->filter);
 			break;
 		case 2:
-			sprintf(alert, " (Filtering on user with '%s')", fil->filter);
+			snprintf(alert, sizeof(alert), " (Filtering on user with '%s')", fil->filter);
 		case 3:
-			sprintf(alert, " (Filtering on launch with '%s')", fil->filter);
+			snprintf(alert, sizeof(alert), " (Filtering on launch with '%s')", fil->filter);
 		default:
 /*			fprintf(stderr, "Invalid filter field %d\n", fil->field);*/
 			break;
@@ -171,5 +171,3 @@ filter_alert(PwFilter* fil)
 	ui_statusline_clear();
 	ui_statusline_msg(alert);
 }
-
-

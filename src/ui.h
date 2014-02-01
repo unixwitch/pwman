@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,8 +19,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef UI_H
-#define UI_H
+#ifndef PWMAN_UI_H
+#define PWMAN_UI_H
 
 #include <curses.h>
 #include <signal.h>
@@ -35,6 +36,8 @@
 #ifdef HAVE_SYS_IOCTL_H
 #       include <sys/ioctl.h>
 #endif
+
+#include	"pwman.h"
 
 #define MIN_LINES 22
 #define MIN_COLS 60
@@ -79,10 +82,13 @@ typedef struct {
 	char *(*autogen)(char*);
 } InputField;
 
-int uilist_init();
-int uilist_free();
-int uilist_refresh();
-int ui_statusline_clear();
+void uilist_init(void);
+void uilist_free(void);
+void uilist_refresh(void);
+void uilist_clear(void);
+void uilist_headerline(void);
+int ui_statusline_clear(void);
+void ui_refresh_windows(void);
 
 int view_pw(int i);
 
@@ -94,7 +100,21 @@ char * ui_statusline_ask_str(char *, char *, int len);
 char * ui_statusline_ask_passwd(char *, char *, int, int);
 char * ui_statusline_ask_str_with_autogen(char *msg, char *input, int len, char *(*autogen)(char *), int ch);
 
+void	uilist_up(void);
+void	uilist_down(void);
+LIST_ITEM_TYPE uilist_get_highlighted_type(void);
+Pw * uilist_get_highlighted_item(void);
+PWList *uilist_get_highlighted_sublist(void);
+PWSearchResult *uilist_get_highlighted_searchresult(void);
+void uilist_page_up(void);
+void uilist_page_down(void);
+
 void statusline_readonly();
-#endif
 
+int filter_apply(Pw *pw, PwFilter* fil);
+void filter_alert(PwFilter* fil);
+void filter_get(void);
 
+int search_alert(PwSearch* srch);
+
+#endif	/* !PWMAN_UI_H */

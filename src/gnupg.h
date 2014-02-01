@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-void gnupg_forget_passphrase();
+void gnupg_forget_passphrase(void);
 
 int gnupg_check_id(char*);
 void gnupg_get_id(char*);

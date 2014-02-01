@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +19,19 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pwman.h>
-#include <ui.h>
-#include <help.h>
-#include <time.h>
-#include <stdlib.h>
+#include	<time.h>
+#include	<stdlib.h>
 
-char * statusline_ask_str(char *, char*, int);
-Pw *get_highlighted_item();
+#include	"pwman.h"
+#include	"ui.h"
+#include	"help.h"
+#include	"actions.h"
+#include	"gnupg.h"
 
 int should_resize = FALSE;
 int can_resize = FALSE;
 
-
 WINDOW *top = NULL, *bottom = NULL;
-extern int curitem, lines;
-extern WINDOW *list;
 
 void
 ui_draw_top()

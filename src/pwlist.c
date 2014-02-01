@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014 Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,19 +19,18 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pwman.h>
-#include <gnupg.h>
-#include <ui.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include	<errno.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+
+#include	<libxml/tree.h>
+#include	<libxml/parser.h>
+
+#include	"pwman.h"
+#include	"gnupg.h"
+#include	"ui.h"
 
 int pwindex = 0;
-extern int errno;
-void pwlist_free_pw(Pw*);
-
 
 PWList *
 pwlist_new(char *name)
@@ -254,6 +254,7 @@ void
 pwlist_rename_item(Pw* pwitem, char* new_name) {
 	strncpy(pwitem->name, new_name, STRING_MEDIUM);
 }
+
 void
 pwlist_rename_sublist(PWList *pwlist, char* new_name) {
 	strncpy(pwlist->name, new_name, STRING_MEDIUM);
@@ -703,6 +704,7 @@ pwlist_export_passwd(Pw *pw)
 {
    return pwlist_do_export(NULL, pw);
 }
+
 int
 pwlist_export_list(PWList *pwlist)
 {

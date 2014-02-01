@@ -2,6 +2,7 @@
  *  PWMan - password manager application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,15 +24,19 @@
  * (c) 2001 Theodore Ts'o
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <pwman.h>
-#include <ui.h>
+#include	<sys/types.h>
+#include	<sys/time.h>
+#include	<sys/stat.h>
+
+#include	<unistd.h>
+#include	<stdlib.h>
+#include	<fcntl.h>
+#include	<errno.h>
+
+#include	"pwman.h"
+#include	"ui.h"
+
+int pwgen_random_number(int max_num);
 
 struct pwgen_element {
 	char	*str;
@@ -177,10 +182,6 @@ char *pwgen(char *buf, int size)
 	return buf;
 }
 
-#ifdef HAVE_DRAND48
-extern double drand48();
-#endif
-
 /* Borrowed/adapted from e2fsprogs's UUID generation code */
 static int pwgen_get_random_fd(void)
 {
@@ -251,8 +252,8 @@ int pwgen_random_number(int max_num)
 #endif
 }
 
-char 
-*pwgen_ask(char *pw)
+char *
+pwgen_ask(char *pw)
 {
 	int i;
 	ui_statusline_ask_num("Length of Password(default 5):\t", &i);
@@ -267,7 +268,7 @@ char
 	return pw;
 }
 
-int 
+void 
 pwgen_indep()
 {
 	char pass[STRING_SHORT], text[STRING_LONG];

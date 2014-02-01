@@ -2,6 +2,7 @@
  *  PWMan - password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,20 +19,31 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "pwman.h"
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdarg.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+
+#include	<signal.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	<fcntl.h>
+#include	<stdarg.h>
+#include	<ctype.h>
+
+#include	"pwman.h"
+#include	"gnupg.h"
+#include	"ui.h"
 
 static void pwman_parse_command_line(int argc, char **argv);
 static void pwman_show_usage();
 static void pwman_show_version();
 static void pwman_quit();
 
+Options *options;
+int write_options;
+PWList *pwlist;
+PWList *current_pw_sublist;
+PWSearchResult *search_results;
+time_t time_base;
 
 static int
 pwman_check_lock_file()
@@ -47,7 +59,7 @@ pwman_check_lock_file()
 	}
 }
 
-static int
+static void
 pwman_create_lock_file()
 {
 	char fn[STRING_LONG];
@@ -56,7 +68,7 @@ pwman_create_lock_file()
 	creat(fn, S_IRWXU);
 }
 
-static int
+static void
 pwman_delete_lock_file()
 {
 	char fn[STRING_LONG];

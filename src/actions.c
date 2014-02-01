@@ -2,6 +2,7 @@
  *  PWman - Password management application
  *
  *  Copyright (C) 2002  Ivan Kelly <ivan@ivankelly.net>
+ *  Copyright (c) 2014	Felicity Tarnell.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +19,16 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <ui.h>
-#include <pwman.h>
-#include <gnupg.h>
+#include	<stdlib.h>
 
-extern Pw * uilist_get_highlighted_item();
-extern PWList * uilist_get_highlighted_sublist();
-extern PWList * pwlist_new(char*);
-extern PWSearchResult * uilist_get_highlighted_searchresult();
-extern char *pwgen_ask();
+#include	"ui.h"
+#include	"pwman.h"
+#include	"gnupg.h"
+#include	"actions.h"
 
 int disp_h = 15, disp_w = 60;
-extern int curitem;
-extern WINDOW *bottom;
 
-int
+void
 action_list_add_pw()
 {
 	Pw *pw;
@@ -105,7 +100,7 @@ action_list_add_pw()
 	uilist_refresh();
 }
 
-int
+void
 action_edit_pw(Pw *pw)
 {
 	InputField fields[] = {
@@ -116,9 +111,9 @@ action_edit_pw(Pw *pw)
 		{"Launch Command:\t", NULL, STRING_LONG, STRING}
 	};
 
-	if(pw == NULL){
-		return -1;
-	}
+	if(pw == NULL)
+		return;
+
 	/*
 	 * Get specified password
 	 */
@@ -136,7 +131,7 @@ action_edit_pw(Pw *pw)
 	action_input_dialog(fields, (sizeof(fields)/sizeof(InputField)), "Edit Password");
 }
 
-int 
+void 
 action_list_rename()
 {
 	Pw* curpw;
@@ -174,7 +169,7 @@ action_list_rename()
 	uilist_refresh();
 }
 
-int
+void
 action_edit_options()
 {
 	InputField fields[] = {
@@ -189,7 +184,7 @@ action_edit_options()
 	write_options = TRUE;
 }
 
-int 
+void
 action_input_dialog_draw_items(WINDOW* dialog_win, InputField *fields, 
 		int num_fields, char *title, char *msg)
 {
@@ -238,7 +233,7 @@ action_input_dialog_draw_items(WINDOW* dialog_win, InputField *fields,
 	wrefresh(dialog_win);
 }
 
-int 
+void
 action_input_dialog(InputField *fields, int num_fields, char *title)
 {
 	int ch, i;
@@ -295,7 +290,7 @@ action_input_dialog(InputField *fields, int num_fields, char *title)
 	uilist_refresh();
 }
 
-int 
+void
 action_input_gpgid_dialog(InputField *fields, int num_fields, char *title)
 {
 	int i, valid_id;
@@ -386,7 +381,7 @@ action_yes_no_dialog(InputField *fields, int num_fields, char *title, char *ques
 	return i;
 }
 
-int
+void
 action_list_add_sublist()
 {
 	char *name;
@@ -397,7 +392,7 @@ action_list_add_sublist()
 	for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
 		if( strcmp(iter->name, name) == 0){
 			free(name);
-			return -1;
+			return;
 		}
 	}
 	sublist = pwlist_new(name);
@@ -418,7 +413,7 @@ action_list_at_top_level()
 	}
 }
 
-int
+void
 action_list_select_item()
 {
 	Pw* curpw;
@@ -467,7 +462,7 @@ action_list_select_item()
 	}
 }
 
-int
+void
 action_list_delete_item()
 {
 	Pw* curpw;
@@ -511,7 +506,7 @@ action_list_delete_item()
 	uilist_refresh();
 }
 
-int
+void
 action_list_move_item()
 {
 	Pw* curpw;
@@ -530,7 +525,7 @@ action_list_move_item()
 					
 					/* if user just enters nothing do nothing */
 					if(answer[0] == 0){
-						return 0;
+						return;
 					}
 					
 					for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
@@ -538,7 +533,7 @@ action_list_move_item()
 							pwlist_detach_pw(current_pw_sublist, curpw);
 							pwlist_add_ptr(iter, curpw);
 							uilist_refresh();
-							return 0;
+							return;
 						}
 					}
 					ui_statusline_msg("Sublist does not exist, try again");
@@ -555,10 +550,10 @@ action_list_move_item()
 					
 					/* if user just enters nothing, do nothing */
 					if(answer[0] == 0){
-						return 0;
+						return;
 					}
 					if( strcmp(answer, curpwl->name) == 0 ){
-						return 0;
+						return;
 					}
 
 					for(iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next){
@@ -566,7 +561,7 @@ action_list_move_item()
 							pwlist_detach_sublist(current_pw_sublist, curpwl);
 							pwlist_add_sublist(iter, curpwl);
 							uilist_refresh();
-							return 0;
+							return;
 						}
 					}
 					ui_statusline_msg("Sublist does not exist, try again");
@@ -582,7 +577,7 @@ action_list_move_item()
 	}
 }
 
-int
+void
 action_list_move_item_up_level()
 {
 	Pw* curpw;
@@ -622,7 +617,7 @@ action_list_move_item_up_level()
 	}
 }
 
-int
+void
 action_list_up_one_level()
 {
 	/* move up one sublist */
@@ -632,7 +627,7 @@ action_list_up_one_level()
 	}
 }
 	
-int
+void
 action_list_export()
 {
 	Pw* curpw;
@@ -670,7 +665,7 @@ void _create_information_field(char* name, InputField* field)
 	field->type = INFORMATION;
 }
 
-int
+void
 action_list_locate()
 {
 	int depth = 0, count = 0;
@@ -742,7 +737,7 @@ action_list_locate()
 	free(fields);
 }
 
-int
+void
 action_list_launch()
 {
 	int i;
@@ -768,7 +763,7 @@ action_list_launch()
 	}
 }
 
-int
+void
 action_list_read_file()
 {
 	pwlist_free_all();
@@ -777,10 +772,9 @@ action_list_read_file()
 		current_pw_sublist = pwlist;
 	}
 	uilist_refresh();
-	return -1;
 }
 
-int
+void
 action_list_move_item_up()
 {
 	Pw* curpw;
@@ -813,7 +807,7 @@ action_list_move_item_up()
 	}
 }
 
-int 
+void
 action_list_move_item_down()
 {
 	Pw* curpw;
