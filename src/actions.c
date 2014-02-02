@@ -512,7 +512,7 @@ char		str[STRING_LONG];
 		curpw = cursearch->entry;
 
 		if (curpw) {
-			snprintf(str, STRING_LONG, "Really delete \"%s\"", curpw->name);
+			snprintf(str, sizeof(str), "Really delete \"%s\"", curpw->name);
 			if ((i = ui_ask_yes_no(str, 0)) != 0) {
 				pwlist_delete_pw(curpwl, curpw);
 				ui_statusline_msg("Password deleted");
@@ -523,10 +523,10 @@ char		str[STRING_LONG];
 			return;
 		}
 
-		snprintf(str, STRING_LONG, "Really delete Sublist \"%s\"", curpwl->name);
+		snprintf(str, sizeof(str), "Really delete sublist \"%s\"", curpwl->name);
 		if ((i = ui_ask_yes_no(str, 0)) != 0) {
 			pwlist_delete_sublist(curpwl->parent, curpwl);
-			ui_statusline_msg("Password Sublist deleted");
+			ui_statusline_msg("Password sublist deleted");
 		} else
 			ui_statusline_msg("Password not deleted");
 
@@ -539,7 +539,7 @@ char		str[STRING_LONG];
 		curpw = uilist_get_highlighted_item();
 
 		if (curpw) {
-			snprintf(str, STRING_LONG, "Really delete \"%s\"", curpw->name);
+			snprintf(str, sizeof(str), "Really delete \"%s\"", curpw->name);
 			i = ui_ask_yes_no(str, 0);
 			if (i) {
 				pwlist_delete_pw(current_pw_sublist, curpw);
@@ -553,11 +553,11 @@ char		str[STRING_LONG];
 		curpwl = uilist_get_highlighted_sublist();
 
 		if (curpwl) {
-			snprintf(str, STRING_LONG, "Really delete Sublist \"%s\"", curpwl->name);
+			snprintf(str, sizeof(str), "Really delete sublist \"%s\"", curpwl->name);
 			i = ui_ask_yes_no(str, 0);
 			if (i) {
 				pwlist_delete_sublist(curpwl->parent, curpwl);
-				ui_statusline_msg("Password Sublist deleted");
+				ui_statusline_msg("Password sublist deleted");
 			} else
 				ui_statusline_msg("Password not deleted");
 		}
@@ -803,7 +803,7 @@ char		msg[STRING_LONG];
 			}
 
 			i = launch(curpw);
-			snprintf(msg, STRING_LONG, "Application exited with code %d", i);
+			snprintf(msg, sizeof(msg), "Application exited with code %d", i);
 			ui_statusline_msg(msg);
 		}
 		break;

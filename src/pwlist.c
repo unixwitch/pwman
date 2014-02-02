@@ -604,7 +604,7 @@ char const     *name;
 int
 pwlist_read_file()
 {
-char		fn        [STRING_LONG];
+char		fn[STRING_LONG];
 char const     *buf;
 int		i = 0;
 int		gnupg_worked = 0;
@@ -616,7 +616,7 @@ xmlDocPtr	doc;
 		return -1;
 
 	/* Do we need to create a new file? */
-	snprintf(fn, STRING_LONG, "%s", options->password_file);
+	snprintf(fn, sizeof(fn), "%s", options->password_file);
 	if (access(fn, F_OK) != 0) {
 		ui_statusline_msg("Database not found, created. Press any key to begin  ");
 		getch();

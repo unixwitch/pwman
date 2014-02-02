@@ -195,10 +195,10 @@ char		buf[STRING_LONG];
 	if (gnupg_hit_sigpipe) {
 		fputs("GPG hit an error and died...\n", stderr);
 
-		while (fgets(buf, STRING_LONG - 1, stream[STDOUT_FILENO]) != NULL)
+		while (fgets(buf, sizeof(buf), stream[STDOUT_FILENO]) != NULL)
 			fputs(buf, stderr);
 
-		while (fgets(buf, STRING_LONG - 1, stream[STDERR_FILENO]) != NULL)
+		while (fgets(buf, sizeof(buf), stream[STDERR_FILENO]) != NULL)
 			fputs(buf, stderr);
 
 		/*
@@ -289,14 +289,13 @@ int		id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 	} else
 		debug("check_gnupg_id: supplied ID taken to be an email address\n");
 
-	if (id_is_key_id == 1) {
+	if (id_is_key_id == 1)
 		/* Match on "pub:.:SIZE:type:FULLID:DATE" */
 		/* Where FULLID is 8 chars then the 8 chars we expected */
-		snprintf(idstr, STRING_LONG, "^pub:.:[0-9]+:[0-9]+:[0-9a-zA-Z]{8}%s:", id);
-	} else {
+		snprintf(idstr, sizeof(idstr), "^pub:.:[0-9]+:[0-9]+:[0-9a-zA-Z]{8}%s:", id);
+	else
 		/* Match on "(pub|uid) .... NAME <EMAIL ADDRESS>" */
-		snprintf(idstr, STRING_LONG, "[^<]*<%s>", id);
-	}
+		snprintf(idstr, sizeof(idstr), "[^<]*<%s>", id);
 
 	/* Fire off GPG to find all our keys */
 	args[0] = "gpg";
@@ -307,7 +306,7 @@ int		id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
 	regcomp(&reg, idstr, REG_EXTENDED);
-	while (fgets(text, STRING_LONG, streams[STDOUT_FILENO])) {
+	while (fgets(text, sizeof(text), streams[STDOUT_FILENO])) {
 		if (regexec(&reg, text, 0, NULL, 0) != 0)
 			continue;
 
@@ -544,7 +543,7 @@ char           *expfile;
 
 		close(fileno(streams[STDIN_FILENO]));
 
-		while (fgets(buf, STRING_LONG - 1, streams[STDERR_FILENO]) != NULL)
+		while (fgets(buf, sizeof(buf), streams[STDERR_FILENO]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
 		gnupg_exec_end(pid, streams);
 
@@ -637,10 +636,10 @@ int		pid, ret = 0, pos;
 		streams[STDIN_FILENO] = NULL;
 
 		debug("gnupg_read: start reading data");
-		while (fgets(buf, STRING_LONG - 1, streams[STDOUT_FILENO]) != NULL)
+		while (fgets(buf, sizeof(buf), streams[STDOUT_FILENO]) != NULL)
 			data = gnupg_add_to_buf(data, buf);
 
-		while (fgets(buf, STRING_LONG - 1, streams[STDERR_FILENO]) != NULL)
+		while (fgets(buf, sizeof(buf), streams[STDERR_FILENO]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
 
 		gnupg_exec_end(pid, streams);
@@ -662,7 +661,7 @@ int		pid, ret = 0, pos;
 
 		if (gnupg_str_in_buf(err, GPG_ERR_CANTOPEN)) {
 			debug("gnupg_read: cannot open %s", filename);
-			snprintf(buf, STRING_LONG, "Cannot open file \"%s\"", expfile);
+			snprintf(buf, sizeof(buf), "Cannot open file \"%s\"", expfile);
 			ui_statusline_msg(buf);
 			getch();
 
@@ -673,7 +672,7 @@ int		pid, ret = 0, pos;
 		if (gnupg_str_in_buf(err, GPG_ERR_NOSECRETKEY)) {
 			debug("gnupg_read: secret key not available!");
 			user = gnupg_find_recp(err);
-			snprintf(buf, STRING_LONG, "You do not have the secret key for %s", user);
+			snprintf(buf, sizeof(buf), "You do not have the secret key for %s", user);
 			ui_statusline_msg(buf);
 			getch();
 
