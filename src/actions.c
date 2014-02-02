@@ -26,6 +26,7 @@
 #include	"gnupg.h"
 #include	"actions.h"
 
+static void	unmark_entries(void);
 static void	action_edit_pw(password_t *pw);
 static void	_create_information_field(char const *name, InputField * field);
 
@@ -464,7 +465,7 @@ search_result_t	*cursearch;
 
 			/* Now display the selected sublist */
 			current_pw_sublist = curpwl;
-			pwlist_unmark(current_pw_sublist);
+			unmark_entries();
 			uilist_refresh();
 		}
 
@@ -482,7 +483,7 @@ search_result_t	*cursearch;
 		curpwl = uilist_get_highlighted_sublist();
 		if (curpwl) {
 			current_pw_sublist = curpwl;
-			pwlist_unmark(current_pw_sublist);
+			unmark_entries();
 			uilist_refresh();
 		}
 		break;
@@ -576,7 +577,50 @@ action_list_move_item()
 {
 password_t     *curpw, *next;
 pwlist_t       *curpwl, *list, *nextl;
-int		type = uilist_get_highlighted_type();
+int		type;
+
+	if (search_results) {
+		ui_statusline_msg("Cannot move items from a search result");
+		return;
+#ifdef notyet
+		/*
+		 * This would allow moving items from the search result
+		 * list.  Disabled for now as I'm not sure it's that useful,
+		 * and it may have problems with referential integrity.
+		 */
+	search_result_t	*sr = uilist_get_highlighted_searchresult();
+
+		if (sr->entry) {
+			ui_statusline_msg("Items can only be moved to a sublist or parent");
+			return;
+		}
+
+		if (!sr->entry && sr->sublist->marked) {
+			ui_statusline_msg("Cannot move a sublist to itself");
+			return;
+		}
+
+		curpwl = sr->sublist;
+
+		for (sr = search_results; sr; sr = sr->next) {
+			if (sr->entry) {
+				if (!sr->entry->marked)
+					continue;
+
+				pwlist_detach_pw(sr->sublist, sr->entry);
+				pwlist_add_ptr(curpwl, sr->entry);
+				continue;
+			}
+
+			pwlist_detach_sublist(sr->sublist->parent, sr->sublist);
+			pwlist_add_sublist(curpwl, sr->sublist);
+			continue;
+		}
+		return;
+#endif
+	}
+
+	type = uilist_get_highlighted_type();
 
 	if (type != PW_SUBLIST && type != PW_UPLEVEL) {
 		ui_statusline_msg("Items can only be moved to a sublist or parent");
@@ -585,8 +629,13 @@ int		type = uilist_get_highlighted_type();
 
 	if (type == PW_UPLEVEL)
 		curpwl = current_pw_sublist->parent;
-	else
+	else {
 		curpwl = uilist_get_highlighted_sublist();
+		if (curpwl->marked) {
+			ui_statusline_msg("Cannot move a sublist to itself");
+			return;
+		}
+	}
 
 	curpw = current_pw_sublist->list;
 	while (curpw) {
@@ -660,7 +709,7 @@ action_list_up_one_level()
 	/* move up one sublist */
 	if (current_pw_sublist->parent) {
 		current_pw_sublist = current_pw_sublist->parent;
-		pwlist_unmark(current_pw_sublist);
+		unmark_entries();
 		uilist_refresh();
 	}
 }
@@ -957,8 +1006,15 @@ action_list_mark()
 password_t	*curpw;
 pwlist_t	*curpwl;
 
-	if (search_results)
+	if (search_results) {
+	search_result_t	*sr = uilist_get_highlighted_searchresult();
+		if (sr->entry)
+			sr->entry->marked = !sr->entry->marked;
+		else
+			sr->sublist->marked = !sr->sublist->marked;
+		uilist_refresh();
 		return;
+	}
 
 	switch (uilist_get_highlighted_type()) {
 	case PW_ITEM:
@@ -978,4 +1034,27 @@ pwlist_t	*curpwl;
 	}
 
 	uilist_refresh();
+}
+
+void
+unmark_entries()
+{
+password_t	*pw;
+pwlist_t	*pwl;
+
+	if (search_results) {
+	search_result_t	*sr;
+		for (sr = search_results; sr; sr = sr->next)
+			if (sr->entry)
+				sr->entry->marked = 0;
+			else
+				sr->sublist->marked = 0;
+		return;
+	}
+
+	for (pw = current_pw_sublist->list; pw; pw = pw->next)
+		pw->marked = 0;
+
+	for (pwl = current_pw_sublist->sublists; pwl; pwl = pwl->next)
+		pwl->marked = 0;
 }

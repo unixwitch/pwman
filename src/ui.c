@@ -207,7 +207,7 @@ static char    *help[] = {
 	"",
 	"	a		add item",
 	"	A		add sublist",
-	"       x               mark.unmark item",
+	"       x               mark/unmark item",
 	"	m		move marked items to sublist",
 	"	[		move item up the list",
 	"	]		move item down the list",

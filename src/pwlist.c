@@ -778,17 +778,3 @@ xmlDocPtr	doc;
 	xmlFreeDoc(doc);
 	return 0;
 }
-
-void
-pwlist_unmark(list)
-	pwlist_t	*list;
-{
-password_t	*pw;
-pwlist_t	*pwl;
-
-	for (pw = list->list; pw; pw = pw->next)
-		pw->marked = 0;
-
-	for (pwl = list->sublists; pwl; pwl = pwl->next)
-		pwl->marked = 0;
-}
