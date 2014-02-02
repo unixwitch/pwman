@@ -153,7 +153,8 @@ int		pid, ret;
 	if ((path == NULL) || (args == NULL))
 		return -1;
 
-	pid = fork();
+	if ((pid = fork()) == -1)
+		return -1;
 
 	/* Do the right thing with the fork */
 	if (pid == 0) {
@@ -169,22 +170,23 @@ int		pid, ret;
 		if (ret)
 			pw_abort("Failed to run %s, aborted with error code %d", path, errno);
 		abort();	/* NOTREACHED */
-	} else {
-		close(stdout_fd[1]);
-		close(stdin_fd[0]);
-		close(stderr_fd[1]);
-
-		if (stream != NULL) {
-			stream[STDOUT] = fdopen(stdout_fd[0], "r");
-			stream[STDIN] = fdopen(stdin_fd[1], "w");
-			stream[STDERR] = fdopen(stderr_fd[0], "r");
-		}
-		/* Mark us as not having had a sigpipe yet */
-		gnupg_hit_sigpipe = 0;
-		signal(SIGPIPE, gnupg_sigpipe_handler);
-
-		return pid;
 	}
+
+	close(stdout_fd[1]);
+	close(stdin_fd[0]);
+	close(stderr_fd[1]);
+
+	if (stream != NULL) {
+		stream[STDOUT] = fdopen(stdout_fd[0], "r");
+		stream[STDIN] = fdopen(stdin_fd[1], "w");
+		stream[STDERR] = fdopen(stderr_fd[0], "r");
+	}
+
+	/* Mark us as not having had a sigpipe yet */
+	gnupg_hit_sigpipe = 0;
+	signal(SIGPIPE, gnupg_sigpipe_handler);
+
+	return pid;
 }
 
 static void
@@ -205,9 +207,8 @@ char		buf[STRING_LONG];
 
 		/*
 		 * TODO - figure out why we don't get the real error message
-		 * from
-		 */
-		/* GPG displayed here like one might expect */
+		 * from GPG displayed here like one might expect
+		 */ 
 	}
 	signal(SIGPIPE, NULL);
 
@@ -536,6 +537,8 @@ char           *expfile;
 		err = NULL;
 
 		pid = gnupg_exec(options->gpg_path, args, streams);
+		if (pid == -1)
+			return -1;
 
 #if LIBXML_VERSION >= 20423
 		xmlDocFormatDump(streams[STDIN], doc, TRUE);
@@ -557,7 +560,7 @@ char           *expfile;
 		if (gnupg_str_in_buf(err, GPG_ERR_CANTWRITE)) {
 			debug("gnupg_write: cannot write to %s", expfile);
 
-			snprintf(buf, STRING_LONG, "Cannot write to %s", expfile);
+			snprintf(buf, sizeof(buf), "Cannot write to %s", expfile);
 			ui_statusline_msg(buf);
 			getch();
 

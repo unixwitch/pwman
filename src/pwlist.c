@@ -487,9 +487,10 @@ pwlist_t       *pwliter;
 int
 pwlist_write_file()
 {
-char		vers      [5];
+char		vers[5];
 xmlDocPtr	doc;
 xmlNodePtr	root;
+char		tfile[PATH_MAX];
 
 	if (options->readonly)
 		return 0;
@@ -510,7 +511,9 @@ xmlNodePtr	root;
 
 	xmlDocSetRootElement(doc, root);
 
-	gnupg_write(doc, options->gpg_id, options->password_file);
+	snprintf(tfile, sizeof(tfile), "%s.tmp", options->password_file);
+	if (gnupg_write(doc, options->gpg_id, tfile) == 0)
+		rename(tfile, options->password_file);
 
 	xmlFreeDoc(doc);
 	return 0;
