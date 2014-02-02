@@ -77,9 +77,8 @@ int		i = -1;
 
 	for (srchiter = search_results; (srchiter != NULL); srchiter = srchiter->next) {
 		i++;
-		if (i == current_pw_sublist->current_item) {
+		if (i == current_pw_sublist->current_item)
 			break;
-		}
 	}
 	return srchiter;
 }
