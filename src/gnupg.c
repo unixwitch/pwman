@@ -54,10 +54,6 @@
 #include	"actions.h"
 #include	"gnupg.h"
 
-#define STDOUT 0
-#define STDIN 1
-#define STDERR 2
-
 static int	gnupg_hit_sigpipe = 0;
 static char    *passphrase = NULL;
 
@@ -177,9 +173,9 @@ int		pid, ret;
 	close(stderr_fd[1]);
 
 	if (stream != NULL) {
-		stream[STDOUT] = fdopen(stdout_fd[0], "r");
-		stream[STDIN] = fdopen(stdin_fd[1], "w");
-		stream[STDERR] = fdopen(stderr_fd[0], "r");
+		stream[STDOUT_FILENO] = fdopen(stdout_fd[0], "r");
+		stream[STDIN_FILENO] = fdopen(stdin_fd[1], "w");
+		stream[STDERR_FILENO] = fdopen(stderr_fd[0], "r");
 	}
 
 	/* Mark us as not having had a sigpipe yet */
@@ -199,10 +195,10 @@ char		buf[STRING_LONG];
 	if (gnupg_hit_sigpipe) {
 		fputs("GPG hit an error and died...\n", stderr);
 
-		while (fgets(buf, STRING_LONG - 1, stream[STDOUT]) != NULL)
+		while (fgets(buf, STRING_LONG - 1, stream[STDOUT_FILENO]) != NULL)
 			fputs(buf, stderr);
 
-		while (fgets(buf, STRING_LONG - 1, stream[STDERR]) != NULL)
+		while (fgets(buf, STRING_LONG - 1, stream[STDERR_FILENO]) != NULL)
 			fputs(buf, stderr);
 
 		/*
@@ -311,7 +307,7 @@ int		id_is_key_id = 0, key_found = 0, key_is_expired = -1;
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
 	regcomp(&reg, idstr, REG_EXTENDED);
-	while (fgets(text, STRING_LONG, streams[STDOUT])) {
+	while (fgets(text, STRING_LONG, streams[STDOUT_FILENO])) {
 		if (regexec(&reg, text, 0, NULL, 0) != 0)
 			continue;
 
@@ -451,7 +447,7 @@ int		pid, count, version[3];
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
 	/* this might do version checking someday if needed */
-	count = fscanf(streams[STDOUT], "gpg (GnuPG) %d.%d.%d",
+	count = fscanf(streams[STDOUT_FILENO], "gpg (GnuPG) %d.%d.%d",
 		       &version[0], &version[1], &version[2]);
 	gnupg_exec_end(pid, streams);
 
@@ -541,14 +537,14 @@ char           *expfile;
 			return -1;
 
 #if LIBXML_VERSION >= 20423
-		xmlDocFormatDump(streams[STDIN], doc, TRUE);
+		xmlDocFormatDump(streams[STDIN_FILENO], doc, TRUE);
 #else
-		xmlDocDump(streams[STDIN], doc);
+		xmlDocDump(streams[STDIN_FILENO], doc);
 #endif
 
-		close(fileno(streams[STDIN]));
+		close(fileno(streams[STDIN_FILENO]));
 
-		while (fgets(buf, STRING_LONG - 1, streams[STDERR]) != NULL)
+		while (fgets(buf, STRING_LONG - 1, streams[STDERR_FILENO]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
 		gnupg_exec_end(pid, streams);
 
@@ -635,16 +631,16 @@ int		pid, ret = 0, pos;
 		}
 		pid = gnupg_exec(options->gpg_path, args, streams);
 
-		fputs(pass, streams[STDIN]);
-		fputc('\n', streams[STDIN]);
-		fclose(streams[STDIN]);
-		streams[STDIN] = NULL;
+		fputs(pass, streams[STDIN_FILENO]);
+		fputc('\n', streams[STDIN_FILENO]);
+		fclose(streams[STDIN_FILENO]);
+		streams[STDIN_FILENO] = NULL;
 
 		debug("gnupg_read: start reading data");
-		while (fgets(buf, STRING_LONG - 1, streams[STDOUT]) != NULL)
+		while (fgets(buf, STRING_LONG - 1, streams[STDOUT_FILENO]) != NULL)
 			data = gnupg_add_to_buf(data, buf);
 
-		while (fgets(buf, STRING_LONG - 1, streams[STDERR]) != NULL)
+		while (fgets(buf, STRING_LONG - 1, streams[STDERR_FILENO]) != NULL)
 			err = gnupg_add_to_buf(err, buf);
 
 		gnupg_exec_end(pid, streams);
@@ -727,7 +723,7 @@ FILE           *streams[3];
 
 	pid = gnupg_exec(options->gpg_path, args, streams);
 
-	while (fgets(text, sizeof(text), streams[STDOUT])) {
+	while (fgets(text, sizeof(text), streams[STDOUT_FILENO])) {
 	char	*type, *flags, *bits, *alg, *id, *date, *j1, *j2, *j3, *name, *j4;
 	char	 kstr[128];
 
