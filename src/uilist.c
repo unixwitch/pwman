@@ -316,8 +316,22 @@ int		i;
 void
 uilist_headerline()
 {
+int	i;
+
 	show_cursor();
-	attrset(A_BOLD);
+	attrset(A_UNDERLINE);
+
+	move(LIST_TOP - 1, NAMEPOS);
+	for (i = NAMEPOS; i < HOSTPOS - 1; i++)
+		addch(' ');
+
+	move(LIST_TOP - 1, HOSTPOS);
+	for (i = HOSTPOS; i < USERPOS - 1; i++)
+		addch(' ');
+
+	move(LIST_TOP - 1, USERPOS);
+	for (i = USERPOS; i < COLS; i++)
+		addch(' ');
 
 	mvaddnstr(LIST_TOP - 1, NAMEPOS, "Name", NAMELEN);
 	mvaddnstr(LIST_TOP - 1, HOSTPOS, "Host", HOSTLEN);
