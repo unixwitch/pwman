@@ -82,6 +82,8 @@ typedef struct pwlist {
 	char           *name;
 	password_t     *list;
 
+	int		marked;
+
 	struct pwlist  *parent;
 	struct pwlist  *sublists;
 	struct pwlist  *next;

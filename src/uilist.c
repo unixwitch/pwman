@@ -171,6 +171,9 @@ _uilist_render_sublist(pwlist_t *sublist, int i, int num_shown)
 		else
 			wattrset(list, A_BOLD);
 
+		if (sublist->marked)
+			mvwaddstr(list, num_shown, 1, "x");
+
 		mvwprintw(list, num_shown, NAMEPOS, "%s ->", sublist->name);
 		wattrset(list, A_NORMAL);
 		wstandend(list);

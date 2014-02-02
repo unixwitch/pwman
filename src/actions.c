@@ -574,8 +574,8 @@ char		str[STRING_LONG];
 void
 action_list_move_item()
 {
-password_t     *curpw;
-pwlist_t       *curpwl;
+password_t     *curpw, *next;
+pwlist_t       *curpwl, *list, *nextl;
 int		type = uilist_get_highlighted_type();
 
 	if (type != PW_SUBLIST && type != PW_UPLEVEL) {
@@ -588,15 +588,32 @@ int		type = uilist_get_highlighted_type();
 	else
 		curpwl = uilist_get_highlighted_sublist();
 
-again:
-	for (curpw = current_pw_sublist->list; curpw; curpw = curpw->next) {
-		if (!curpw->marked)
-			continue;
+	curpw = current_pw_sublist->list;
+	for (;;) {
+		next = curpw->next;
 
-		pwlist_detach_pw(current_pw_sublist, curpw);
-		pwlist_add_ptr(curpwl, curpw);
-		curpw = current_pw_sublist->list;
-		goto again;
+		if (curpw->marked) {
+			pwlist_detach_pw(current_pw_sublist, curpw);
+			pwlist_add_ptr(curpwl, curpw);
+		}
+
+		curpw = next;
+		if (!curpw)
+			break;
+	}
+
+	list = current_pw_sublist->sublists;
+	for (;;) {
+		nextl = list->next;
+
+		if (list->marked) {
+			pwlist_detach_sublist(current_pw_sublist, list);
+			pwlist_add_sublist(curpwl, list);
+		}
+
+		list = nextl;
+		if (!list)
+			break;
 	}
 
 	uilist_refresh();
@@ -940,20 +957,27 @@ void
 action_list_mark()
 {
 password_t	*curpw;
-search_result_t	*cursearch;
+pwlist_t	*curpwl;
 
-	if (search_results != NULL) {
-		cursearch = uilist_get_highlighted_searchresult();
-		curpw = cursearch->entry;
-	} else {
-		if (uilist_get_highlighted_type() != PW_ITEM)
-			return;
-		curpw = uilist_get_highlighted_item();
-	}
-
-	if (!curpw)
+	if (search_results)
 		return;
 
-	curpw->marked = !curpw->marked;
+	switch (uilist_get_highlighted_type()) {
+	case PW_ITEM:
+		if ((curpw = uilist_get_highlighted_item()) == NULL)
+			return;
+		curpw->marked = !curpw->marked;
+		break;
+
+	case PW_SUBLIST:
+		if ((curpwl = uilist_get_highlighted_sublist()) == NULL)
+			return;
+		curpwl->marked = !curpwl->marked;
+		break;
+
+	default:
+		break;
+	}
+
 	uilist_refresh();
 }
