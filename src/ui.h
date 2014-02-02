@@ -98,7 +98,7 @@ void		uilist_up (void);
 void		uilist_down(void);
 LIST_ITEM_TYPE	uilist_get_highlighted_type(void);
 password_t     *uilist_get_highlighted_item(void);
-pwlist_t       *uilist_get_highlighted_sublist(void);
+folder_t       *uilist_get_highlighted_sublist(void);
 search_result_t *uilist_get_highlighted_searchresult(void);
 void		uilist_page_up(void);
 void		uilist_page_down(void);

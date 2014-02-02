@@ -41,6 +41,8 @@
 #include	<stdint.h>
 #endif
 
+#include	"queue.h"
+
 #define CONF_FILE 	".pwmanrc"
 #define	DB_FILE		".pwman.db"
 
@@ -64,44 +66,18 @@
 #define	xcalloc(n,s)	calloc(n,s)
 #define	xfree(s)	do { if (s) free(s); } while (0)
 
-typedef struct password {
-	int		id;
-	char           *name;
-	char           *host;
-	char           *user;
-	char           *passwd;
-	char           *launch;
-
-	/* ui */
-	int		marked;
-
-	struct password *next;
-} password_t;
-
-typedef struct pwlist {
-	char           *name;
-	password_t     *list;
-
-	int		marked;
-
-	struct pwlist  *parent;
-	struct pwlist  *sublists;
-	struct pwlist  *next;
-
-	/* ui stuff, shouldn't be here but this is a quick hack */
-	int		current_item;
-} pwlist_t;
+#include	"password.h"
+#include	"folder.h"
 
 typedef struct search_result {
 	/* Always has a sublist, whether the list or child matches */
-	pwlist_t       *sublist;
+	folder_t       *sublist;
 
 	/* If the entry itself matches, will be present */
 	password_t     *entry;
 
 	struct search_result *next;
 } search_result_t;
-
 
 typedef struct filter {
 	int		field;
@@ -126,8 +102,8 @@ typedef struct {
 
 extern Options *options;
 extern int	write_options;
-extern pwlist_t *pwlist;
-extern pwlist_t *current_pw_sublist;
+extern folder_t *folder;
+extern folder_t *current_pw_sublist;
 extern search_result_t *search_results;
 extern time_t	time_base;
 
@@ -147,27 +123,6 @@ void		options_get(void);
 
 void		search_get(void);
 void		search_remove(void);
-
-int		pwlist_add_ptr(pwlist_t *, password_t *);
-pwlist_t       *pwlist_new(char const *);
-int		pwlist_change_item_order(password_t *pw, pwlist_t *parent, int moveUp);
-int		pwlist_init(void);
-
-int		pwlist_export_passwd(password_t *pw);
-int		pwlist_free_all(void);
-int		pwlist_read_file(void);
-int		pwlist_change_list_order(pwlist_t *pw, int moveUp);
-void		pwlist_detach_sublist(pwlist_t *parent, pwlist_t *old);
-void		pwlist_detach_pw(pwlist_t *list, password_t *pw);
-void		pwlist_delete_sublist(pwlist_t *parent, pwlist_t *old);
-void		pwlist_delete_pw(pwlist_t *list, password_t *pw);
-void		pwlist_free_pw(password_t *old);
-void		pwlist_rename_item(password_t *pwitem, char const *new_name);
-void		pwlist_rename_sublist(pwlist_t *pwlist, char const *new_name);
-int		pwlist_add_sublist(pwlist_t *parent, pwlist_t *new);
-int		pwlist_export_list(pwlist_t *pwlist);
-int		pwlist_write_file(void);
-int		pwlist_import_passwd(void);
 
 char           *pwgen_ask(void);
 void		pwgen_indep(void);

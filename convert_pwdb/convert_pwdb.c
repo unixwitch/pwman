@@ -21,6 +21,7 @@
 
 #include	<stdlib.h>
 #include	<stdio.h>
+#include	<assert.h>
 
 #include	<libxml/parser.h>
 
@@ -34,15 +35,15 @@ static void		 show_version(void);
 static void		 show_usage(char*);
 static void		 get_options(int argc, char *argv[]);
 static void		 free_pw(password_t *old);
-static pwlist_t		*parse_old_doc(xmlDocPtr doc);
-static xmlDocPtr	 write_new_doc(pwlist_t *list);
-static pwlist_t *		 new_pwlist(char const *name);
+static folder_t		*parse_old_doc(xmlDocPtr doc);
+static xmlDocPtr	 write_new_doc(folder_t *list);
+static folder_t		*new_folder(char const *name);
 static void		 write_password_node(xmlNodePtr root, password_t *pw);
-static int		 add_pw_ptr(pwlist_t *list, password_t *new);
+static void		 add_pw_ptr(folder_t *list, password_t *new);
 static xmlDocPtr	 get_data(void);
-static password_t		*new_pw(void);
-static password_t		*read_pw_node(xmlNodePtr parent);
-static void		 write_pwlist(xmlNodePtr parent, pwlist_t *list);
+static password_t	*new_pw(void);
+static password_t	*read_pw_node(xmlNodePtr parent);
+static void		 write_folder(xmlNodePtr parent, folder_t *list);
 static char		*add_to_buf(char *buf, char *new);
 static void		 put_data(xmlDocPtr doc);
 static char		*ask(char *msg);
@@ -69,38 +70,36 @@ debug(char const *fmt, ... )
 #endif
 }
 
-static pwlist_t *
-new_pwlist(char const *name)
+static folder_t *
+new_folder(char const *name)
 {
-	pwlist_t *new;
-	new = malloc( sizeof(pwlist_t) );
+	folder_t *new;
+	new = malloc( sizeof(folder_t) );
 	new->name = malloc(STRING_MEDIUM);
 	strncpy(new->name, name, STRING_MEDIUM);
 	new->parent = NULL;
-	new->list = NULL;
+	PWLIST_INIT(&new->list);
 	new->sublists = NULL;
-	debug("new_pwlist: %s", name);
+	debug("new_folder: %s", name);
 
 	return new;
 }
 
 static int 
-free_pwlist(pwlist_t *old)
+free_folder(folder_t *old)
 {
 	password_t *current, *next;
-	pwlist_t *curlist, *nlist;
+	folder_t *curlist, *nlist;
 
 	if (!old)
 		return 0;
 
-	for (current = old->list; current != NULL; current = next) {
-		next = current->next;
+	PWLIST_FOREACH_SAFE(current, &old->list, next)
 		free_pw(current);
-	}
 
 	for (curlist = old->sublists; curlist != NULL; curlist = nlist) {
 		nlist = curlist->next;
-		free_pwlist(curlist);
+		free_folder(curlist);
 	}
 	
 	free(old->name);
@@ -140,34 +139,15 @@ free_pw(password_t *old)
 	free(old);
 }
 
-static int
-add_pw_ptr(pwlist_t *list, password_t *new)
+static void
+add_pw_ptr(list, new)
+	folder_t	*list;
+	password_t	*new;
 {
-	password_t *current;
-	
-	if(list == NULL){
-		debug("add_pw_ptr : Bad pwlist_t");
-		return -1;
-	}
-	if(new == NULL){
-		debug("add_pw_ptr : Bad password_t");
-		return -1;
-	}
-	if(list->list == NULL){
-		list->list = new;
-		new->next = NULL;
-		return 0;
-	}
+	assert(list);
+	assert(new);
 
-	debug("add_pw_ptr: add to list");
-	current = list->list;
-	while(current->next != NULL){
-		current = current->next;
-	}
-	current->next = new;
-	new->next = NULL;
-
-	return 0;
+	PWLIST_INSERT_TAIL(&list->list, new);
 }
 
 static void 
@@ -184,7 +164,7 @@ write_password_node(xmlNodePtr root, password_t *pw)
 }
 
 static void
-write_pwlist(xmlNodePtr parent, pwlist_t *list)
+write_folder(xmlNodePtr parent, folder_t *list)
 {
 	xmlNodePtr node;
 	password_t* iter;
@@ -192,12 +172,12 @@ write_pwlist(xmlNodePtr parent, pwlist_t *list)
 	node = xmlNewChild(parent, NULL, (xmlChar const*)"PwList", NULL);
 	xmlSetProp(node, (xmlChar const*)"name", (xmlChar*)list->name);
 
-	for (iter = list->list; iter != NULL; iter = iter->next)
+	PWLIST_FOREACH(iter, &list->list)
 		write_password_node(node, iter);
 }
 
 static xmlDocPtr
-write_new_doc(pwlist_t *list)
+write_new_doc(folder_t *list)
 {
 char	vers[5];
 	xmlDocPtr doc;
@@ -207,17 +187,17 @@ char	vers[5];
 		puts("write_new_doc: bad password data");
 		exit(-1);
 	}
-	snprintf(vers, 5, "%d", FF_VERSION);
+	snprintf(vers, sizeof(vers), "%d", FF_VERSION);
 	doc = xmlNewDoc((xmlChar const*)"1.0");
 
 	if (!export) {
 		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_PasswordList", NULL);
 		xmlSetProp(root, (xmlChar const *)"version", (xmlChar *) vers);
-		write_pwlist(root, list);
+		write_folder(root, list);
 	} else {
 		root = xmlNewDocNode(doc, NULL, (xmlChar const*)"PWMan_Export", NULL);
 		xmlSetProp(root, (xmlChar const *) "version", (xmlChar *) vers);
-		write_password_node(root, list->list);	
+		write_password_node(root, PWLIST_FIRST(&list->list));
 	}
 
 	xmlDocSetRootElement(doc, root);
@@ -259,14 +239,14 @@ read_pw_node(xmlNodePtr parent)
 	return new;
 }
 
-static pwlist_t*
+static folder_t*
 parse_old_doc(xmlDocPtr doc)
 {
-pwlist_t		*list;
+folder_t		*list;
 password_t		*pw;
 xmlNodePtr	 root, node;
 
-	list = new_pwlist("Main");
+	list = new_folder("Main");
 
 	if(!doc){
 		debug("parse_old_doc: Bad xmlDocPtr");
@@ -300,12 +280,12 @@ xmlNodePtr	 root, node;
 		}
 	}
 
-	if (list->list){
-		return list;
-	} else {
+	if (PWLIST_EMPTY(&list->list)) {
 		fputs("Unrecognised file format\n", stderr);
 		exit(-1);
 	}
+
+	return list;
 }
 
 static char *
@@ -425,7 +405,7 @@ int
 main(int argc, char *argv[])
 {
 xmlDocPtr	 doc;
-pwlist_t		*list;
+folder_t		*list;
 	
 	get_options(argc, argv);
 
@@ -436,7 +416,7 @@ pwlist_t		*list;
 	doc = write_new_doc(list);
 	put_data(doc);
 	xmlFreeDoc(doc);
-	free_pwlist(list);
+	free_folder(list);
 
 	free(infile);
 	free(outfile);

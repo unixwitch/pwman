@@ -25,7 +25,7 @@
 #include	"pwman.h"
 #include	"ui.h"
 
-static search_result_t *_search_add_if_matches(search_result_t *, password_t *, pwlist_t *);
+static search_result_t *_search_add_if_matches(search_result_t *, password_t *, folder_t *);
 static void	_search_free(void);
 static int	search_active(search_t *srch);
 static int	search_apply(void);
@@ -62,7 +62,7 @@ search_strcasestr(haystack, needle)
 
 
 static search_result_t *
-_search_add_if_matches(search_result_t *current, password_t *entry, pwlist_t *list)
+_search_add_if_matches(search_result_t *current, password_t *entry, folder_t *list)
 {
 search_result_t *next = NULL;
 
@@ -109,8 +109,8 @@ search_result_t *next = NULL;
 static int
 search_apply()
 {
-pwlist_t       *stack[MAX_SEARCH_DEPTH];
-pwlist_t       *tmpList = NULL;
+folder_t       *stack[MAX_SEARCH_DEPTH];
+folder_t       *tmpList = NULL;
 password_t     *tmp = NULL;
 int		depth;
 int		stepping_back;
@@ -131,7 +131,7 @@ search_result_t *cur = NULL;
 
 	/* Setup for start */
 	depth = 0;
-	tmpList = pwlist;
+	tmpList = folder;
 	stepping_back = 0;
 
 	/* Find anything we like the look of */
@@ -152,15 +152,9 @@ search_result_t *cur = NULL;
 		stepping_back = 0;
 
 		/* Any entries? */
-		if (tmpList->list) {
-			tmp = tmpList->list;
-			while (tmp != NULL) {
-				/* Test this entry */
-				cur = _search_add_if_matches(cur, tmp, tmpList);
-				/* Next entry */
-				tmp = tmp->next;
-			}
-		}
+		PWLIST_FOREACH(tmp, &tmpList->list)
+			cur = _search_add_if_matches(cur, tmp, tmpList);
+
 		/* Next sibling if there is one */
 		if (tmpList->next != NULL) {
 			tmpList = tmpList->next;
@@ -186,7 +180,7 @@ void
 search_remove()
 {
 	/* Put things back how they should have been */
-	current_pw_sublist = pwlist;
+	current_pw_sublist = folder;
 	current_pw_sublist->current_item = -1;
 
 	/* Free the memory held by the search results */

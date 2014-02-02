@@ -292,13 +292,13 @@ int		debug_i = 0;
 
 		if ((time_base < (time(NULL) - (options->passphrase_timeout * 60)))
 		    && options->passphrase_timeout != 0 && tolower(ch) != 'q') {
-			pwlist_write_file();
-			pwlist_free_all();
+			folder_write_file();
+			folder_free_all();
 
 			ui_statusline_msg("Passphrase has timed out and you must enter it again.");
 			getch();
 
-			load_worked = pwlist_read_file();
+			load_worked = folder_read_file();
 			if (load_worked != 0) {
 				ui_statusline_msg("Error - unable to re-load the password file!");
 				break;
@@ -354,7 +354,7 @@ int		debug_i = 0;
 		case 'r':
 			if (!options->readonly) {
 				action_list_rename();
-				pwlist_write_file();
+				folder_write_file();
 			} else {
 				statusline_readonly();
 			}
@@ -363,7 +363,7 @@ int		debug_i = 0;
 		case 'a':
 			if (!options->readonly) {
 				action_list_add_pw();
-				pwlist_write_file();
+				folder_write_file();
 			} else {
 				statusline_readonly();
 			}
@@ -408,7 +408,7 @@ int		debug_i = 0;
 
 		case 0x17:	/* control-w */
 			if (!options->readonly)
-				pwlist_write_file();
+				folder_write_file();
 			else
 				statusline_readonly();
 			break;
@@ -444,7 +444,7 @@ int		debug_i = 0;
 
 		case 'I':
 			if (!options->readonly) {
-				pwlist_import_passwd();
+				folder_import_passwd();
 				uilist_refresh();
 			} else {
 				statusline_readonly();
@@ -474,7 +474,7 @@ int		debug_i = 0;
 			debug_i++;
 			snprintf(msg, 80, "Name %d", debug_i);
 
-			pwlist_add(current_pw_sublist, msg, "myhost", "myuser", "mypasswd", "mylaucnh");
+			folder_add(current_pw_sublist, msg, "myhost", "myuser", "mypasswd", "mylaucnh");
 			uilist_refresh();
 			break;
 #endif

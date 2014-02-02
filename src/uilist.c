@@ -25,7 +25,7 @@
 #include	"pwman.h"
 
 static void	uilist_highlight_line(int line);
-static int	_uilist_render_sublist(pwlist_t *sublist, int i, int num_shown);
+static int	_uilist_render_sublist(folder_t *sublist, int i, int num_shown);
 static int	_uilist_render_entry(password_t *entry, int i, int num_shown);
 
 static WINDOW  *list;
@@ -82,10 +82,10 @@ int		i = -1;
 	return srchiter;
 }
 
-pwlist_t       *
+folder_t       *
 uilist_get_highlighted_sublist()
 {
-pwlist_t       *iter;
+folder_t       *iter;
 int		i = -1;
 
 	if (!current_pw_sublist)
@@ -108,7 +108,7 @@ password_t     *
 uilist_get_highlighted_item()
 {
 password_t     *iter;
-pwlist_t       *listiter;
+folder_t       *listiter;
 int		i = -1;
 
 	if (current_pw_sublist->parent)
@@ -118,7 +118,7 @@ int		i = -1;
 		i++;
 
 
-	for (iter = current_pw_sublist->list; iter != NULL; iter = iter->next) {
+	PWLIST_FOREACH(iter, &current_pw_sublist->list) {
 		if (filter_apply(iter, options->filter))
 			i++;
 
@@ -135,7 +135,7 @@ LIST_ITEM_TYPE
 uilist_get_highlighted_type()
 {
 password_t     *iter;
-pwlist_t       *listiter;
+folder_t       *listiter;
 int		i = -1;
 
 	if (current_pw_sublist->parent) {
@@ -151,7 +151,7 @@ int		i = -1;
 			return PW_SUBLIST;
 	}
 
-	for (iter = current_pw_sublist->list; iter != NULL; iter = iter->next) {
+	PWLIST_FOREACH(iter, &current_pw_sublist->list) {
 		if (filter_apply(iter, options->filter))
 			i++;
 
@@ -163,7 +163,7 @@ int		i = -1;
 
 /* Draw a sublist on the screen */
 static int
-_uilist_render_sublist(pwlist_t *sublist, int i, int num_shown)
+_uilist_render_sublist(folder_t *sublist, int i, int num_shown)
 {
 	if ((i >= first_list_item) && (i <= LAST_LIST_ITEM)) {
 		if (lines == current_pw_sublist->current_item)
@@ -207,7 +207,7 @@ void
 uilist_refresh()
 {
 password_t     *iter;
-pwlist_t       *listiter;
+folder_t       *listiter;
 search_result_t *srchiter;
 int		i = 0;
 int		num_shown = 0;
@@ -258,8 +258,7 @@ int		num_shown = 0;
 			i++;
 		}
 		/* Draw our entries, if the filter says it's ok */
-		for (iter = current_pw_sublist->list; (iter != NULL); iter = iter->next) {
-
+		PWLIST_FOREACH(iter, &current_pw_sublist->list) {
 			/*
 			 * if line satifies filter criteria increment i and
 			 * lines

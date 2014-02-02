@@ -68,7 +68,7 @@ xmlNodePtr	root;
 }
 
 int
-export_passwd_list(pwlist_t *pwlist)
+export_passwd_list(folder_t *folder)
 {
 char		vers      [5];
 char		id        [STRING_LONG], file[STRING_LONG];
@@ -80,7 +80,7 @@ xmlNodePtr	root;
 		debug("export_passwd_list: gnupg not found");
 		return -1;
 	}
-	if (!pwlist) {
+	if (!folder) {
 		debug("export_passwd_list: bad password");
 		statusline_msg("Bad password");
 		return -1;
@@ -100,7 +100,7 @@ xmlNodePtr	root;
 
 	xmlSetProp(root, "version", vers);
 
-	write_pwlist(root, pwlist);
+	write_folder(root, folder);
 
 	xmlDocSetRootElement(doc, root);
 
@@ -142,7 +142,7 @@ xmlDocPtr	doc;
 	}
 	for (node = root->children; node != NULL; node = node->next) {
 		if (strcmp(node->name, "PwList") == 0) {
-			read_pwlist(node, current_pw_sublist);
+			read_folder(node, current_pw_sublist);
 			break;
 		} else if (strcmp(node->name, "PwItem") == 0) {
 			read_password_node(node, current_pw_sublist);

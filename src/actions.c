@@ -72,10 +72,10 @@ int		i;
 	i = action_yes_no_dialog(fields, (sizeof(fields) / sizeof(InputField)), NULL, "Add this entry");
 
 	if (i) {
-		pwlist_add_ptr(current_pw_sublist, pw);
+		folder_add_pw(current_pw_sublist, pw);
 		ui_statusline_msg("New password added");
 	} else {
-		pwlist_free_pw(pw);
+		pw_delete(pw);
 		ui_statusline_msg("New password cancelled");
 	}
 
@@ -83,7 +83,7 @@ int		i;
 	return;
 
 end:
-	pwlist_free_pw(pw);
+	pw_delete(pw);
 }
 
 static void
@@ -105,7 +105,7 @@ void
 action_list_rename()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 char           *new_name;
 
 	new_name = malloc(STRING_MEDIUM);
@@ -116,7 +116,7 @@ char           *new_name;
 		if (curpw) {
 			new_name = ui_ask_str("New name", curpw->name);
 			if (strlen(new_name) > 0)
-				pwlist_rename_item(curpw, new_name);
+				pw_rename(curpw, new_name);
 			free(new_name);
 		}
 		break;
@@ -126,7 +126,7 @@ char           *new_name;
 		if (curpwl) {
 			new_name = ui_ask_str("New sublist name", curpwl->name);
 			if (strlen(new_name) > 0)
-				pwlist_rename_sublist(curpwl, new_name);
+				folder_rename_sublist(curpwl, new_name);
 			free(new_name);
 		}
 		break;
@@ -415,7 +415,7 @@ void
 action_list_add_sublist()
 {
 char           *name;
-pwlist_t       *sublist, *iter;
+folder_t       *sublist, *iter;
 
 	name = ui_ask_str("Sublist name:", NULL);
 	for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
@@ -425,10 +425,10 @@ pwlist_t       *sublist, *iter;
 		}
 	}
 
-	sublist = pwlist_new(name);
+	sublist = folder_new(name);
 	free(name);
 
-	pwlist_add_sublist(current_pw_sublist, sublist);
+	folder_add_sublist(current_pw_sublist, sublist);
 	uilist_refresh();
 }
 
@@ -448,7 +448,7 @@ void
 action_list_select_item()
 {
 password_t	*curpw;
-pwlist_t	*curpwl;
+folder_t	*curpwl;
 search_result_t	*cursearch;
 
 	/* Are they searching, or in normal mode? */
@@ -502,7 +502,7 @@ void
 action_list_delete_item()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 search_result_t *cursearch;
 int		i;
 char		str[STRING_LONG];
@@ -515,7 +515,7 @@ char		str[STRING_LONG];
 		if (curpw) {
 			snprintf(str, sizeof(str), "Really delete \"%s\"", curpw->name);
 			if ((i = ui_ask_yes_no(str, 0)) != 0) {
-				pwlist_delete_pw(curpwl, curpw);
+				pw_delete(curpw);
 				ui_statusline_msg("Password deleted");
 			} else
 				ui_statusline_msg("Password not deleted");
@@ -526,7 +526,7 @@ char		str[STRING_LONG];
 
 		snprintf(str, sizeof(str), "Really delete sublist \"%s\"", curpwl->name);
 		if ((i = ui_ask_yes_no(str, 0)) != 0) {
-			pwlist_delete_sublist(curpwl->parent, curpwl);
+			folder_delete_sublist(curpwl->parent, curpwl);
 			ui_statusline_msg("Password sublist deleted");
 		} else
 			ui_statusline_msg("Password not deleted");
@@ -543,7 +543,7 @@ char		str[STRING_LONG];
 			snprintf(str, sizeof(str), "Really delete \"%s\"", curpw->name);
 			i = ui_ask_yes_no(str, 0);
 			if (i) {
-				pwlist_delete_pw(current_pw_sublist, curpw);
+				pw_delete(curpw);
 				ui_statusline_msg("Password deleted");
 			} else
 				ui_statusline_msg("Password not deleted");
@@ -557,7 +557,7 @@ char		str[STRING_LONG];
 			snprintf(str, sizeof(str), "Really delete sublist \"%s\"", curpwl->name);
 			i = ui_ask_yes_no(str, 0);
 			if (i) {
-				pwlist_delete_sublist(curpwl->parent, curpwl);
+				folder_delete_sublist(curpwl->parent, curpwl);
 				ui_statusline_msg("Password sublist deleted");
 			} else
 				ui_statusline_msg("Password not deleted");
@@ -575,8 +575,8 @@ char		str[STRING_LONG];
 void
 action_list_move_item()
 {
-password_t     *curpw, *next;
-pwlist_t       *curpwl, *list, *nextl;
+password_t     *curpw, *tmp;
+folder_t       *curpwl, *list, *nextl;
 int		type;
 
 	if (search_results) {
@@ -607,13 +607,13 @@ int		type;
 				if (!sr->entry->marked)
 					continue;
 
-				pwlist_detach_pw(sr->sublist, sr->entry);
-				pwlist_add_ptr(curpwl, sr->entry);
+				folder_detach_pw(sr->sublist, sr->entry);
+				folder_add_pw(curpwl, sr->entry);
 				continue;
 			}
 
-			pwlist_detach_sublist(sr->sublist->parent, sr->sublist);
-			pwlist_add_sublist(curpwl, sr->sublist);
+			folder_detach_sublist(sr->sublist->parent, sr->sublist);
+			folder_add_sublist(curpwl, sr->sublist);
 			continue;
 		}
 		return;
@@ -637,16 +637,12 @@ int		type;
 		}
 	}
 
-	curpw = current_pw_sublist->list;
-	while (curpw) {
-		next = curpw->next;
+	PWLIST_FOREACH_SAFE(curpw, &current_pw_sublist->list, tmp) {
+		if (!curpw->marked)
+			continue;
 
-		if (curpw->marked) {
-			pwlist_detach_pw(current_pw_sublist, curpw);
-			pwlist_add_ptr(curpwl, curpw);
-		}
-
-		curpw = next;
+		folder_detach_pw(current_pw_sublist, curpw);
+		folder_add_pw(curpwl, curpw);
 	}
 
 	list = current_pw_sublist->sublists;
@@ -654,8 +650,8 @@ int		type;
 		nextl = list->next;
 
 		if (list->marked) {
-			pwlist_detach_sublist(current_pw_sublist, list);
-			pwlist_add_sublist(curpwl, list);
+			folder_detach_sublist(current_pw_sublist, list);
+			folder_add_sublist(curpwl, list);
 		}
 
 		list = nextl;
@@ -670,7 +666,7 @@ void
 action_list_move_item_up_level()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 
 	/* Do nothing if searching */
 	if (search_results != NULL)
@@ -681,8 +677,8 @@ pwlist_t       *curpwl;
 	case PW_ITEM:
 		curpw = uilist_get_highlighted_item();
 		if (curpw && current_pw_sublist->parent) {
-			pwlist_detach_pw(current_pw_sublist, curpw);
-			pwlist_add_ptr(current_pw_sublist->parent, curpw);
+			folder_detach_pw(current_pw_sublist, curpw);
+			folder_add_pw(current_pw_sublist->parent, curpw);
 			uilist_refresh();
 		}
 		break;
@@ -690,8 +686,8 @@ pwlist_t       *curpwl;
 	case PW_SUBLIST:
 		curpwl = uilist_get_highlighted_sublist();
 		if (curpwl && current_pw_sublist->parent) {
-			pwlist_detach_sublist(current_pw_sublist, curpwl);
-			pwlist_add_sublist(current_pw_sublist->parent, curpwl);
+			folder_detach_sublist(current_pw_sublist, curpwl);
+			folder_add_sublist(current_pw_sublist->parent, curpwl);
 			uilist_refresh();
 		}
 		break;
@@ -718,7 +714,7 @@ void
 action_list_export()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 
 	debug("list_export: enter switch");
 	switch (uilist_get_highlighted_type()) {
@@ -726,14 +722,14 @@ pwlist_t       *curpwl;
 		debug("list_export: is a pw");
 		curpw = uilist_get_highlighted_item();
 		if (curpw)
-			pwlist_export_passwd(curpw);
+			folder_export_passwd(curpw);
 		break;
 
 	case PW_SUBLIST:
-		debug("list_export: is a pwlist");
+		debug("list_export: is a folder");
 		curpwl = uilist_get_highlighted_sublist();
 		if (curpwl)
-			pwlist_export_list(curpwl);
+			folder_export_list(curpwl);
 		break;
 
 	case PW_UPLEVEL:
@@ -760,8 +756,8 @@ int		depth = 0, count = 0;
 char           *currentName = NULL;
 InputField     *fields;
 password_t     *curpw = NULL;
-pwlist_t       *curpwl = NULL;
-pwlist_t       *parent = NULL;
+folder_t       *curpwl = NULL;
+folder_t       *parent = NULL;
 search_result_t *cursearch;
 
 	if (search_results != NULL) {
@@ -868,11 +864,11 @@ char		msg[STRING_LONG];
 void
 action_list_read_file()
 {
-	pwlist_free_all();
+	folder_free_all();
 
-	if (pwlist_read_file() != 0) {
-		pwlist = pwlist_new("Main");
-		current_pw_sublist = pwlist;
+	if (folder_read_file() != 0) {
+		folder = folder_new("Main");
+		current_pw_sublist = folder;
 	}
 
 	uilist_refresh();
@@ -882,7 +878,7 @@ void
 action_list_move_item_up()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 int		worked = 0;
 
 	/* Do nothing if searching */
@@ -892,12 +888,12 @@ int		worked = 0;
 	switch (uilist_get_highlighted_type()) {
 	case PW_ITEM:
 		curpw = uilist_get_highlighted_item();
-		worked = pwlist_change_item_order(curpw, current_pw_sublist, 1);
+		worked = folder_change_item_order(curpw, current_pw_sublist, 1);
 		break;
 
 	case PW_SUBLIST:
 		curpwl = uilist_get_highlighted_sublist();
-		worked = pwlist_change_list_order(curpwl, 1);
+		worked = folder_change_list_order(curpwl, 1);
 		break;
 
 	case PW_UPLEVEL:
@@ -972,7 +968,7 @@ void
 action_list_move_item_down()
 {
 password_t     *curpw;
-pwlist_t       *curpwl;
+folder_t       *curpwl;
 int		worked = 0;
 
 	/* Do nothing if searching */
@@ -982,12 +978,12 @@ int		worked = 0;
 	switch (uilist_get_highlighted_type()) {
 	case PW_ITEM:
 		curpw = uilist_get_highlighted_item();
-		worked = pwlist_change_item_order(curpw, current_pw_sublist, 0);
+		worked = folder_change_item_order(curpw, current_pw_sublist, 0);
 		break;
 
 	case PW_SUBLIST:
 		curpwl = uilist_get_highlighted_sublist();
-		worked = pwlist_change_list_order(curpwl, 0);
+		worked = folder_change_list_order(curpwl, 0);
 		break;
 
 	case PW_UPLEVEL:
@@ -1004,7 +1000,7 @@ void
 action_list_mark()
 {
 password_t	*curpw;
-pwlist_t	*curpwl;
+folder_t	*curpwl;
 
 	if (search_results) {
 	search_result_t	*sr = uilist_get_highlighted_searchresult();
@@ -1040,7 +1036,7 @@ void
 unmark_entries()
 {
 password_t	*pw;
-pwlist_t	*pwl;
+folder_t	*pwl;
 
 	if (search_results) {
 	search_result_t	*sr;
@@ -1052,7 +1048,7 @@ pwlist_t	*pwl;
 		return;
 	}
 
-	for (pw = current_pw_sublist->list; pw; pw = pw->next)
+	PWLIST_FOREACH(pw, &current_pw_sublist->list)
 		pw->marked = 0;
 
 	for (pwl = current_pw_sublist->sublists; pwl; pwl = pwl->next)

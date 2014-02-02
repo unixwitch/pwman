@@ -49,8 +49,8 @@ static void	pwman_quit();
 
 Options        *options;
 int		write_options;
-pwlist_t       *pwlist;
-pwlist_t       *current_pw_sublist;
+folder_t       *folder;
+folder_t       *current_pw_sublist;
 search_result_t *search_results;
 time_t		time_base;
 
@@ -156,16 +156,16 @@ int		load_worked, gpg_id_valid;
 	ui_refresh_windows();
 
 	/* get pw database */
-	pwlist_init();
-	load_worked = pwlist_read_file();
+	folder_init();
+	load_worked = folder_read_file();
 
 	if (load_worked != 0) {
 		debug("Failed to load the database, error was %d", load_worked);
 
 		/* Did they cancel out, or is it a new file? */
 		if (load_worked < 0) {
-			pwlist = pwlist_new("Main");
-			current_pw_sublist = pwlist;
+			folder = folder_new("Main");
+			current_pw_sublist = folder;
 		} else {
 			/* Quit, hard! */
 			ui_end();
@@ -183,8 +183,8 @@ int		load_worked, gpg_id_valid;
 static void
 pwman_quit()
 {
-	pwlist_write_file();
-	pwlist_free_all();
+	folder_write_file();
+	folder_free_all();
 	pwman_delete_lock_file();
 
 	ui_end();
