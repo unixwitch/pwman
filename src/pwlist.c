@@ -23,6 +23,7 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<assert.h>
+#include	<limits.h>
 
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
