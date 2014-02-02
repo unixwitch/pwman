@@ -69,10 +69,10 @@ search_result_t *next = NULL;
 	/* Did we get an entry of a list? */
 	if (entry != NULL) {
 		if (search_strcasestr(entry->name, options->search->search_term)
-				|| search_strcasestr(entry->host, options->search->search_term)
-				|| search_strcasestr(entry->user, options->search->search_term)
-				|| search_strcasestr(entry->passwd, options->search->search_term)
-				|| search_strcasestr(entry->launch, options->search->search_term)
+		    || search_strcasestr(entry->host, options->search->search_term)
+		    || search_strcasestr(entry->user, options->search->search_term)
+		    || search_strcasestr(entry->passwd, options->search->search_term)
+		    || search_strcasestr(entry->launch, options->search->search_term)
 			) {
 			next = xcalloc(1, sizeof(*next));
 			next->entry = entry;
@@ -89,22 +89,21 @@ search_result_t *next = NULL;
 	}
 
 	/* If we matched, append */
-	if (next == NULL) {
+	if (next == NULL)
 		return current;
-	} else {
-		if (current == NULL) {
-			/* First hit */
-			search_results = next;
-		} else {
-			/* Additional hit, append */
-			current->next = next;
-		}
 
-		/* For now, nothing follows us */
-		next->next = NULL;
-		/* We are the new current entry */
-		return next;
+	if (current == NULL) {
+		/* First hit */
+		search_results = next;
+	} else {
+		/* Additional hit, append */
+		current->next = next;
 	}
+
+	/* For now, nothing follows us */
+	next->next = NULL;
+	/* We are the new current entry */
+	return next;
 }
 
 static int
