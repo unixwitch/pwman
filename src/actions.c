@@ -464,6 +464,7 @@ search_result_t	*cursearch;
 
 			/* Now display the selected sublist */
 			current_pw_sublist = curpwl;
+			pwlist_unmark(current_pw_sublist);
 			uilist_refresh();
 		}
 
@@ -481,6 +482,7 @@ search_result_t	*cursearch;
 		curpwl = uilist_get_highlighted_sublist();
 		if (curpwl) {
 			current_pw_sublist = curpwl;
+			pwlist_unmark(current_pw_sublist);
 			uilist_refresh();
 		}
 		break;
@@ -573,81 +575,31 @@ void
 action_list_move_item()
 {
 password_t     *curpw;
-pwlist_t       *curpwl, *iter;
-char		str[STRING_LONG];
-char           *answer;
+pwlist_t       *curpwl;
+int		type = uilist_get_highlighted_type();
 
-	switch (uilist_get_highlighted_type()) {
-	case PW_ITEM:
-		curpw = uilist_get_highlighted_item();
+	if (type != PW_SUBLIST && type != PW_UPLEVEL) {
+		ui_statusline_msg("Items can only be moved to a sublist or parent");
+		return;
+	}
 
-		if (curpw) for(;;) {
-			snprintf(str, sizeof(str), "Move \"%s\" to where?", curpw->name);
-			answer = ui_ask_str(str, NULL);
-
-			/* if user just enters nothing do nothing */
-			if (answer[0] == 0) {
-				free(answer);
-				return;
-			}
-
-			for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
-				if (strcmp(iter->name, answer) != 0)
-					continue;
-
-				pwlist_detach_pw(current_pw_sublist, curpw);
-				pwlist_add_ptr(iter, curpw);
-				uilist_refresh();
-				free(answer);
-				return;
-			}
-
-			free(answer);
-			ui_statusline_msg("Sublist does not exist, try again");
-			getch();
-		}
-
-		break;
-
-	case PW_SUBLIST:
+	if (type == PW_UPLEVEL)
+		curpwl = current_pw_sublist->parent;
+	else
 		curpwl = uilist_get_highlighted_sublist();
 
-		if (curpwl) for (;;) {
-			snprintf(str, sizeof(str), "Move sublist \"%s\" to where?", curpwl->name);
-			answer = ui_ask_str(str, NULL);
+again:
+	for (curpw = current_pw_sublist->list; curpw; curpw = curpw->next) {
+		if (!curpw->marked)
+			continue;
 
-			/* if user just enters nothing, do nothing */
-			if (answer[0] == 0) {
-				free(answer);
-				return;
-			}
-
-			if (strcmp(answer, curpwl->name) == 0) {
-				free(answer);
-				return;
-			}
-
-			for (iter = current_pw_sublist->sublists; iter != NULL; iter = iter->next) {
-				if (strcmp(iter->name, answer) != 0)
-					continue;
-
-				pwlist_detach_sublist(current_pw_sublist, curpwl);
-				pwlist_add_sublist(iter, curpwl);
-				uilist_refresh();
-				free(answer);
-				return;
-			}
-
-			ui_statusline_msg("Sublist does not exist, try again");
-			getch();
-		}
-		break;
-
-	case PW_UPLEVEL:
-	case PW_NULL:
-		/* do nothing */
-		break;
+		pwlist_detach_pw(current_pw_sublist, curpw);
+		pwlist_add_ptr(curpwl, curpw);
+		curpw = current_pw_sublist->list;
+		goto again;
 	}
+
+	uilist_refresh();
 }
 
 void
@@ -693,6 +645,7 @@ action_list_up_one_level()
 	/* move up one sublist */
 	if (current_pw_sublist->parent) {
 		current_pw_sublist = current_pw_sublist->parent;
+		pwlist_unmark(current_pw_sublist);
 		uilist_refresh();
 	}
 }
@@ -899,39 +852,24 @@ action_list_copy_username()
 {
 password_t	*curpw;
 search_result_t	*cursearch;
-int		 stat;
 
 	if (options->safemode) {
 		ui_statusline_msg("Clipboard cannot be used in safe mode");
 		return;
 	}
 
-	/* Are they searching, or in normal mode? */
 	if (search_results != NULL) {
 		cursearch = uilist_get_highlighted_searchresult();
 		curpw = cursearch->entry;
-
-		if (!curpw)
-			return;
-		stat = copy_string(curpw->user);
 	} else {
-		switch (uilist_get_highlighted_type()) {
-		case PW_ITEM:
-			curpw = uilist_get_highlighted_item();
-			if (!curpw)
-				return;
-			stat = copy_string(curpw->user);
-			break;
-
-		case PW_NULL:
-		case PW_SUBLIST:
-		case PW_UPLEVEL:
-			/* do nothing */
+		if (uilist_get_highlighted_type() != PW_ITEM)
 			return;
-		}
+		curpw = uilist_get_highlighted_item();
 	}
 
-	if (stat == 0)
+	if (!curpw)
+		return;
+	if (copy_string(curpw->user) == 0)
 		ui_statusline_msg("Username copied");
 	else
 		ui_statusline_msg("Failed to copy username");
@@ -942,39 +880,25 @@ action_list_copy_pw()
 {
 password_t	*curpw;
 search_result_t	*cursearch;
-int		 stat;
 
 	if (options->safemode) {
 		ui_statusline_msg("Clipboard cannot be used in safe mode");
 		return;
 	}
 
-	/* Are they searching, or in normal mode? */
 	if (search_results != NULL) {
 		cursearch = uilist_get_highlighted_searchresult();
 		curpw = cursearch->entry;
-
-		if (!curpw)
-			return;
-		stat = copy_string(curpw->passwd);
 	} else {
-		switch (uilist_get_highlighted_type()) {
-		case PW_ITEM:
-			curpw = uilist_get_highlighted_item();
-			if (!curpw)
-				return;
-			stat = copy_string(curpw->passwd);
-			break;
-
-		case PW_NULL:
-		case PW_SUBLIST:
-		case PW_UPLEVEL:
-			/* do nothing */
+		if (uilist_get_highlighted_type() != PW_ITEM)
 			return;
-		}
+		curpw = uilist_get_highlighted_item();
 	}
 
-	if (stat == 0)
+	if (!curpw)
+		return;
+
+	if (copy_string(curpw->passwd) == 0)
 		ui_statusline_msg("Password copied");
 	else
 		ui_statusline_msg("Failed to copy password");
@@ -1010,4 +934,26 @@ int		worked = 0;
 
 	if (worked)
 		uilist_down();
+}
+
+void
+action_list_mark()
+{
+password_t	*curpw;
+search_result_t	*cursearch;
+
+	if (search_results != NULL) {
+		cursearch = uilist_get_highlighted_searchresult();
+		curpw = cursearch->entry;
+	} else {
+		if (uilist_get_highlighted_type() != PW_ITEM)
+			return;
+		curpw = uilist_get_highlighted_item();
+	}
+
+	if (!curpw)
+		return;
+
+	curpw->marked = !curpw->marked;
+	uilist_refresh();
 }

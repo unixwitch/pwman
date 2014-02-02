@@ -72,6 +72,9 @@ typedef struct password {
 	char           *passwd;
 	char           *launch;
 
+	/* ui */
+	int		marked;
+
 	struct password *next;
 } password_t;
 
@@ -163,6 +166,7 @@ int		pwlist_add_sublist(pwlist_t *parent, pwlist_t *new);
 int		pwlist_export_list(pwlist_t *pwlist);
 int		pwlist_write_file(void);
 int		pwlist_import_passwd(void);
+void		pwlist_unmark(pwlist_t *pwlist);
 
 char           *pwgen_ask(void);
 void		pwgen_indep(void);

@@ -207,8 +207,8 @@ static char    *help[] = {
 	"",
 	"	a		add item",
 	"	A		add sublist",
-	"	m		move item/sublist",
-	"	M		move item/sublist up one level",
+	"       x               mark.unmark item",
+	"	m		move marked items to sublist",
 	"	[		move item up the list",
 	"	]		move item down the list",
 	"	r		rename item/sublist",
@@ -291,7 +291,7 @@ int		debug_i = 0;
 		can_resize = FALSE;
 
 		if ((time_base < (time(NULL) - (options->passphrase_timeout * 60)))
-		&& options->passphrase_timeout != 0 && tolower(ch) != 'q') {
+		    && options->passphrase_timeout != 0 && tolower(ch) != 'q') {
 			pwlist_write_file();
 			pwlist_free_all();
 
@@ -375,6 +375,10 @@ int		debug_i = 0;
 			action_list_select_item();
 			break;
 
+		case 'x':
+			action_list_mark();
+			break;
+
 		case 'B':
 			action_list_copy_username();
 			break;
@@ -396,20 +400,6 @@ int		debug_i = 0;
 				action_list_move_item();
 			else
 				statusline_readonly();
-			break;
-
-		case 'M':
-			if (!options->readonly)
-				action_list_move_item_up_level();
-			else
-				statusline_readonly();
-			break;
-
-		case 'h':
-			hide_cursor();
-			break;
-		case 's':
-			show_cursor();
 			break;
 
 		case 'o':

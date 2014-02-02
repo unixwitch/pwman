@@ -60,7 +60,6 @@ uilist_highlight_line(int line)
 int		i;
 
 	wstandout(list);
-/*	mvwchgat(list, i, 0, -1, A_STANDOUT, 0, NULL);*/
 
 	scrollok(list, FALSE);
 	wmove(list, line, 0);
@@ -188,6 +187,9 @@ _uilist_render_entry(password_t *entry, int i, int num_shown)
 	if ((i >= first_list_item) && (i <= LAST_LIST_ITEM)) {
 		if (lines == current_pw_sublist->current_item)
 			uilist_highlight_line(num_shown);
+
+		if (entry->marked)
+			mvwaddstr(list, num_shown, 1, "x");
 
 		mvwaddnstr(list, num_shown, NAMEPOS, entry->name, NAMELEN);
 		mvwaddnstr(list, num_shown, HOSTPOS, entry->host, HOSTLEN);

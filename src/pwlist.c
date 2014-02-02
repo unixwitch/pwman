@@ -733,7 +733,6 @@ pwlist_export_list(list)
 	return pwlist_do_export(list, NULL);
 }
 
-
 int
 pwlist_import_passwd()
 {
@@ -775,4 +774,13 @@ xmlDocPtr	doc;
 	}
 	xmlFreeDoc(doc);
 	return 0;
+}
+
+void
+pwlist_unmark(list)
+	pwlist_t	*list;
+{
+password_t	*pw;
+	for (pw = list->list; pw; pw = pw->next)
+		pw->marked = 0;
 }
