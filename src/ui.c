@@ -234,8 +234,8 @@ static char    *help[] = {
 	"	^R		read database from file (reload)",
 	"	I		import password from file",
 	"	E		export password to file",
-	"	^G		Generate password",
-	"	^F		Forget passphrase",
+	"	^G		generate password",
+	"	^F		forget passphrase",
 	NULL
 };
 
