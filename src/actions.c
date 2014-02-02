@@ -589,7 +589,7 @@ int		type = uilist_get_highlighted_type();
 		curpwl = uilist_get_highlighted_sublist();
 
 	curpw = current_pw_sublist->list;
-	for (;;) {
+	while (curpw) {
 		next = curpw->next;
 
 		if (curpw->marked) {
@@ -598,12 +598,10 @@ int		type = uilist_get_highlighted_type();
 		}
 
 		curpw = next;
-		if (!curpw)
-			break;
 	}
 
 	list = current_pw_sublist->sublists;
-	for (;;) {
+	while (list) {
 		nextl = list->next;
 
 		if (list->marked) {
