@@ -107,11 +107,17 @@ int		load_worked, gpg_id_valid;
 
 	/* check to see if another instance of pwman is open */
 	if (!options->readonly && pwman_check_lock_file()) {
-		fprintf(stderr, "It seems %s is already opened by an instance of pwman\n",
+		fprintf(stderr, "File %s is already opened by another instance of pwman.\n",
 			options->password_file);
-		fprintf(stderr, "Two instances of pwman should not be open the same file at the same time\n");
+		fprintf(stderr, "Two instances of pwman should not be open the same file at the same time.\n");
+
+		if (options->safemode) {
+			fprintf(stderr, "Exiting.\n");
+			exit(1);
+		}
+
 		fprintf(stderr, "If you are sure pwman is not already open you can delete the file.\n");
-		fprintf(stderr, "Alternatively, you can open the file readonly by answering 'r'\n");
+		fprintf(stderr, "Alternatively, you can open the file readonly by answering 'r'.\n");
 		fprintf(stderr, "Delete file %s.lock? [y/n/r]\n",
 			options->password_file);
 		c = getchar();
